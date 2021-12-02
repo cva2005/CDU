@@ -1,0 +1,218 @@
+#include "../sys/system.h"
+#include "../net/usart.h"
+#include "ds1820.h"
+/*
+Function of Init sequence for DS18B20
+RETURNS VALUE:
+	1-connected
+	0-not connected
+*/
+unsigned char Tmp_Presence_pulse(void)
+{//unsigned int i;
+ unsigned char data_accept;
+ Direction_Wr;
+// PDR5_P52=1;
+ Write_0;
+ //for (i=0; i<300; i++);		//Wait 480 mks (Trsth)
+delay_us(480);
+ Direction_Rd;
+ //for (i=0; i<60; i++);  	//Wait 120mks (Tpdh+Tpdl/2)
+delay_us(40);
+ data_accept=Read_P;
+ //for (i=0; i<300; i++);  	//Wait 520mks ()
+delay_us(150);
+// PDR5_P52=0;
+ //if (data_accept==0) return(1);
+ //else return(0);
+ return(data_accept);
+}
+
+/*
+Procedure of write one byte of data into DS18B20 using 1-wire protocol
+Parameters: byte of data
+*/
+void Write_Byte_Tmp(unsigned char byte_1wire)
+{unsigned char bit_counter, bit_transmit;
+ Write_1;
+ Direction_Wr;
+ for (bit_counter=0; bit_counter<8; bit_counter++)
+ 	{bit_transmit=(byte_1wire>>bit_counter)&0x01; //current bit->in last bit
+// 	 PDR5_P52=1;
+ 	 Write_0;			 //Reqwest of write bit
+	 //for (i=0; i<5; i++);   //Wait 11 mks (Tlow1)
+	 delay_us(11);
+//	 DR5_P52=0;
+
+//!!!!!!!!!!!!!!!!----------------------------
+//	 Write_0|bit_transmit;//write current bit
+	 PORTB=(PINB&0xFC)|(bit_transmit<<1)|bit_transmit;
+//----------------------------
+	 //for (i=0; i<50; i++);	 //Wait 100mks ()
+	 delay_us(100);
+//	 PDR5_P52=1;
+	 Write_1;			 //End write bit	
+ 	}//for (bit_counter)
+ //for (i=0; i<50; i++);   //Wait when device complede of byte write
+ delay_us(40);
+ Direction_Rd;
+}
+
+/*
+Function of read one byte of data from DS18B20 using 1-wire protocol
+RETURNS VALUE:
+	read byte
+*/
+void Read_Byte_Tmp(unsigned char *byte_receive1, unsigned char *byte_receive2)
+{unsigned char bit_counter,bit_receive1=0,bit_receive2=0;
+ *byte_receive1=0;
+ *byte_receive2=0;
+ Write_1;
+ Direction_Wr;
+ for (bit_counter=0; bit_counter<8; bit_counter++)
+ 	{
+ //	 PDR5_P52=0;
+ 	 Write_0;			 //Reqwest of read bit
+	 //for (i=0; i<2; i++);   //Wait 3 mks (for device accept reqwest)
+	 delay_us(3);
+//	 PDR5_P52=1;
+	 Direction_Rd; //allow device write data
+	 //for (i=0; i<4; i++);   //Wait 8 mks (when device set data bit)
+	 delay_us(8);
+//	 PDR5_P52=0;
+	 bit_receive1=Read_P1; //read 1 bit of data device1
+	 bit_receive2=Read_P2>>1; //read 1 bit of data device2
+	 *byte_receive1=*byte_receive1|(bit_receive1<<bit_counter); //save receive bit in byte_receive
+	 *byte_receive2=*byte_receive2|(bit_receive2<<bit_counter); //save receive bit in byte_receive
+	 //for (i=0; i<20; i++); //Wait (when device complited write of data)
+	 delay_us(35);
+//	 PDR5_P52=1;
+	 Write_1;			//End read bit	
+	 Direction_Wr;
+	 //for (i=0; i<20; i++);   //Wait (pause before next bit will read)
+	 delay_us(35);
+ 	}//for (bit_counter)
+// for (i=0; i<150; i++);
+ Direction_Rd;
+ //*t1=byte_receive1;
+ //*t2=byte_receive1;
+ return;
+}
+
+/*
+Function of read temperature from the DS18B20
+Parameters: pointer on unsiget char massiv with 8 elements (lenght of code)
+RETURNS VALUE:
+		fil of massiv
+	Status of read:
+		00 - data read without errors
+		01 - device is not DS18B20
+		02 - error of read (maybe second read is need)
+*/
+//unsigned char Read_ROM_Tmp(unsigned char *Temperature)
+//{unsigned char i, CRC=0;
+// if (Tmp_Presence_pulse()) return(0x02); //Give present pulse and take answer, if not answer error 2-not device
+// Write_Byte_Tmp(0x33);  //wrait command: "Read ROM"
+// for (i=0; i<8; i++)
+// 	{Temperature[i]=Read_Byte_Tmp(); //Read one byte of data
+// 	if (i!=7) CRC=CRC8_Tmp(Temperature[i], CRC);} //calculated CRC for this byte (exclude last byte (8) of receive CRC)
+// if (Temperature[0]!=0x28) return(0x03);	  //if first byte!=1 - it's DS18B20
+// if (Temperature[7]!=CRC) return(0x01);		  //if calculated CRC!=Read CRC (last byte (8)) - error of read
+// return(0x00);							  //if not error 
+//}
+
+
+
+
+
+unsigned char Thermometr_Start_Convert(void)
+{unsigned char error;
+ error=Tmp_Presence_pulse();//Give present pulse and take answer, if not answer error 1-not device
+ 
+ Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
+ Write_Byte_Tmp(0x44); //Send command: "begin convert"
+ return(error);
+}
+
+unsigned char Thermometr_Convert_Finish(void)
+{unsigned char bit_receive;
+ Direction_Wr;
+ Write_0;			 //Reqwest of read bit
+ //for (i=0; i<2; i++);   //Wait 3 mks (for device accept reqwest)
+ delay_us(3);
+ Direction_Rd; //allow device write data
+ //for (i=0; i<4; i++);   //Wait 8 mks (when device set data bit)
+ delay_us(8);
+ bit_receive=Read_P; //read status bit in all device
+  //for (i=0; i<20; i++); //Wait (when device complited write of data)
+ delay_us(35);
+ Write_1;			//End read bit	
+ Direction_Wr;
+ //for (i=0; i<20; i++);   //Wait
+ delay_us(35);
+ Direction_Rd;
+ return (bit_receive); //1 - convert finished, 0 - convert process
+}
+
+
+
+//unsigned char Read_Current_Temperature(unsigned int *Current_tmp)
+//{unsigned char i, CRC=0;
+//unsigned char Temperature[9];
+// Tmp_Presence_pulse(); //Give present pulse and take answer
+// Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
+// Write_Byte_Tmp(0xBE); //Send command: "Read RAM"
+// for (i=0; i<9; i++)	  //Read of 9 data byte
+// 	{Temperature[i]=Read_Byte_Tmp(); //Read one byte of data
+//	 if ((i!=8)) CRC=CRC8_Tmp(Temperature[i], CRC); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
+// 	 }
+// *Current_tmp=((unsigned int)Temperature[1]<<8)|Temperature[0];
+// if (Temperature[8]!=CRC) return(0x01);		  //if calculated CRC!=Read CRC (last byte (8)) - error of read
+// return(0x00);
+//}
+
+
+unsigned char Read_Current_Temperature(Temp_type *tmp1, Temp_type *tmp2)
+{unsigned char i, CRC1=0, CRC2=0, error=0;
+unsigned char Temperature1[9], Temperature2[9];
+ error=Tmp_Presence_pulse(); //Give present pulse and take answer
+ Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
+ Write_Byte_Tmp(0xBE); //Send command: "Read RAM"
+ for (i=0; i<9; i++)	  //Read of 9 data byte
+ 	{
+	Read_Byte_Tmp(&Temperature1[i], &Temperature2[i]); //Read one byte of data
+	if ((i!=8)) 
+		{
+		CRC1=CRC8_Tmp(Temperature1[i], CRC1); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
+		CRC2=CRC8_Tmp(Temperature2[i], CRC2); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
+		}
+ 	}
+	 
+ tmp1->fld.V=(Temperature1[1]<<4)|(Temperature1[0]>>4);
+ tmp1->fld.D=Temperature1[0]&0x0F;
+ 
+ tmp2->fld.V=(Temperature2[1]<<4)|(Temperature2[0]>>4);
+ tmp2->fld.D=Temperature2[0]&0x0F;
+
+ if (Temperature1[8]!=CRC1) error|=0x01;
+ if (Temperature2[8]!=CRC2) error|=0x02;
+ return(error);
+}
+
+/*
+Function of calculated CRC
+Parameters: byte of data for calculate, begining CRC
+RETURNS VALUE:
+		byte of current CRC
+*/
+unsigned char CRC8_Tmp(unsigned char data, unsigned char CRC)
+{
+ unsigned char n; unsigned char cnt=8;
+ do 
+	{
+	n=(data^CRC)&0x01;
+	CRC>>=1; data>>=1;
+	if(n) CRC^=0x8C;
+	}
+ while(--cnt);
+ return(CRC);
+}
