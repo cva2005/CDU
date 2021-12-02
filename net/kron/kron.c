@@ -1,197 +1,99 @@
 #pragma message	("@(#)dcon.c     1.00    09/09/22 OWEN")
 
 /*
- * Драйвер сетевого протокола DCON
+ * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° DCON
  */
 
 #include <sys/system.h>
-//#include <sys/config.h>
-//#include <net/dsc.h>
-//#include <meas/meas.h>
-//#include <sys/floatErr.h>
 #include "kron.h"
 #include "kron_imp.h"
 
 static void frame_parse(void);
-static unsigned char calc_crc(unsigned char *buf, unsigned char len);
-static bool str_to_int(char *uint, char *str);
-static void int_to_str(char uint, char *str);
-static unsigned char char_to_int(char inp_char);
-static char int_to_char(char uint);
-static void float_to_str(float flo, char *str, char i);
+static uint8_t calc_crc(uint8_t *buf, uint8_t len);
 
-static unsigned char KronBuff[KRON_BUFF_LEN]; /* буфер приема/передачи */
-BUS_STATE KronBusState; /* машина сотояния према кадра */
-static unsigned char KronIpBuff; /* указатель данных в буфере приема */
+static unsigned char KronBuff[KRON_BUFF_LEN]; /* Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё */
+BUS_STATE KronBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРёРµРјР° РєР°РґСЂР° */
+static unsigned char KronIpBuff; /* СѓРєР°Р·Р°С‚РµР»СЊ РґР°РЅРЅС‹С… РІ Р±СѓС„РµСЂРµ РїСЂРёРµРјР° */
+unsigned char KronIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё */
 
-/* драйвер DCON SLAVE устройства */
+/* РґСЂР°Р№РІРµСЂ KRON SLAVE СѓСЃС‚СЂРѕР№СЃС‚РІР° */
 void kron_drv(unsigned char ip, unsigned char len)
 {
     while (len--) {
         if (ip >= RX_BUFF_LEN) ip = 0;
         unsigned char tmp = RxBuff[ip++];
-        if (tmp == DC_IO_DATA) { /* обнаружен стартовый байт DCON */
-            KronIpBuff = 0; /* указатель на начало буфера */
-            KronBusState = BUS_START; /* первый байт кадра принят */
+        if (tmp == CHAR_START) { /* РѕР±РЅР°СЂСѓР¶РµРЅ СЃС‚Р°СЂС‚РѕРІС‹Р№ Р±Р°Р№С‚ KRON */
+            KronIpBuff = 0; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° */
+            KronBusState = BUS_START; /* РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° РїСЂРёРЅСЏС‚ */
         }
-        if (KronBusState == BUS_START) { /* первый байт кадра уже принят */
-            if (tmp == DC_STOP) { /* принят стоп байт DCON */
-                if (KronIpBuff >= KRON_RX_MIN) { /* длина кадра в норме */
-                    KronBusState = BUS_STOP; /* завершить прием */
-                    frame_parse();
-                    KronBusState = BUS_IDLE; /* шину в режим ожидания */
-                } else { /* длина кадра мала */
-                    KronBusState = BUS_IDLE; /* шину в режим ожидания */
-                }
-            } else if (KronIpBuff <= KRON_BUFF_LEN) { /* буфер не переполнен */
-                KronBuff[KronIpBuff++] = tmp; /* записать байт в буфер */
-            } else { /* переполнение буфера */
-                KronBusState = BUS_IDLE; /* шину в режим ожидания */
+        if (KronBusState == BUS_START) { /* РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° СѓР¶Рµ РїСЂРёРЅСЏС‚ */
+             if (KronIpBuff <= KRON_BUFF_LEN) { /* Р±СѓС„РµСЂ РЅРµ РїРµСЂРµРїРѕР»РЅРµРЅ */
+                KronBuff[KronIpBuff++] = tmp; /* Р·Р°РїРёСЃР°С‚СЊ Р±Р°Р№С‚ РІ Р±СѓС„РµСЂ */
+            } else { /* РїРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° */
+                KronBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+            }
+        } else if (KronBusState == BUS_STOP) {  /* Р·Р°РІРµСЂС€РµРЅ РїСЂРёРµРј РєР°РґСЂР° */
+            if (KronIpBuff >= KRON_RX_MIN) { /* РґР»РёРЅР° РєР°РґСЂР° РІ РЅРѕСЂРјРµ */
+                KronBusState = BUS_STOP; /* Р·Р°РІРµСЂС€РёС‚СЊ РїСЂРёРµРј */
+                frame_parse();
+                KronBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+            } else { /* РґР»РёРЅР° РєР°РґСЂР° РјР°Р»Р° */
+                KronBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
             }
         }
     }
 }
 
-/* разбор кадра DCON */
+/* СЂР°Р·Р±РѕСЂ РєР°РґСЂР° KRON */
 static void frame_parse(void)
 {
-    unsigned char i;
+#if 0
+  unsigned char i;
 
     if (str_to_int((char *)&i, (char *)(KronBuff + 1)) &&
-        (i == (/*Cfg.Addres &*/ 0xff))) { /* адрес совпал */
+        (i == (/*Cfg.Addres &*/ 0xff))) { /* Р°РґСЂРµСЃ СЃРѕРІРїР°Р» */
         if (str_to_int((char *)&i, (char *)(KronBuff + KronIpBuff - 2)) &&
-            (i == calc_crc(KronBuff, KronIpBuff - 2))) { /* CRC совпала */
-            if (KronIpBuff == ONE_CH) { /* поканальное считывание данных */
-                i = char_to_int(KronBuff[3]); /* сохранить номер канала */
+            (i == calc_crc(KronBuff, KronIpBuff - 2))) { /* CRC СЃРѕРІРїР°Р»Р° */
+            if (KronIpBuff == ONE_CH) { /* РїРѕРєР°РЅР°Р»СЊРЅРѕРµ СЃС‡РёС‚С‹РІР°РЅРёРµ РґР°РЅРЅС‹С… */
+                i = char_to_int(KronBuff[3]); /* СЃРѕС…СЂР°РЅРёС‚СЊ РЅРѕРјРµСЂ РєР°РЅР°Р»Р° */
                 if (i == ERR_CHAR) return;
-                if (i < INP_NUM) { /* номер канала валидный */
+                if (i < INP_NUM) { /* РЅРѕРјРµСЂ РєР°РЅР°Р»Р° РІР°Р»РёРґРЅС‹Р№ */
                     KronBuff[0] = DC_DATA_OK;
                     float_to_str(ch_data[i].value, (char *)&DconBuff[1], i);
-                    BuffLen = CH_DATA_LEN + 1; /* размер без CRC */
-                } else { /* запрос несуществующего входа */
+                    BuffLen = CH_DATA_LEN + 1; /* СЂР°Р·РјРµСЂ Р±РµР· CRC */
+                } else { /* Р·Р°РїСЂРѕСЃ РЅРµСЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ РІС…РѕРґР° */
                     KronBuff[0] = DC_COMM_ERR;
-                    BuffLen = 3; /* размер буфера без CRC */
+                    BuffLen = 3; /* СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° Р±РµР· CRC */
                 }
-            } else if (KronIpBuff == ALL_CH) { /* групповое считывание данных */
+            } else if (KronIpBuff == ALL_CH) { /* РіСЂСѓРїРїРѕРІРѕРµ СЃС‡РёС‚С‹РІР°РЅРёРµ РґР°РЅРЅС‹С… */
                 KronBuff[0] = DC_DATA_OK;
-                for (i = 0; i < INP_NUM; i++) { /* запись данных каналов */
+                for (i = 0; i < INP_NUM; i++) { /* Р·Р°РїРёСЃСЊ РґР°РЅРЅС‹С… РєР°РЅР°Р»РѕРІ */
                     float_to_str(ch_data[i].value,
                         (char *)&DconBuff[1 + i * CH_DATA_LEN], i);
                 }
-                BuffLen = (CH_DATA_LEN * INP_NUM) + 1; /* размер без CRC */
-            } else return; /* команда не поддерживается */
+                BuffLen = (CH_DATA_LEN * INP_NUM) + 1; /* СЂР°Р·РјРµСЂ Р±РµР· CRC */
+            } else return; /* РєРѕРјР°РЅРґР° РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ */
             i = calc_crc(KronBuff, BuffLen);
             int_to_str(i, (char *)(KronBuff + BuffLen));
-            BuffLen += 2; /* размер буфера с CRC */
-            KronBuff[BuffLen++] = DC_STOP; /* добавить стоп байт */
-            TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
-            start_tx(KronBuff[0], KronBuff); /* стартовать передачу кадра */
+            BuffLen += 2; /* СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° СЃ CRC */
+            KronBuff[BuffLen++] = DC_STOP; /* РґРѕР±Р°РІРёС‚СЊ СЃС‚РѕРї Р±Р°Р№С‚ */
+            TxIpBuff = 1; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° (РІС‚РѕСЂРѕР№ Р±Р°Р№С‚!) */
+            start_tx(KronBuff[0], KronBuff); /* СЃС‚Р°СЂС‚РѕРІР°С‚СЊ РїРµСЂРµРґР°С‡Сѓ РєР°РґСЂР° */
         }
     }
+#endif
 }
-
-/* Вычисление контрольной суммы кадра DCON */
-static unsigned char calc_crc(unsigned char *buf, unsigned char len)
+/* Р’С‹С‡РёСЃР»РµРЅРёРµ РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ РєР°РґСЂР° KRON */
+static uint8_t calc_crc(uint8_t *buf, uint8_t len)
 {
-    unsigned char crc = 0;
-
-    while (len--) crc += buf[len];
+    uint8_t crc = 0, i, b, n, d;
+    for (i = 0; i < len; i++) {
+        b = 8; d = buf[i];
+        do {
+            n = (d ^ crc) & 0x01;
+            crc >>= 1; d >>= 1;
+            if (n) crc ^= 0x8C;
+        } while(--b);
+    }
     return crc;
-}
-
-/*
- * Перевод числа из строки в формат unsigned char.
- * При обнаружении ошибки возвращается значение FALSE.
- */
-static bool str_to_int(char *uint, char *str)
-{
-    unsigned char dig;
-
-    dig = char_to_int(str[0]);
-    if (dig != ERR_CHAR) {
-        *uint = dig << 4;
-        dig = char_to_int(str[1]);
-        if (dig != ERR_CHAR) {
-            *uint |= dig;
-            return true;
-        }
-    }
-    return false;
-}
-
-/* Перевод числа из формат unsigned char в строку */
-static void int_to_str(char uint, char *str)
-{
-    str[0] = int_to_char(uint >> 4);
-    str[1] = int_to_char(uint);
-}
-
-/*
- * Перевод символа в формат unsigned char.
- * При обнаружении ошибки функция возвращает значение ERR_CHAR.
- */
-static unsigned char char_to_int(char inp_char)
-{
-    if ((inp_char >= '0') && (inp_char <= '9')) return (inp_char - 0x30);
-    else if ((inp_char >= 'A') && (inp_char <= 'F')) return (inp_char - 0x37);
-    else return ERR_CHAR; /* недопустимый символ */
-}
-
-/* Перевода шестнадцатиричного числа в символ */
-static char int_to_char(char uint)
-{
-    uint &= 0x0f;
-    if (uint <= 9) return (uint + 0x30);
-    return (uint + 0x37);
-}
-
-const float error_val[] = { /* значения при сообщении об ошибке */
-     -9999.9, /* 0 */
-     -9999.9, /* 1 */
-     -9999.9, /* 2 */
-     -9999.9, /* 3 */
-     -9999.9, /* 4 */
-     -9999.9, /* 5 */
-     -9999.9, /* 6 данные не готовы */
-     -9999.9, /* 7 отключен датчик */
-     +9999.9, /* 8 велика температура CJC */
-     -9999.9, /* 9  мала  температура CJC */
-     +9999.9, /* 10 значение велико */
-     -9999.9, /* 11 значение мало */
-     -9999.9, /* 12 короткое замыкание */
-     +9999.9, /* 13 обрыв датчика */
-     +9999.9, /* 14 нет связи */
-     -9999.9, /* 15 не тот калибровочный коэфициент */
-};
-/*
- * Перевод значения индекированного float числа в строку.
- * Длинна каждой записи числа равна 7 символам (включая знак и точку).
- * При передаче значений менее 10 вначале значения добавляется 0.
- * Десятичная точка может быть смешена не более чем на 2 знака!
- */
-static void float_to_str(float flo, char *str, char i)
-{
-    unsigned char ecode;
-    char dp;
-
-    ecode = *((unsigned char *)&(flo) + 3);
-    if (ecode > emErrValue) { /* значение содержит ошибку */
-        flo = error_val[ecode - emErrValue];
-        dp = 1;
-    } else {
-        dp = Cfg.Dp[i]; /* положение десятичной точки */
-    }
-    if (flo < 0) {
-        str[0] = '-'; /* записать в буфер знак "-" */
-        flo *= - 1;
-    } else str[0] = '+'; /* записать в буфер знак "+" */
-    for (i = 0; i < dp; i++) flo *= 10.0; /* число с учетом точности */
-    flo += 0.5; /* округление числа */
-    i = CHAR_NUM + 1; /* символов в строковом представлении числа */
-    do {
-        if (dp != CHAR_NUM + 1 - i) {
-            str[i] = (char)((unsigned long)flo % 10) + '0';
-            flo /= 10.0;
-        } else  str[i] = '.'; /* записать в буфер знак "." */
-    } while (--i);
 }

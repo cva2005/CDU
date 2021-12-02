@@ -1,3 +1,10 @@
+#ifndef ENABLE_BIT_DEFINITIONS
+#define  ENABLE_BIT_DEFINITIONS
+#endif /* ENABLE_BIT_DEFINITIONS */
+
+#include <ina90.h>
+#include <ioavr.h>
+
 #include <system.h>
 #include "pid/pid_r.h"
 #include "net/usart.h"
@@ -93,7 +100,6 @@ unsigned char MY_ADR;
 
 unsigned int Wr_ADR=METHOD_START_ADR;
 
-#if PID_CONTROL
 typedef enum {
   RESET_ST,
   CHARGE_ST,
@@ -129,7 +135,7 @@ unsigned int StbCnt;
 static void init_PIDs (void);
 static void Correct_UI (void);
 
-void main (void)
+int main( void )
 {
     Init_Port();
     //Init_USART();
@@ -168,9 +174,6 @@ void main (void)
 		{
 		if ((CSU_cfg.bit.LED_ON==0)||(connect_st!=0))
 			Correct_UI(); //Проверить необходимость корректировки тока или/и напряжения
-#if !PID_CONTROL
-		else ADC_cfg_wr.bit.DR=0;
-#endif
 		ADC_finish=0; //Устанвить флаг ожидания окончания следующей оцифровки
 		}
 //--------------------------------------------Сохранение данных калибровки		
@@ -202,21 +205,6 @@ void main (void)
 				}
 			}//*/
 		}
-//--------------------------------------------Обработка данных с UART		
-	if ((UCSRA&0x08)==0x08) //Если overrun error, то переинициализировать UART
-		{
-		rx_point=0;
-		tx_point=0;
-		time_wait=0xFF;	
-		Init_USART();
-		}
-
-	if (time_wait==0) {time_wait=5; rx_point=0; tx_point=0; RS485_Rx;} //Если в течении T пакет полностью не принят, то ожидать новый пакет
-	if (NEED_TX) //Если установлен флаг необходимости отправки ответа
-		{
-		if (tx_point==0) Tx_Data(NEED_TX); //если сейчас не идёт передача, то отправить ответ
-		}
-//--------------------------------------------
 	if (CSU_cfg.bit.LCD_ON==1)
 		{
 		if (connect_st==0) //если подключение прервалось, а значения дисплея не обновлены
@@ -331,6 +319,7 @@ void main (void)
 			}
 		}
 	}//while(1);
+    return 0;
 }
 
 /*
@@ -431,7 +420,7 @@ static void Correct_UI (void) {
     No_akb_cnt = NO_BATT_TIME;
   }
 }
-#else // !PID_CONTROL
+#if 0 // !PID_CONTROL
 void Correct_UI(void)
 {unsigned char U_under=0, U_over=0, I_under=0, I_over=0, Id_under=0, Id_over=0;
  unsigned int min_error=0xFFFF, err_U=0, err_I=0, limit_Id=0;

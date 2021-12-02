@@ -26,16 +26,6 @@ extern "C" {
 
 #define BRGL_REG UART(UBRR,L)
 
-/*
- * Макроподстановка для 8 битного таймера RTU.
- * При использовании битов регистров (E)TIFR, (E)TIMSK
- * необходимо явно указывать имя регистра в коде!
- */
-#define RTUTRM(P1) P1##2
-#define RTU_OCR_IRQ TIMER2_COMP_vect
-#define RTU_TIMSK ETIMSK
-#define RTU_TIFR ETIFR
-
 /* линия порта для переключения прием/передача */
 #define RS_DIR_PORT     D
 #define RS_DIR          2
@@ -45,55 +35,33 @@ extern "C" {
 #define	RS485_OUT()     SET_PIN(RS_DIR_PORT, RS_DIR) /* передачу */
 #define IS_RS485_IN()   IS_LAT_CLR(RS_DIR_PORT, RS_DIR) /* акт. прием */
 #define IS_RS485_OUT()  IS_LAT_SET(RS_DIR_PORT, RS_DIR) /* акт. передача */
-
-/* генерация имени регистра сравнения 16-ти битного таймера OCRuX */
-#define OCRnX(X)  RSTRM(OCR,X)
-
-/* генерация имени вектора прерывания 16-ти битного таймера OCRuX */
-#define RS_OCRnX_IRQ(X)    RS_OCR_IRQ(X)
-
-/* разрешить прерывание OCIEnX */
-#define SET_RS_OCIE(X) SET_BIT(RS_TIMSK, RSTRM(OCIE,X))
-#define SET_RTU_OCIE() SET_BIT(RTU_TIMSK, RTUTRM(OCIE,A))
-
-/* запретить прерывание OCIEnX */
-#define CLR_RS_OCIE(X) CLR_BIT(RS_TIMSK, RSTRM(OCIE,X))
-#define CLR_RTU_OCIE() CLR_BIT(RTU_TIMSK, RTUTRM(OCIE,A))
-
-/* сбросить флаг возможно возникшего прерывания OCFnX */
-#define SET_RS_OCF(X) CLR_BIT(RS_TIFR, RSTRM(OCIE,X))
-#define SET_RTU_OCF() CLR_BIT(RTU_TIFR, RTUTRM(OCIE,A))
-
-/* остановить таймер тайм-аута приема кадра RTU */
-#define	RTU_TMR_OFF()\
-{\
-    CLR_RTU_OCIE(); /* запретить прерывание RTU */\
-    RTUTRM(TCCR,B) = 0; /* остановить таймер RTU */\
-    RtuIdleCount = 0; /* очистить счетчик интервалов MODBUS RTU */\
-}
-
-/* остановить таймер тайм-аута приема кадра ASCII */
-#define	ASCII_TMR_OFF()\
-{\
-    AsciiIdleCount = 0; /* очистить счетчик интервалов ASCII */\
-    RSTRM(TCCR,B) = 0; /* остановить таймер ASCII */\
-    CLR_RS_OCIE(ASCII); /* запретить прерывание ASCII */\
-}
-
-/* активизация режима передачи кадра */
-#define	FRAME_TX_ON()\
-{\
-    SET_RS_OCIE(TXDEL); /* разрешить прер. от таймера задержки предачи */\
-}
-
 /* состояние передачи кадра */
-#define	TX_ACTIVE() IS_RS485_OUT()
+#define	TX_ACTIVE()     IS_RS485_OUT()
+
+/* Макроподстановка для 8 битного таймера RX */
+#define RX_TRM(P1,P2) P1##2##P2
+#define RX_OCR_IRQ TIMER2_COMP_vect
+
+/* разрешить прерывание OCIE */
+#define SET_RX_OCIE() SET_BIT(TIMSK, RX_TRM(OCIE,))
+
+/* запретить прерывание OCIE */
+#define CLR_RX_OCIE() CLR_BIT(TIMSK, RX_TRM(OCIE,))
+
+/* сбросить флаг возможно возникшего прерывания OCF */
+#define SET_RX_OCF() CLR_BIT(TIFR, RX_TRM(OCI,))
+
+/* остановить таймер тайм-аута приема кадра */
+#define	RX_TMR_OFF()\
+{\
+    CLR_RX_OCIE(); /* запретить прерывание RX */\
+    RX_TRM(TCCR,) = 0; /* остановить таймер RX */\
+}
 
 /* полная инициализация приема кадра */
 #define START_RX()\
 {\
-    ASCII_TMR_OFF(); /* остановить таймер ASCII */\
-    RTU_TMR_OFF(); /* остановить таймер RTU */\
+    RX_TMR_OFF(); /* остановить таймер приема кадра */\
     RS485_IN(); /* линию управления RS485 на прием */\
     RxIpOld = RxIpNew; /* указатель хвоста буфера приема */\
     UART(UDR,) = UART(UDR,); /* сбросить флаг возможного прерывания URxC */\
@@ -130,75 +98,31 @@ extern "C" {
 }
 #endif
 
-/*
- * Значения таймера тайм-аута режима MODBUS ASCII/KRON:
- * MODBUS ASCII/KRON - время следования символов в кадре < 1 сек,
- * OWEN - время следования символов в кадре < 50 мс.
- * Наименьшее кратное - 50 мс.
- */
-#define TO_ASCII_MS     50
-#define TO_ASCII_PRD    TO_ASCII_MS / MILLISEC
-#define TO_ASCII_PS     8 /* предделитель таймера */
-#define TO_ASCII_VAL    (((F_CPU_HZ / TO_ASCII_PS) * TO_ASCII_PRD) - 1)
-#define FRAME_ASCII_ERROR   (MILLISEC / TO_ASCII_MS)
-
-/*
- * Макроподстановка для 16-ти битного таймера тайм-аута MODBUS ASCII/OWEN/DCON
- */
-#if (TO_ASCII_PS == 1)
-#define TO_CS_VAL 1
-#elif (TO_ASCII_PS == 8)
-#define TO_CS_VAL 2
-#elif (TO_ASCII_PS == 64)
-#define TO_CS_VAL 3
-#elif (TO_ASCII_PS == 256)
-#define TO_CS_VAL 4
-#elif (TO_ASCII_PS == 1024)
-#define TO_CS_VAL 5
-#else
-#error "ASCII timer prescaler value not correct!!"
-#endif
-
-/* Режимы 16-ти битного таймера тайм-аута RS485. */
-/* MODBUS RTU режим, (CTC Mode, No prescaling) */
-#define RTU_TO_MODE     (SHL(RTUTRM(CS,0)) | SHL(RTUTRM(WGM,2)))
-/* ASCII режим,(CTC Mode, + prescaler) */
-#define ASCII_TO_MODE   (SHL(RSTRM(WGM,2)) | (TO_CS_VAL << RSTRM(CS,0)))
+/* Режимы 8-ти битного таймера тайм-аута RS485. */
+/* CTC Mode, No prescaling */
+#define RX_TO_MODE     SHL(RX_TRM(CS,1))
     
-/* запустить таймер тайм-аута приема кадра RTU */
-#define	RTU_TMR_ON()\
+/* запустить таймер тайм-аута приема кадра */
+#define	RX_TMR_ON()\
 {\
     if (RtuIdleCount >= FRAME_RTU_ERROR) RtuBusState = BUS_IDLE;\
     RtuIdleCount = 0; /* очистить счетчик интервалов MODBUS RTU */\
-    RTUTRM(TCNT,) = 0; /* очистить счетный регистр таймера RTU */\
-    RTUTRM(TCCR,B) = RTU_TO_MODE; /* установить режим RTU */\
-    SET_RTU_OCIE(); /* разрешить прерывание RTU */\
-}
-
-/* запустить таймеры тайм-аута приема кадра ASCII */
-#define	ASCII_TMR_ON()\
-{\
     AsciiIdleCount = 0; /* очистить счетчик интервалов ASCII */\
-    RSTRM(TCNT,) = 0; /* очистить счетный регистр таймера ASCII */\
-    SET_BIT(SFIOR, PSR321); /* сбросить предделитель таймера ASCII */\
-    RSTRM(TCCR,B) = ASCII_TO_MODE; /* установить режим ASCII */\
-    SET_RS_OCIE(ASCII); /* разрешить прерывание ASCII */\
+    RX_TRM(TCNT,) = 0; /* очистить счетный регистр таймера */\
+    RX_TRM(TCCR,) = RX_TO_MODE; /* установить режим */\
+    SET_RX_OCIE(); /* разрешить прерывание таймера приема */\
 }
 
-/* регистр сравнения 16-ти битного таймера OCRnX для режима MODBUS RTU */
-#if TIMER_3_USE
-#define RTU_TREG    RTUTRM(OCR,A)
-#else
-#define RTU_TREG    RTUTRM(OCR)
-#endif
+/* значение регистра сравнения 8-и битного таймера приема */
+#define  T_VAL_RTU  0xFF
+/*
+ * Значения таймера тайм-аута режима MODBUS ASCII/KRON:
+ * MODBUS ASCII/KRON - время следования символов в кадре < 1 сек,
+ */
+#define FRAME_ASCII_ERROR   0xFF
 
-/* регистр сравнения 16-ти битного таймера OCRnX для режима ASCII */
-#define ASCII_TREG  OCRnX(ASCII)
-
-/* значение регистра сравнения 8-и битного таймера OCRnX для режима RTU */
-#define  T_05_RTU  0xFF
-
-#define SET_BAUD(baud) {BRG_SET(baud); RTU_TREG = T_05_RTU;}
+/* Установка скорости UART и регистра сравнения таймера тайм-аута */
+#define SET_BAUD(baud) {BRG_SET(baud); RX_TRM(OCR,) = T_VAL_RTU;}
 
 /* Тип функций сетевого драйвера верхнего уровня */
 typedef void NET_FUNC(unsigned char ip, unsigned char len);

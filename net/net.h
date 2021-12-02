@@ -16,9 +16,9 @@ extern "C" {
 /* тип машины сотояния према кадра */
 typedef enum {
     BUS_IDLE  = 0,
-    BUS_START = 1,
-    BUS_FULL  = 2,
-    BUS_STOP  = 3
+    BUS_STOP  = 1,
+    BUS_START = 2,
+    BUS_FULL  = 3
 } BUS_STATE;
 
 /* Settable Baud Rate */

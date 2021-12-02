@@ -1,6 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <userOverrides>
     <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron.c</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron.h</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron_imp.h</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\modbus\mbus.c</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\modbus\mbus.h</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\net.c</path>
+        <encoding>UTF-8</encoding>
+    </override>
+    <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\net_imp.h</path>
         <encoding>UTF-8</encoding>
     </override>

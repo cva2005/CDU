@@ -253,6 +253,7 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
+                    <state>SYS_TMR_DBGU</state>
                     <state>SYS_UART</state>
                     <state>SYS_TRM0</state>
                     <state>JTAG_DBGU</state>
@@ -688,7 +689,7 @@
                 </option>
                 <option>
                     <name>AsmOutputFile</name>
-                    <state></state>
+                    <state>$FILE_BNAME$.r90</state>
                 </option>
                 <option>
                     <name>AStdIncCheck</name>
@@ -2195,6 +2196,7 @@
             <name>$PROJ_DIR$\net\usart.c</name>
             <excluded>
                 <configuration>Debug</configuration>
+                <configuration>Release</configuration>
             </excluded>
         </file>
         <file>
