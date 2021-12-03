@@ -1,7 +1,7 @@
 #pragma message	("@(#)mbus.c     1.00    09/09/22 OWEN")
 
 /*
- * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° MODBUS
+ * Драйвер сетевого протокола MODBUS
  */
 
 #include <sys/system.h>
@@ -18,170 +18,170 @@ static unsigned char ascii_lcr(unsigned char *buf, unsigned char len);
 static bool read_reg(unsigned char *buf, unsigned short first,
     unsigned short len);
 
-static unsigned char RtuBuff[RTU_BUFF_LEN]; /* Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё RTU */
-static unsigned char AsciiBuff[ASCII_BUFF_LEN]; /* Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё ASCII */
-BUS_STATE RtuBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° RTU */
-BUS_STATE AsciiBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° ASCII */
-static unsigned char RtuIpBuff; /* СѓРєР°Р·Р°С‚РµР»СЊ РґР°РЅРЅС‹С… РІ Р±СѓС„РµСЂРµ РїСЂРёРµРјР° */
-static unsigned char AsciiIpBuff; /* СѓРєР°Р·Р°С‚РµР»СЊ РґР°РЅРЅС‹С… РІ Р±СѓС„РµСЂРµ РїСЂРёРµРјР° */
-unsigned char RtuIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё RTU */
-unsigned char AsciiIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё ASCII */
+static unsigned char RtuBuff[RTU_BUFF_LEN]; /* буфер приема/передачи RTU */
+static unsigned char AsciiBuff[ASCII_BUFF_LEN]; /* буфер приема/передачи ASCII */
+BUS_STATE RtuBusState; /* машина сотояния према кадра RTU */
+BUS_STATE AsciiBusState; /* машина сотояния према кадра ASCII */
+static unsigned char RtuIpBuff; /* указатель данных в буфере приема */
+static unsigned char AsciiIpBuff; /* указатель данных в буфере приема */
+unsigned char RtuIdleCount; /* счетчик интервалов времени RTU */
+unsigned char AsciiIdleCount; /* счетчик интервалов времени ASCII */
 
-/* Р”СЂР°Р№РІРµСЂ MODBUS ASCII */
+/* Драйвер MODBUS ASCII */
 void ascii_drv(unsigned char ip, unsigned char len)
 {
     while (len--) {
         if (ip >= RX_BUFF_LEN) ip = 0;
         unsigned char tmp = RxBuff[ip++];
-        if (tmp == MB_START) { /* РїСЂРёРЅСЏС‚ РјР°СЂРєРµСЂ "СЃС‚Р°СЂС‚" */
-            AsciiIpBuff = 0; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° */
-            AsciiBusState = BUS_START; /* РјР°СЂРєРµСЂ "СЃС‚Р°СЂС‚" РїСЂРёРЅСЏС‚ */
-        } else if (AsciiBusState != BUS_IDLE) { /* С€РёРЅР° РЅРµ РІ СЂРµР¶РёРјРµ РѕР¶РёРґР°РЅРёСЏ */
-            if (AsciiBusState == BUS_START) { /* РјР°СЂРєРµСЂ "СЃС‚Р°СЂС‚" СѓР¶Рµ РїСЂРёРЅСЏС‚ */
-                if (tmp == MB_STOP_1) { /* РїСЂРёРЅСЏС‚ РїРµСЂРІС‹Р№ СЃС‚РѕРї Р±Р°Р№С‚ */
+        if (tmp == MB_START) { /* принят маркер "старт" */
+            AsciiIpBuff = 0; /* указатель на начало буфера */
+            AsciiBusState = BUS_START; /* маркер "старт" принят */
+        } else if (AsciiBusState != BUS_IDLE) { /* шина не в режиме ожидания */
+            if (AsciiBusState == BUS_START) { /* маркер "старт" уже принят */
+                if (tmp == MB_STOP_1) { /* принят первый стоп байт */
                     AsciiBusState = BUS_FULL;
-                } else if (AsciiIpBuff <= ASCII_BUFF_LEN) { /* Р·Р°РїРёСЃСЊ РІ Р±СѓС„РµСЂ */
+                } else if (AsciiIpBuff <= ASCII_BUFF_LEN) { /* запись в буфер */
                     if ((tmp >= 0x30) && (tmp <= 0x39)) {
                         AsciiBuff[AsciiIpBuff++] = tmp - 0x30;
                     } else if ((tmp >= 0x41) && (tmp <= 0x46)) {
                         AsciiBuff[AsciiIpBuff++] = tmp - 0x37;
-                    } else { /* РїСЂРёРЅСЏС‚ РЅРµРґРѕРїСѓСЃС‚РёРјС‹Р№ СЃРёРјРІРѕР» */
-                        AsciiBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+                    } else { /* принят недопустимый символ */
+                        AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
                     }
-                } else { /* РїРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° */
-                    AsciiBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+                } else { /* переполнение буфера */
+                    AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
                 }
-            } else if (tmp == MB_STOP_2) { /* РїСЂРёРЅСЏС‚ РІС‚РѕСЂРѕР№ СЃС‚РѕРї */
-                if ((AsciiBusState == BUS_FULL) && /* РїРµСЂРІС‹Р№ СЃС‚РѕРї СѓР¶Рµ РїСЂРёРЅСЏС‚ */
-                    (AsciiIpBuff >= MB_ASCII_RX_MIN) && /* СЂР°Р·РјРµСЂ РІ РЅРѕСЂРјРµ */
-                    (!(AsciiIpBuff % 2))) { /* С‡РµС‚РЅРѕСЃС‚СЊ РєР°РґСЂР° РІ РЅРѕСЂРјРµ */
-                    AsciiBusState = BUS_STOP; /* Р·Р°РІРµСЂС€РёС‚СЊ РїСЂРёРµРј РєР°РґСЂР° */
-                    frame_parse(MODE_ASCII); /* РЅР° СЂР°Р·Р±РѕСЂ РєР°РґСЂР° */
-                    AsciiBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+            } else if (tmp == MB_STOP_2) { /* принят второй стоп */
+                if ((AsciiBusState == BUS_FULL) && /* первый стоп уже принят */
+                    (AsciiIpBuff >= MB_ASCII_RX_MIN) && /* размер в норме */
+                    (!(AsciiIpBuff % 2))) { /* четность кадра в норме */
+                    AsciiBusState = BUS_STOP; /* завершить прием кадра */
+                    frame_parse(MODE_ASCII); /* на разбор кадра */
+                    AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
                 } else {
-                    AsciiBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+                    AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
                 }
-            } else if (AsciiBusState == BUS_FULL) { /* РїРµСЂРІС‹Р№ СЃС‚РѕРї РїСЂРёРЅСЏС‚ */
-                /* РЅРµ РїСЂРёС€РµР» РІС‚РѕСЂРѕР№ СЃС‚РѕРї РїРѕСЃР»Рµ РїРµСЂРІРѕРіРѕ! */
-                AsciiBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+            } else if (AsciiBusState == BUS_FULL) { /* первый стоп принят */
+                /* не пришел второй стоп после первого! */
+                AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
             }
         }
     }
 }
 
-/* Р”СЂР°Р№РІРµСЂ MODBUS RTU */
+/* Драйвер MODBUS RTU */
 void rtu_drv(unsigned char ip, unsigned char len)
 {
-    if (RtuBusState != BUS_STOP) { /* Р°РєС‚РёРІРµРЅ РїСЂРёРµРј РєР°РґСЂР° */
+    if (RtuBusState != BUS_STOP) { /* активен прием кадра */
         if (RtuBusState == BUS_IDLE) {
-            /* РїСЂРёРЅСЏС‚ РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° MODBUS RTU */
-            RtuIpBuff = 0; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° */
-            RtuBusState = BUS_START; /* РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° РїСЂРёРЅСЏС‚ */
+            /* принят первый байт кадра MODBUS RTU */
+            RtuIpBuff = 0; /* указатель на начало буфера */
+            RtuBusState = BUS_START; /* первый байт кадра принят */
         }
         while (len--) {
             if (ip >= RX_BUFF_LEN) ip = 0;
-            if (RtuIpBuff <= RTU_BUFF_LEN) { /* Р·Р°РїРёСЃСЊ РІ Р±СѓС„РµСЂ */
-                RtuBuff[RtuIpBuff++] = RxBuff[ip++]; /* Р·Р°РїРёСЃР°С‚СЊ Р±Р°Р№С‚ */
-            } else { /* РїРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° */
-                RtuBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+            if (RtuIpBuff <= RTU_BUFF_LEN) { /* запись в буфер */
+                RtuBuff[RtuIpBuff++] = RxBuff[ip++]; /* записать байт */
+            } else { /* переполнение буфера */
+                RtuBusState = BUS_IDLE; /* шину в режим ожидания */
                 break;
             }
         }
     } else { /* RtuBusState == BUS_STOP */
-        if (RtuIpBuff >= MB_RTU_RX_MIN) { /* РґР»РёРЅР° РєР°РґСЂР° РІ РЅРѕСЂРјРµ */
+        if (RtuIpBuff >= MB_RTU_RX_MIN) { /* длина кадра в норме */
             frame_parse(MODE_RTU);
         }
-        RtuBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
+        RtuBusState = BUS_IDLE; /* шину в режим ожидания */
     }
 }
 
-/* Р”СЂР°Р№РІРµСЂ MODBUS */
+/* Драйвер MODBUS */
 static void frame_parse(BUS_MODE mode)
 {
-    unsigned char i, j; /* СЃС‡РµС‚С‡РёРєРё */
-    MODBUS_ERROR mb_error = NO_MB_ERROR; /* СЂРµРіРёСЃС‚СЂ РѕС€РёР±РѕРє MODBUS */
-    unsigned char *rs_buff; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё */
-    unsigned short raddr; /* РЅР°С‡Р°Р»СЊРЅС‹Р№ Р°РґСЂРµСЃ СЂРµРіРёСЃС‚СЂР° MODBUS */
-    unsigned short rnum; /* РєРѕР»РёС‡РµСЃС‚РІРѕ СЂРµРіРёСЃС‚СЂРѕРІ MODBUS */
+    unsigned char i, j; /* счетчики */
+    MODBUS_ERROR mb_error = NO_MB_ERROR; /* регистр ошибок MODBUS */
+    unsigned char *rs_buff; /* указатель на буфер приема/передачи */
+    unsigned short raddr; /* начальный адрес регистра MODBUS */
+    unsigned short rnum; /* количество регистров MODBUS */
 
     if (mode == MODE_ASCII) {
-        i = 0; /* СЃС‡РµС‚С‡РёРє РґР»РёРЅРЅРѕРіРѕ Р±СѓС„РµСЂР° */
-        j = 0; /* СЃС‡РµС‚С‡РёРє РєРѕСЂРѕС‚РєРѕРіРѕ Р±СѓС„РµСЂР° */
-        for (; i < AsciiIpBuff; j++) { /* СЃРєР»РµРёРІР°РЅРёРµ С‚РµС‚СЂР°Рґ РІ Р±СѓС„РµСЂРµ */
-            AsciiBuff[j] = AsciiBuff[i++] << 4; /* Р·Р°РїРёСЃСЊ СЃС‚Р°СЂС€РµР№ С‚РµС‚СЂР°РґС‹ */
-            AsciiBuff[j] |= AsciiBuff[i++]; /* Р·Р°РїРёСЃСЊ РјР»Р°РґС€РµР№ С‚РµС‚СЂР°РґС‹ */
+        i = 0; /* счетчик длинного буфера */
+        j = 0; /* счетчик короткого буфера */
+        for (; i < AsciiIpBuff; j++) { /* склеивание тетрад в буфере */
+            AsciiBuff[j] = AsciiBuff[i++] << 4; /* запись старшей тетрады */
+            AsciiBuff[j] |= AsciiBuff[i++]; /* запись младшей тетрады */
         }
-        AsciiIpBuff /= 2; /* СЂР°Р·РјРµСЂ РґРµРєРѕРґРёСЂРѕРІР°РЅРЅРѕРіРѕ РєР°РґСЂР° */
+        AsciiIpBuff /= 2; /* размер декодированного кадра */
         rs_buff = AsciiBuff;
     } else { /* mode == MODE_RTU */
         rs_buff = RtuBuff;
     }
-    if (rs_buff[0] != MB_COMMON) { /* РЅРµ С€РёСЂРѕРєРѕРІРµС‰Р°С‚РµР»СЊРЅС‹Р№ Р°РґСЂРµСЃ */
-        if (rs_buff[0] != (/*Cfg.Addres &*/ 0xff)) {
-            return; /* Р°РґСЂРµСЃ РЅРµ СЃРѕРІРїР°Р» */
+    if (rs_buff[0] != MB_COMMON) { /* не широковещательный адрес */
+        if (rs_buff[0] != (MY_ADR)) {
+            return; /* адрес не совпал */
         }
-    } else { /* С€РёСЂРѕРєРѕРІРµС‰Р°С‚РµР»СЊРЅС‹Р№ Р°РґСЂРµСЃ */
-        return; /* РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РїСЂРё С‡С‚РµРЅРёРё! */
+    } else { /* широковещательный адрес */
+        return; /* не поддерживается при чтении! */
     }
     if (mode == MODE_ASCII) {
         if (rs_buff[AsciiIpBuff - 1] !=
             ascii_lcr(&rs_buff[0], AsciiIpBuff - 1))
-            return; /* РѕС€РёР±РєР° LCR */
+            return; /* ошибка LCR */
     } else { /* mode == MODE_RTU */
         if (*((unsigned short *)&rs_buff[RtuIpBuff - 2]) !=
             rtu_crc(&rs_buff[0], RtuIpBuff - 2))
-            return; /* РѕС€РёР±РєР° CRC */
+            return; /* ошибка CRC */
     }
     if ((rs_buff[1] == RD_HOLD_REG) || (rs_buff[1] == RD_INP_REG)) {
         raddr = ((unsigned short)rs_buff[2] << 8);
-        raddr += rs_buff[3]; /* РЅР°С‡Р°Р»СЊРЅС‹Р№ Р°РґСЂРµСЃ СЂРµРіРёСЃС‚СЂР° MODBUS */
+        raddr += rs_buff[3]; /* начальный адрес регистра MODBUS */
         rnum = ((unsigned short)rs_buff[4] << 8);
-        rnum += rs_buff[5]; /* РєРѕР»РёС‡РµСЃС‚РІРѕ СЂРµРіРёСЃС‚СЂРѕРІ РґР»СЏ С‡С‚РµРЅРёСЏ */
+        rnum += rs_buff[5]; /* количество регистров для чтения */
         if (read_reg(&rs_buff[3], raddr, rnum) != false) {
-            BuffLen = rs_buff[2] = (unsigned char)rnum * 2; /* СЃС‡РµС‚С‡РёРє Р±Р°Р№С‚ */
-            BuffLen += 3; /* СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° Р±РµР· РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ */
-        } else { /* РѕР±РЅР°СЂСѓР¶РµРЅР° РѕС€РёР±РєР° */
+            BuffLen = rs_buff[2] = (unsigned char)rnum * 2; /* счетчик байт */
+            BuffLen += 3; /* размер буфера без контрольной суммы */
+        } else { /* обнаружена ошибка */
             mb_error = ILLEGAL_DATA_ADDRESS;
         }
-    } else { /* Р·Р°РїСЂРѕС€РµРЅРЅР°СЏ С„СѓРЅРєС†РёСЏ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ */
+    } else { /* запрошенная функция не поддерживается */
         mb_error = ILLEGAL_FUNCTION;
     }
-    if (mb_error != NO_MB_ERROR) { /* РіРµРЅРµСЂР°С†РёСЏ СЃРѕРѕР±С‰РµРЅРёСЏ РѕР± РѕС€РёР±РєРµ */
-        rs_buff[1] |= ERROR_MASK; /* РїСЂРёР·РЅР°Рє РѕС€РёР±РєРё РІ РїРѕР»Рµ РєРѕРґР° С„СѓРЅРєС†РёРё */
-        rs_buff[2] = mb_error; /* РєРѕРґ РѕС€РёР±РєРё */
-        BuffLen = 3; /* СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° Р±РµР· РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ */
+    if (mb_error != NO_MB_ERROR) { /* генерация сообщения об ошибке */
+        rs_buff[1] |= ERROR_MASK; /* признак ошибки в поле кода функции */
+        rs_buff[2] = mb_error; /* код ошибки */
+        BuffLen = 3; /* размер буфера без контрольной суммы */
     }
     if (mode == MODE_ASCII) {
         *((char *)&rs_buff[BuffLen]) = ascii_lcr(&rs_buff[0], BuffLen);
-        BuffLen++; /* СЂР°Р·РјРµСЂ РЅРµРєРѕРґРёСЂРѕРІР°РЅРЅРѕРіРѕ Р±СѓС„РµСЂР° СЃ LCR */
+        BuffLen++; /* размер некодированного буфера с LCR */
         j = BuffLen;
-        BuffLen *= 2; /* СЂР°Р·РјРµСЂ РєРѕРґРёСЂРѕРІР°РЅРЅРѕРіРѕ Р±СѓС„РµСЂР° СЃ LCR */
-        i = BuffLen - 1; /* СѓРєР°Р·Р°С‚РµР»СЊ С…РІРѕСЃС‚Р° РґР»РёРЅРЅРѕРіРѕ Р±СѓС„РµСЂР° */
-        do { /* С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ С‚РµС‚СЂР°Рґ РІ Р±СѓС„РµСЂРµ */
+        BuffLen *= 2; /* размер кодированного буфера с LCR */
+        i = BuffLen - 1; /* указатель хвоста длинного буфера */
+        do { /* формирование тетрад в буфере */
             rs_buff[i--] = (rs_buff[--j] & 0x0f);
             rs_buff[i--] = (rs_buff[j] >> 4);
         } while (j);
-        for (i = 0; i < BuffLen; i++) { /* РєРѕРґРёСЂРѕРІР°РЅРёРµ СЃРёРјРІРѕР»РѕРІ */
+        for (i = 0; i < BuffLen; i++) { /* кодирование символов */
             j = rs_buff[i];
             if (j < 0x0a) j += 0x30;
             else j += 0x37;
             rs_buff[i] = j;
         }
-        rs_buff[BuffLen++] = MB_STOP_1; /* РјР°СЂРєРµСЂ СЃС‚РѕРї 1 */
-        rs_buff[BuffLen++] = MB_STOP_2; /* РјР°СЂРєРµСЂ СЃС‚РѕРї 2 */
-        i = MB_START; /* СЃРѕС…СЂР°РЅРёС‚СЊ РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° */
-        TxIpBuff = 0; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° */
+        rs_buff[BuffLen++] = MB_STOP_1; /* маркер стоп 1 */
+        rs_buff[BuffLen++] = MB_STOP_2; /* маркер стоп 2 */
+        i = MB_START; /* сохранить первый байт кадра */
+        TxIpBuff = 0; /* указатель на начало буфера */
     } else { /* mode == MODE_RTU */
         *((short *)&rs_buff[BuffLen]) = rtu_crc(rs_buff, BuffLen);
-        BuffLen += 2; /* РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїСЂРё РїРµСЂРµРґР°С‡Рµ РєР°РґСЂР° */
-        i = rs_buff[0]; /* СЃРѕС…СЂР°РЅРёС‚СЊ РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° */
-        TxIpBuff = 1; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° (РІС‚РѕСЂРѕР№ Р±Р°Р№С‚!) */
+        BuffLen += 2; /* полный размер буфера при передаче кадра */
+        i = rs_buff[0]; /* сохранить первый байт кадра */
+        TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
     }
-    start_tx(i, rs_buff); /* СЃС‚Р°СЂС‚РѕРІР°С‚СЊ РїРµСЂРµРґР°С‡Сѓ РєР°РґСЂР° */
+    start_tx(i, rs_buff); /* стартовать передачу кадра */
     return;
 }
 
-/* Р·Р°РїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° СЃРѕРґРµСЂР¶РёРјС‹Рј СЂРµРіРёСЃС‚СЂРѕРІ */
+/* заполнение буфера содержимым регистров */
 static bool read_reg(unsigned char *buf, unsigned short first,
                      unsigned short len)
 {
@@ -191,8 +191,8 @@ static bool read_reg(unsigned char *buf, unsigned short first,
         signed short int_val;
         float flo_val;
         unsigned char i;
-        unsigned char idx = first / REG_IDX_NUM; /* РёРЅРґРµРєСЃ РіСЂСѓРїРїС‹ */
-        switch ((char)(first % REG_IDX_NUM)) { /* РЅРѕРјРµСЂ РїР°СЂР°РјРµС‚СЂР° РІ РіСЂСѓРїРїРµ */
+        unsigned char idx = first / REG_IDX_NUM; /* индекс группы */
+        switch ((char)(first % REG_IDX_NUM)) { /* номер параметра в группе */
         case DPOINT_POS:
             *buf++ = 0;
             *buf++ = /*Cfg.Dp[idx]*/0;
@@ -205,9 +205,9 @@ static bool read_reg(unsigned char *buf, unsigned short first,
             break;
         case MEAS_STAT:
             i = *((unsigned char *)/*&ch_data[idx].value +*/ 3);
-            if (i <= /*emErrValue*/1) { /* Р·РЅР°С‡РµРЅРёРµ РЅРµ СЃРѕРґРµСЂР¶РёС‚ РѕС€РёР±РєСѓ */
+            if (i <= /*emErrValue*/1) { /* значение не содержит ошибку */
                 int_val = 0x0000;
-            } else { /* РѕС€РёР±РєР° РёР·РјРµСЂРµРЅРёСЏ*/
+            } else { /* ошибка измерения*/
                 int_val = 0xf000 + (i & 0x0f);
             }
             break;
@@ -226,7 +226,7 @@ static bool read_reg(unsigned char *buf, unsigned short first,
     return true;
 }
 
-/* РІС‹С‡РёСЃР»РµРЅРёРµ РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ РєР°РґСЂР° MODBUS RTU CRC */
+/* вычисление контрольной суммы кадра MODBUS RTU CRC */
 static unsigned short rtu_crc(unsigned char *buf, unsigned char len)
 {
     unsigned char bit_cnt;
@@ -246,7 +246,7 @@ static unsigned short rtu_crc(unsigned char *buf, unsigned char len)
     return crc;
 }
 
-/* Р’С‹С‡РёСЃР»РµРЅРёРµ РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ РєР°РґСЂР° MODBUS ASCII LCR */
+/* Вычисление контрольной суммы кадра MODBUS ASCII LCR */
 static unsigned char ascii_lcr(unsigned char *buf, unsigned char len)
 {
     unsigned char lrc = 0;

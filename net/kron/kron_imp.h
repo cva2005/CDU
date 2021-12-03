@@ -4,16 +4,16 @@
 #pragma message	("@(#)kron_imp.h     1.00    09/09/22 OWEN")
 
 /*
- * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° KRON
+ * Драйвер сетевого протокола KRON
  */
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#define KRON_RX_MIN         4 /* РјРёРЅРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РєР°РґСЂР° */
-#define KRON_RX_MAX         250 /* РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РєР°РґСЂР° */
-#define CHAR_START          0x5A /* СЃРёРјРІРѕР» РЅР°С‡Р°Р»Р° РєР°РґСЂР° */
+#define KRON_RX_MIN         4 /* минимальная длина кадра */
+#define KRON_RX_MAX         250 /* максимальная длина кадра */
+#define CHAR_START          0x5A /* символ начала кадра */
 #define KRON_BUFF_LEN       KRON_RX_MAX
 
 #ifdef __cplusplus

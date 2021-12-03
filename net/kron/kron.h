@@ -4,16 +4,16 @@
 #define KRON_H
 
 /*
- * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° DCON
+ * Драйвер сетевого протокола DCON
  */
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 void kron_drv(unsigned char ip, unsigned char len);
-extern BUS_STATE KronBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° */
-extern unsigned char KronIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё */
-#define FRAME_KRON_ERROR 10 /* "СЂРµР¶РёРј РјРѕР»С‡Р°РЅРёСЏ" Р°РєС‚РёРІРµРЅ > 1.5 РёРЅС‚РµСЂРІР°Р»Р° */
+extern BUS_STATE KronBusState; /* машина сотояния према кадра */
+extern unsigned char KronIdleCount; /* счетчик интервалов времени */
+#define FRAME_KRON_ERROR 10 /* "режим молчания" активен > 1.5 интервала */
 
 #ifdef __cplusplus
 }

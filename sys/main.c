@@ -144,7 +144,10 @@ int main( void )
     SYS_TMR_ON();
     set_stime(12345);
     __enable_interrupt();
-    while(1);
+    START_RX(); /* начать прием */
+    while(1) {
+      net_drv(); // проверка драйвера сети
+    }
 #else
     Init_Timer0();
 #endif

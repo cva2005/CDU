@@ -1,31 +1,151 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <userOverrides>
     <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\csu\csu.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\csu\mtd.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\csu\mtd.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\ee\eeprom.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\ee\eeprom.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\key\key.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\key\key.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\lcd\lcd.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\lcd\lsd.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\lcd\wh2004.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\lcd\wh2004.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron.c</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron.h</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\kron\kron_imp.h</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\modbus\mbus.c</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\modbus\mbus.h</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\modbus\mbus_imp.h</path>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\net.c</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\net.h</path>
+        <encoding>System</encoding>
     </override>
     <override>
         <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\net_imp.h</path>
-        <encoding>UTF-8</encoding>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\usart.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\net\usart.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\pid\pid_r.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\pid\pid_r.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\pwm\pwm.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\pwm\pwm.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\spi\adc\ads1118.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\spi\adc\ads1118.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\spi\spi.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\spi\spi.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\spi\spi_imp.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\sys\main.c</path>
+        <encoding>Win-1251</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\sys\stime.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\sys\stime.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\sys\system.h</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\tsens\ds1820.c</path>
+        <encoding>System</encoding>
+    </override>
+    <override>
+        <path>C:\Users\cvavi\ZIM_PRJ\CDU\tsens\ds1820.h</path>
+        <encoding>System</encoding>
     </override>
 </userOverrides>

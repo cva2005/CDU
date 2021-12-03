@@ -16,3 +16,5 @@ void EEPROM_save_number(unsigned char *point);
 void EEPROM_read_number(char *point);
 unsigned char EEPROM_read_string(unsigned int method_adr, unsigned char size, unsigned char *str);
 void EEPROM_write_string(unsigned int method_adr, unsigned char size, unsigned char *str);
+
+extern unsigned char MY_ADR;

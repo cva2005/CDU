@@ -4,7 +4,7 @@
 #pragma message	("@(#)mbus.h     1.00    09/09/22 OWEN")
 
 /*
- * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° MODBUS
+ * Драйвер сетевого протокола MODBUS
  */
 
 #ifdef	__cplusplus
@@ -13,24 +13,24 @@ extern "C" {
 
 #include <sys/stime.h>
 
-#define MB_START        0x3a /* СЃРёРјРІРѕР» РЅР°С‡Р°Р»Р° РєР°РґСЂР° MODBUS ASCII */
-#define MB_RTU_RX_MIN   4  /* РјРёРЅРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РєР°РґСЂР° MODBUS RTU РїСЂРё РїСЂРёРµРјРµ */
+#define MB_START        0x3a /* символ начала кадра MODBUS ASCII */
+#define MB_RTU_RX_MIN   4  /* минимальная длина кадра MODBUS RTU при приеме */
 
 /*
- * Р—РЅР°С‡РµРЅРёСЏ С‚Р°Р№РјРµСЂР° С‚Р°Р№Рј-Р°СѓС‚Р° СЂРµР¶РёРјР° MODBUS RTU.
- * РљРІР°РЅС‚ РІСЂРµРјРµРЅРё t0.5 (РІСЂРµРјСЏ СЃР»РµРґРѕРІР°РЅРёСЏ 0.5 СЃРёРјРІРѕР»РѕРІ)
- * РІС‹Р±РёСЂР°РµС‚СЃСЏ РєР°Рє РЅР°РёР±РѕР»СЊС€РёР№ РѕР±С‰РёР№ РґРµР»РёС‚РµР»СЊ РЅР°С†РµР»Рѕ
- * РёРЅС‚РµСЂРІР°Р»РѕРІ РїСЂРѕС‚РѕРєРѕР»Р° (t3.5, t1.5 inter-character time-out).
- * Р’СЂРµРјСЏ СЃР»РµРґРѕРІР°РЅРёСЏ СЃРёРјРІРѕР»Р° СѓС‡РёС‚С‹РІР°РµС‚ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РІРѕР·РјРѕР¶РЅРѕРµ
- * РєРѕР»РёС‡РµСЃС‚РІРѕ Р±РёС‚РѕРІ РЅР° СЃРёРјРІРѕР» РїСЂРё РїРµСЂРµРґР°С‡Рµ.
+ * Значения таймера тайм-аута режима MODBUS RTU.
+ * Квант времени t0.5 (время следования 0.5 символов)
+ * выбирается как наибольший общий делитель нацело
+ * интервалов протокола (t3.5, t1.5 inter-character time-out).
+ * Время следования символа учитывает максимально возможное
+ * количество битов на символ при передаче.
  */
 
 #define BITS_PER_CHAR       11
 #ifdef RTU_STD_MODE
 /* strictly respected MODBUS RTU specification */
 #define T05_RTU(baud) (((F_CPU_HZ * BITS_PER_CHAR) / baud) / 2)
-#define FRAME_RTU_SYNC  22 /* "СЂРµР¶РёРј РјРѕР»С‡Р°РЅРёСЏ" Р°РєС‚РёРІРµРЅ > 3.5 РёРЅС‚РµСЂРІР°Р»Р° */
-#define FRAME_RTU_ERROR 10 /* "СЂРµР¶РёРј РјРѕР»С‡Р°РЅРёСЏ" Р°РєС‚РёРІРµРЅ > 1.5 РёРЅС‚РµСЂРІР°Р»Р° */
+#define FRAME_RTU_SYNC  22 /* "режим молчания" активен > 3.5 интервала */
+#define FRAME_RTU_ERROR 10 /* "режим молчания" активен > 1.5 интервала */
 #else
 /*
  * Modbus_over_serial_lineV1.pdf    page 13/44   MODBUS.ORG
@@ -39,24 +39,24 @@ extern "C" {
  * baud rates, this leads to a heavy CPU load. Consequently these two timers
  * must be strictly respected when the baud rate is equal or lower greater
  * than 19200 Bps, fixed values for the 2 timers should be used than 19200 Bps.
- * For baud rates it is recommended to use a value of 750Вµs for the 
+ * For baud rates it is recommended to use a value of 750µs for the 
  * inter-character time-out (t1.5) and a value of 1.750ms for inter-frame
  * delay (t3.5).
  */
 #define FIX_TO_BAUD   19200
 #define T05_RTU(baud) (((F_CPU_HZ * BITS_PER_CHAR) /\
     (baud > FIX_TO_BAUD ? FIX_TO_BAUD : baud)) / 2)
-#define FRAME_RTU_SYNC  132 /* "СЂРµР¶РёРј РјРѕР»С‡Р°РЅРёСЏ" Р°РєС‚РёРІРµРЅ > 3.5 РёРЅС‚РµСЂРІР°Р»Р° */
-#define FRAME_RTU_ERROR 60 /* "СЂРµР¶РёРј РјРѕР»С‡Р°РЅРёСЏ" Р°РєС‚РёРІРµРЅ > 1.5 РёРЅС‚РµСЂРІР°Р»Р° */
+#define FRAME_RTU_SYNC  132 /* "режим молчания" активен > 3.5 интервала */
+#define FRAME_RTU_ERROR 60 /* "режим молчания" активен > 1.5 интервала */
 #endif
 
 extern void ascii_drv(unsigned char ip, unsigned char len);
 extern void rtu_drv(unsigned char ip, unsigned char len);
 
-extern BUS_STATE RtuBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° RTU */
-extern BUS_STATE AsciiBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° ASCII */
-extern unsigned char RtuIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё RTU */
-extern unsigned char AsciiIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё ASCII */
+extern BUS_STATE RtuBusState; /* машина сотояния према кадра RTU */
+extern BUS_STATE AsciiBusState; /* машина сотояния према кадра ASCII */
+extern unsigned char RtuIdleCount; /* счетчик интервалов времени RTU */
+extern unsigned char AsciiIdleCount; /* счетчик интервалов времени ASCII */
 
 #ifdef __cplusplus
 }
