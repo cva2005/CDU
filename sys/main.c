@@ -28,7 +28,6 @@ unsigned char PWM_status=0, CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
 unsigned char self_ctrl=0; //управление методом зар€да производитс€ самосто€тельно или удалЄнно
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD; //переменные дл€ параметров задаваемого тока и напр€жени€
 unsigned int id_dw_calibrate, id_up_calibrate;
-unsigned int preset_I,  preset_Id, preset_U;
 unsigned int  No_akb_cnt=0, dm_loss_cnt=0;
 unsigned int  pid_t = 0;
 
@@ -95,7 +94,6 @@ unsigned char rx_point=0;
 rx_pack_type rx_pack;
 unsigned char connect_st=0, time_wait=255;
 unsigned char tx_lenght;
-unsigned char NEED_TX=0;
 unsigned char MY_ADR;
 
 unsigned int Wr_ADR=METHOD_START_ADR;
@@ -155,7 +153,7 @@ int main( void )
     Init_ADS1118();
     ALARM_OUT(0);
     Read_temp(); //«апустить на измерение датчик температуры 
-    EEPROM_read_cfg();
+    read_cfg();
     if (CSU_cfg.bit.LCD_ON) LCD_wr_connect(0);
     if (CSU_cfg.bit.FAN_CONTROL==0) {
         FAN(1);

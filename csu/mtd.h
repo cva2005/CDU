@@ -1,14 +1,5 @@
-/*
- * Method.h
- *
- * Created: 04.06.2013 11:30:14
- *  Author: anp
- */ 
-
-
 #ifndef METHOD_H_
 #define METHOD_H_
-
 
 //#define SIZE_STAGE sizeof(stage_type)
 //#define SIZE_METHOD sizeof(method_type)
@@ -96,5 +87,9 @@ void Stop_method(void);
 void create_method(unsigned char method);
 unsigned int find_free_memory(unsigned char m_cnt);
 void delete_all_method(void);
+
+extern unsigned char method_cnt, stage_cnt, cycle_cnt;
+extern unsigned int Method_ARD[15];
+extern unsigned int Wr_ADR;
 
 #endif /* METHOD_H_ */

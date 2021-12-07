@@ -6,7 +6,7 @@
 
 #include <sys/system.h>
 
-__no_init unsigned short stime; /* системное время, 100 HZ */
+__no_init uint32_t stime; /* системное время, 100 HZ */
 
 /*
  * Прерывание по событию:
@@ -19,11 +19,10 @@ void sys_tick_irq(void)
     stime++;
 }
 
-bool run_time(unsigned short start, unsigned short delta)
+bool run_time(uint32_t start, uint32_t delta)
 {
-    unsigned short curtime;
-    unsigned short runtime = start + delta;
-
+    uint32_t curtime;
+    uint32_t runtime = start + delta;
     get_stime(curtime);
     if (runtime < start) { /* run after overflow */
         if ((curtime >= runtime) && (curtime < start)) {
@@ -35,4 +34,34 @@ bool run_time(unsigned short start, unsigned short delta)
         }
     }
     return false;
+}
+
+stime_t get_finish_time(uint32_t delay)
+{
+	stime_t time;
+	get_stime(time.run);
+	time.del = delay;
+	return time;
+}
+
+uint32_t get_time_left(stime_t time)
+{
+    uint32_t del, t;
+ 	get_stime(t);
+    if (t < time.run) { // overflow system timer
+ 		del = (UINT32_MAX - time.run) + t;
+ 	} else {
+ 		del = t - time.run;
+ 	}
+ 	if (del > time.del) return 0;
+ 	else return (time.del - del);
+}
+
+uint32_t get_interval(uint32_t run) {
+	uint32_t del, t;
+ 	get_stime(t);
+ 	if (t < run) // overflow system timer
+ 		del = (UINT32_MAX - run) + t;
+ 	else del = t - run;
+ 	return del;
 }

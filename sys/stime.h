@@ -41,16 +41,12 @@ extern "C" {
 #define CS_VAL 1
 #elif (SYS_TMR_PRE == 8)
 #define CS_VAL 2
-#elif (SYS_TMR_PRE == 32)
-#define CS_VAL 3
 #elif (SYS_TMR_PRE == 64)
-#define CS_VAL 4
-#elif (SYS_TMR_PRE == 128)
-#define CS_VAL 5
+#define CS_VAL 3
 #elif (SYS_TMR_PRE == 256)
-#define CS_VAL 6
+#define CS_VAL 4
 #elif (SYS_TMR_PRE == 1024)
-#define CS_VAL 7
+#define CS_VAL 5
 #else
 #error "System timer prescaler value not correct!!"
 #endif
@@ -73,6 +69,15 @@ extern "C" {
 #error "System timer not defined!"
 #endif
 
+typedef struct {
+	uint32_t del;
+	uint32_t run;
+} stime_t;
+
+stime_t get_finish_time(uint32_t delay);
+uint32_t get_time_left(stime_t stime);
+uint32_t get_interval(uint32_t run);
+
 /* Период системного таймера, CPU Cycles */
 #define SYS_PRD (((F_CPU_HZ / SYS_TMR_PRE) / F_SYS_HZ) - 1)
 
@@ -87,7 +92,7 @@ extern "C" {
     SET_BIT(TIMSK, SYSTRM(OCIE,));\
 }
 
-extern unsigned short stime; /* системное время, 100 HZ */
+extern uint32_t stime; /* системное время, 100 HZ */
 
 #define get_stime(cur_time)\
 {\
@@ -109,10 +114,10 @@ extern unsigned short stime; /* системное время, 100 HZ */
 
 #define STIME_MAX   0xFFFFU
 
-#define stime_diff(t_old, t_new) (unsigned short)((t_new < t_old) ?\
-    (((unsigned short)STIME_MAX - t_old) + t_new) : (t_new - t_old))
+#define stime_diff(t_old, t_new) (uint32_t)((t_new < t_old) ?\
+    (((uint32_t)STIME_MAX - t_old) + t_new) : (t_new - t_old))
 
-bool run_time(unsigned short start, unsigned short delta);
+bool run_time(uint32_t start, uint32_t delta);
 
 #define delay_ns {asm("nop"); asm("nop"); asm("nop"); asm("nop");}
 /*
@@ -122,15 +127,15 @@ bool run_time(unsigned short start, unsigned short delta);
 #define ASM_CYCLE_LEN   7
 #define delay_us(t_us)\
 {\
-    unsigned short i = ((t_us * F_CPU_HZ) / MICROSEC) / ASM_CYCLE_LEN;\
+    uint16_t i = ((t_us * F_CPU_HZ) / MICROSEC) / ASM_CYCLE_LEN;\
     while (i--);\
 }
 
 #define delay_ms(t_ms) \
 {\
-    unsigned short ms = t_ms;\
+    uint16_t ms = t_ms;\
     while (ms--); {\
-        unsigned short us = 1000;\
+        uint16_t us = 1000;\
         while (us--);\
     }\
 }

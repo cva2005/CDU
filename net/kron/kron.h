@@ -13,7 +13,7 @@ extern "C" {
 void kron_drv(unsigned char ip, unsigned char len);
 extern BUS_STATE KronBusState; /* машина сотояния према кадра */
 extern unsigned char KronIdleCount; /* счетчик интервалов времени */
-#define FRAME_KRON_ERROR 10 /* "режим молчания" активен > 1.5 интервала */
+#define FRAME_KRON_SYNC     10 /* interval of idle */
 
 #ifdef __cplusplus
 }

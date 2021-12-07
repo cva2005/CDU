@@ -142,7 +142,7 @@ void rx_tick_irq(void)
         } else RtuIdleCount++; /* скорректировать интервал "молчания" */
     }
     if (KronBusState > BUS_STOP) {
-        if (KronIdleCount == FRAME_KRON_ERROR) { /* межсимв. интервал превышен */
+        if (KronIdleCount == FRAME_KRON_SYNC) { /* межсимв. интервал превышен */
             KronBusState = BUS_STOP; /* завершить прием кадра */
         } else KronIdleCount++; /* скорректировать интервал "молчания" */
     }

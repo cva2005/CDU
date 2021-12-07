@@ -9,10 +9,8 @@ extern unsigned int TEST1, TEST2, TEST3, TEST4;
 
 extern stage_type Stage;
 extern method_type Method;
-extern unsigned int Method_ARD[15];
 extern finish_type finish;
 extern unsigned char finish_cnt;
-extern unsigned char method_cnt, stage_cnt, cycle_cnt;
 extern unsigned int pulse_step; //время импульса заряд/разря при импульсном режиме
 extern unsigned int dU_time;
 extern unsigned char SAVE_Method;

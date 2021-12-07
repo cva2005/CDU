@@ -1,3 +1,10 @@
+#ifndef CSU_H
+#define CSU_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #define REV84 1
 
 #ifdef REV80
@@ -164,10 +171,6 @@
 #define LED_STI(x) ((x)?(PORTC&=~(1<<5)):(PORTC|=(1<<5)))
 #define LED_STU(x) ((x)?(PORTC&=~(1<<4)):(PORTC|=(1<<4)))
 #define LED_POL(x) ((x)?(PORTC&=~(1<<3)):(PORTC|=(1<<3)))
-
-
-
-
 #define DE(x) ((x)?(PORTD|=(1<<7)):(PORTD&=~(1<<7)))
 #define SD(x) ((x)?(PORTD|=(1<<6)):(PORTD&=~(1<<6)))
 #define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
@@ -221,12 +224,13 @@ typedef union{
 	unsigned int word;
 } CSU_type;
 
+typedef	struct {
+    unsigned char autostart :1;
+    unsigned char cdu_dsch_dsb :1;
+} CSU2_cfg_bit;
+
 typedef union{
-	struct
-		{
-		unsigned char autostart :1;
-		unsigned char cdu_dsch_dsb :1;
-		}bit;
+    CSU2_cfg_bit bit;
 	unsigned char byte[2];
 	unsigned int word;
 } CSU2_type;
@@ -331,3 +335,15 @@ void Init_Timer0(void);
 void Init_ExtInt(void);
 void calc_cfg(void);
 void Init_Port(void);
+
+extern unsigned int set_I, set_U, set_Id;
+extern unsigned char change_UI;
+extern unsigned int max_set_I, max_set_Id, max_set_U;
+extern unsigned char PWM_status, CSU_Enable, Error;
+extern unsigned char self_ctrl; //упр. методом заряда: самостоятельно/удалённо
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CSU_H */

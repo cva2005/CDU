@@ -2249,6 +2249,12 @@
     <group>
         <name>sys</name>
         <file>
+            <name>$PROJ_DIR$\sys\config.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\sys\config.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\sys\main.c</name>
         </file>
         <file>

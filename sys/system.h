@@ -17,6 +17,7 @@ extern "C" {
 #include <ina90.h>
 #include <ioavr.h>
 #include "../ee/eeprom.h"
+#include "config.h"
 #include "stime.h"
 #include "net/net.h"
 

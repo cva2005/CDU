@@ -1,3 +1,10 @@
+#ifndef KEY_H
+#define KEY_H
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 unsigned char scan_key(unsigned char *key);
 void key_power(void);
 void key_set(void);
@@ -16,5 +23,10 @@ void key_I_dw(void);
 #define K3 0xD8
 #define K2 0xE8
 #define K1 0xF0
-
 #define KEY_MASK (PINA&0xF8)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* KEY_H */
