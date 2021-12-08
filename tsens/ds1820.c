@@ -1,3 +1,4 @@
+#pragma message	("@(#)ds1820.c")
 #include "../sys/system.h"
 #include "../net/usart.h"
 #include "ds1820.h"

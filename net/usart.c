@@ -180,7 +180,7 @@ if (type==4) //Если необходимо отправить с версией блока
 	tx_pack.fld.data.tx_ver.hard_mode=Rev_mode;
 	tx_pack.fld.data.tx_ver.soft_ver=Soft_ver;
 	tx_pack.fld.data.tx_ver.soft_mode=Soft_mod;
-	EEPROM_read_number(&tx_pack.fld.data.tx_ver.number[0]);
+	read_num(&tx_pack.fld.data.tx_ver.number[0]);
 	tx_lenght_calc=sizeof(tx_ver_type);
 	}
 if (type==5)
@@ -391,7 +391,7 @@ if (rx_point>4) //если принято больше 4-х байт
 					if (rx_pack.fld.header.length==0x0C)//если поле данных конфигурирования не пустое
 						{	
 						if (rx_pack.fld.data.rx_ver.cmd.bit.EEPROM!=0)
-							EEPROM_save_number(&rx_pack.fld.data.rx_ver.number[0]);
+							save_num(&rx_pack.fld.data.rx_ver.number[0]);
 						if (CSU_cfg.bit.LCD_ON) LCD_wr_connect(1);
 						}						
 					}

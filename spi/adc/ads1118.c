@@ -1,3 +1,4 @@
+#pragma message	("@(#)ads1118.c")
 #include "../../sys/system.h"
 #include "../../net/usart.h"
 #include "../../csu/csu.h"

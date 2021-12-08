@@ -1,3 +1,4 @@
+#pragma message	("@(#)pwm.h")
 #define P_WDU_start 0
 #define P_WDI_start 0
 #define MAX_CK 0x1FFF 
@@ -40,24 +41,3 @@ void Correct_PWM(unsigned char pr);
 #define SETId2_EXT2  300000000/K_Id
 #define PWM2_Id_EXT2 2326//*/
 #endif
-//----------
-typedef struct
-{
-	int16_t pwm1;
-	int16_t setI1;
-	int16_t pwm2;
-	int16_t setI2;
-	union
-	{
-		struct
-		{
-			uint8_t control:1;	//проконтролировать калибровку тока разряда
-			uint8_t error:1;	    //ошибка калибровки тока
-			uint8_t up_finish:1;	//верхний предел откалиброван
-			uint8_t dw_finish:1;	//нижний предел откалиброван
-			uint8_t save:1;			//необходимо сохранить значения в EEPROM
-		}bit;
-		uint8_t byte;
-	}id;
-	uint8_t crc8;
-}calibrate_t;

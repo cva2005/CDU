@@ -1,7 +1,7 @@
-#pragma message	("@(#)dcon.c     1.00    09/09/22 OWEN")
+#pragma message	("@(#)kron.c")
 
 /*
- * Драйвер сетевого протокола DCON
+ * Драйвер сетевого протокола KRON
  */
 
 #include <sys/config.h>
@@ -60,11 +60,11 @@ static void frame_parse (void) {
             if ((rx.dest_adr != SYS_ADR) && (rx.type == 2)) return;
 		}
         /* Если на совпадает адрес получателя, то проверить мультикастовый пакет или нет */
-		if ((rx.dest_adr != MY_ADR) && (rx.dest_adr != SYS_ADR)
+		if ((rx.dest_adr != Cfg.MY_ADR) && (rx.dest_adr != SYS_ADR)
             && (rx.dest_adr != BROAD_ADR)) {
 			if ((rx.dest_adr & MULTI_ADR) == 0) return;
 			else {
-				if ((rx.dest_adr & 0x7F) != (MY_ADR & 0x60)) return;
+				if ((rx.dest_adr & 0x7F) != (Cfg.MY_ADR & 0x60)) return;
 				else multi_adr = 1;
 			}
 		}
@@ -126,7 +126,7 @@ static void frame_parse (void) {
 					if (rx.length >= 12) { //если поле данных конфигурирования не пустое
 						if (rd.rx_usr.cmd.bit.ADR_SET) {
 							if ((rd.rx_usr.Adress!=0)&&(rd.rx_usr.Adress!=0xFF)) 
-								MY_ADR = rd.rx_usr.Adress;	
+								Cfg.MY_ADR = rd.rx_usr.Adress;	
 						}
 						Cfg.K_I = rd.rx_usr.K_I;
 						Cfg.K_U = rd.rx_usr.K_U;
@@ -170,17 +170,17 @@ static void frame_parse (void) {
 				if (rx.type == 0x04) { //Если принят пакет с версией ПО
 					if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
 						if (rd.rx_ver.cmd.bit.EEPROM!=0)
-							EEPROM_save_number(&rd.rx_ver.number[0]);
+							save_num(&rd.rx_ver.number[0]);
 						if (Cfg.bf1.LCD_ON) LCD_wr_connect(1);
 					}						
 				}
 				if (rx.type == 0x05) { //Если принят пакет с алгоритмом программы
 					if (CSU_Enable!=0) Stop_CSU(0);
 					if (rd.rx_alg.cmd == 0x01) {	
-						method_cnt = stage_cnt = cycle_cnt = 0;//номера метода, этапа и цикла
+						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
 						for (cnt = 1; cnt < 15; cnt++) Method_ARD[cnt] = 0;
 						Method_ARD[0] = METHOD_START_ADR;
-						Wr_ADR = find_free_memory(method_cnt);
+						Wr_ADR = find_free_memory(mCnt);
 					}
 					if (rd.rx_alg.cmd == 0x20) {
 						delete_all_method();

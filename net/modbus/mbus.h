@@ -1,7 +1,6 @@
 #ifndef MODBUS_H
 #define MODBUS_H
-
-#pragma message	("@(#)mbus.h     1.00    09/09/22 OWEN")
+#pragma message	("@(#)mbus.h")
 
 /*
  * Драйвер сетевого протокола MODBUS

@@ -1,25 +1,15 @@
-/*
- * Описатель параметров конфигурации
- */
-
 #ifndef CONFIG_H
 #define CONFIG_H
+#pragma message	("@(#)config.h")
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
 #include <sys/system.h>
 #include <net/net.h>
 #include "csu/csu.h"
-
-/* адрес начала блока переменных конфигурации в RAM */
-#define CFG_ADDR_START (char *)&Cfg.RsBaudRateAttr
-/*
- * начало блока текущих значений счетчиков
- * (сразу за блоком параметров конфигурации)
- */
-#define COUNT_EE_ADDR sizeof(CONFIG_DSC)
-/* метка конца блока переменных APLY */
-#define APLY_ADDR_END ((char *)&Cfg.RsDelay + 1)
-/* метка начала блока переменных APLY */
-#define APLY_ADDR_START (char *)&Cfg.RsBaudRate
+#include "csu/mtd.h"
 
 /* тип структуры параметров конфигураци */
 typedef struct {
@@ -42,15 +32,72 @@ typedef struct {
     uint8_t Reserved;
 } cfg_t;
 
+#define N_CH        8 // chars in work number
+/* Work number */
+typedef struct {
+    uint8_t w[N_CH];
+} num_t;
+
+typedef struct {
+    int16_t pwm1;
+	int16_t setI1;
+	int16_t pwm2;
+	int16_t setI2;
+	union {
+		struct {
+			uint8_t control:1;	//проконтролировать калибровку тока разряда
+			uint8_t error:1;	    //ошибка калибровки тока
+			uint8_t up_finish:1;	//верхний предел откалиброван
+			uint8_t dw_finish:1;	//нижний предел откалиброван
+			uint8_t save:1;			//необходимо сохранить значения в EEPROM
+		} bit;
+		uint8_t byte;
+	} id;
+	uint8_t crc8;
+} clb_t;
+
+#define EEPROM_SIZE     1024
+#define MS_SIZE sizeof(stg_t) > sizeof(mtd_t) ? sizeof(stg_t) : sizeof(mtd_t)
+/* metod/stage type */
+typedef struct {
+    union {
+        mtd_t mtd;
+        stg_t stg;
+    } u;
+    //uint8_t w[MS_SIZE];
+    uint8_t crc;
+} ms_t;
+
+#define MS_N (EEPROM_SIZE - sizeof(Cfg) - sizeof(Crc1) - sizeof(Num)\
+     - sizeof(Crc2) - sizeof(Clb) - sizeof(Crc3)) / MS_SIZE
 /* тип структуры EEPROM */
 typedef struct {
     cfg_t Cfg;
-    uint8_t Crc;
+    uint8_t Crc1;
+    num_t Num;
+    uint8_t Crc2;
+    clb_t Clb;
+    uint8_t Crc3;
+    ms_t MtdStg[MS_N];
 } edata_t;
 
 extern __no_init cfg_t Cfg;
+extern __no_init num_t Num;
+extern __no_init clb_t Clb;
 void read_cfg (void);
+void read_num (uint8_t *num);
+void save_num (uint8_t *src);
+bool read_clb (void);
+bool read_mtd (uint8_t num, mtd_t *pm);
 void save_cfg (void);
+void save_clb (void);
 uint8_t calc_crc (uint8_t *buf, uint8_t len);
+
+#define MTD_ID     0xAA
+#define STG_ID     0x55
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CONFIG_H */

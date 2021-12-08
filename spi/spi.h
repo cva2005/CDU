@@ -1,5 +1,6 @@
 #ifndef SPI_H
 #define SPI_H
+#pragma message	("@(#)spi.h")
 
 #ifdef	__cplusplus
 extern "C" {

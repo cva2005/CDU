@@ -1,7 +1,6 @@
 #ifndef NET_H
 #define NET_H
-
-#pragma message	("@(#)net.h     1.00    09/08/12 OWEN")
+#pragma message	("@(#)net.h")
 
 #ifdef	__cplusplus
 extern "C" {

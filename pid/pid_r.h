@@ -1,5 +1,6 @@
 #ifndef PID_R_H
 #define PID_R_H
+#pragma message	("@(#)pid_r.h")
 
 #ifdef	__cplusplus
 extern "C"

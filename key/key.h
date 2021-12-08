@@ -1,5 +1,6 @@
 #ifndef KEY_H
 #define KEY_H
+#pragma message	("@(#)key.h")
 
 #ifdef	__cplusplus
 extern "C" {

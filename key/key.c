@@ -1,3 +1,4 @@
+#pragma message	("@(#)key.c")
 #include "key.h"
 #include "../csu/csu.h"
 #include "../csu/mtd.h"

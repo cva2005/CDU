@@ -1,3 +1,4 @@
+#pragma message	("@(#)main.c")
 #ifndef ENABLE_BIT_DEFINITIONS
 #define  ENABLE_BIT_DEFINITIONS
 #endif /* ENABLE_BIT_DEFINITIONS */
@@ -17,12 +18,11 @@
 #include "lcd/lcd.h"
 #include "key/key.h"
 #include "spi/adc/ads1118.h"
-#include "ee/eeprom.h"
 
 unsigned long alarm_del;
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 autosrart_t autosrart;
-calibrate_t calibrate;
+//calibrate_t calibrate;
 //--------------------------------переменные для состояния и режимов работы
 unsigned char PWM_status=0, CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
 unsigned char self_ctrl=0; //управление методом заряда производится самостоятельно или удалённо
@@ -30,15 +30,7 @@ unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD; //переменные для параме
 unsigned int id_dw_calibrate, id_up_calibrate;
 unsigned int  No_akb_cnt=0, dm_loss_cnt=0;
 unsigned int  pid_t = 0;
-
-stage_type Stage;
-method_type Method;
-finish_type finish;
-unsigned char method_cnt=0, stage_cnt=0, cycle_cnt=0;//номера метода, этапа и цикла
-
-unsigned int Method_ARD[15]={METHOD_START_ADR,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 unsigned char SAVE_Method=0;
-
 unsigned char finish_cnt; //время до смены этапа
 unsigned int pulse_step; //время импульса заряд/разряд при импульсном режиме
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
@@ -95,8 +87,6 @@ rx_pack_type rx_pack;
 unsigned char connect_st=0, time_wait=255;
 unsigned char tx_lenght;
 unsigned char MY_ADR;
-
-unsigned int Wr_ADR=METHOD_START_ADR;
 
 typedef enum {
   RESET_ST,
@@ -178,14 +168,12 @@ int main( void )
 		ADC_finish=0; //Устанвить флаг ожидания окончания следующей оцифровки
 		}
 //--------------------------------------------Сохранение данных калибровки		
-	if (calibrate.id.bit.save==1)
-		{
-		if ((calibrate.id.bit.error==0)&&(calibrate.id.bit.dw_finish||calibrate.id.bit.up_finish))	
-			{
-			EEPROM_write_string(FIRST_EEPROM_CALIBRATE, sizeof(calibrate), (unsigned char*)(&calibrate));
-			calibrate.id.byte=0;
-			}
+	if (Clb.id.bit.save == 1) {
+		if (!Clb.id.bit.error && (Clb.id.bit.dw_finish || Clb.id.bit.up_finish)) {
+			save_clb();
+			Clb.id.byte = 0;
 		}
+	}
 //--------------------------------------------Обработка данных с Датчика Температуры
 	if (time_rd==0) //Если пришло время прочитать датчик температуры
 		{
@@ -617,100 +605,82 @@ if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1)))
 }
 #endif
 //-------------------------------------------------------------------------------------
-void calc_cfg(void)
-{uint32_t M=0UL;
-Error=0;
+void calc_cfg (void) {
+    uint32_t M=0UL;
+    Error=0;
 
-if(maxI>5000) maxI=5000;
-M=((uint32_t)maxI*100000UL)/K_I; //вычисляем в значениях АЦП (добавляем 5 нулей чтобы увеличить точность и делим на К)
-max_set_I=(unsigned int) M;
-if (CSU_cfg.bit.GroupM) max_set_I=max_set_I+(I_1A);
+    if(maxI>5000) maxI=5000;
+    M=((uint32_t)maxI*100000UL)/K_I; //вычисляем в значениях АЦП (добавляем 5 нулей чтобы увеличить точность и делим на К)
+    max_set_I=(unsigned int) M;
+    if (CSU_cfg.bit.GroupM) max_set_I=max_set_I+(I_1A);
+    if (DM_SLAVE==0)
+        {if(maxId>maxId_EXT0) maxId=maxId_EXT0;}
+    else 
+        {if(maxId>maxId_EXT12) maxId=maxId_EXT12;}
+    M=((uint32_t)maxId*100000UL)/K_Id;
+    max_set_Id=M;
+    if (CSU_cfg.bit.GroupM) max_set_Id=max_set_Id+(Id_1A);
+    if(maxU>4000) maxU=4000;
+    M=((uint32_t)maxU*100000UL)/K_U;
+    max_set_U=M;
+    M=(uint32_t)max_set_I*100UL/K_PWD_I+B_PWD_I;
+    max_pwd_I=(unsigned int) M;
+    if (max_pwd_I<85) max_pwd_I=85;
+    M=(uint32_t)max_set_U*100UL/K_PWD_U+B_PWD_U;
+    max_pwd_U=(unsigned int) M;
+    if (DM_SLAVE>2) DM_SLAVE=2;
+    if (DM_SLAVE>0) CSU_cfg.bit.EXT_Id=1;
+    else CSU_cfg.bit.EXT_Id=0;
+    //B[ADC_MI]=B_I[DM_SLAVE]; //смещение тока установить в зависимости от того сколько РМ подключено
+    ADC_O[ADC_MU]=B[ADC_MU]; //Убрать ошибку "Переполюсовка" пока АЦП не будет оцифрован
+    ADC_O[ADC_MI]=B[ADC_MI]; //Убрать ошибку "Обрыв РМ"
+    autosrart.u_pwm=((uint32_t)autosrart.u_set*100000UL)/K_U;
+    autosrart.restart_cnt=autosrart.cnt_set;
+    autosrart.restart_time=autosrart.time_set;
+    if (CSU_cfg2.bit.autostart!=0) CSU_cfg.bit.DEBUG_ON=1;
 
-if (DM_SLAVE==0)
-	{if(maxId>maxId_EXT0) maxId=maxId_EXT0;}
-else 
-	{if(maxId>maxId_EXT12) maxId=maxId_EXT12;}
-M=((uint32_t)maxId*100000UL)/K_Id;
-max_set_Id=M;
-if (CSU_cfg.bit.GroupM) max_set_Id=max_set_Id+(Id_1A);
-
-if(maxU>4000) maxU=4000;
-M=((uint32_t)maxU*100000UL)/K_U;
-max_set_U=M;
-
-M=(uint32_t)max_set_I*100UL/K_PWD_I+B_PWD_I;
-max_pwd_I=(unsigned int) M;
-if (max_pwd_I<85) max_pwd_I=85;
-M=(uint32_t)max_set_U*100UL/K_PWD_U+B_PWD_U;
-max_pwd_U=(unsigned int) M;
-
-if (DM_SLAVE>2) DM_SLAVE=2;
-if (DM_SLAVE>0) CSU_cfg.bit.EXT_Id=1;
-else CSU_cfg.bit.EXT_Id=0;
-
-//B[ADC_MI]=B_I[DM_SLAVE]; //смещение тока установить в зависимости от того сколько РМ подключено
-
-ADC_O[ADC_MU]=B[ADC_MU]; //Убрать ошибку "Переполюсовка" пока АЦП не будет оцифрован
-ADC_O[ADC_MI]=B[ADC_MI]; //Убрать ошибку "Обрыв РМ"
-
-autosrart.u_pwm=((uint32_t)autosrart.u_set*100000UL)/K_U;
-autosrart.restart_cnt=autosrart.cnt_set;
-autosrart.restart_time=autosrart.time_set;
-if (CSU_cfg2.bit.autostart!=0) CSU_cfg.bit.DEBUG_ON=1;
-
-id_dw_calibrate=Id_2A;
-if (DM_SLAVE==0) 
-	{
-	id_up_calibrate=HI_Id_EXT0;
-	if (P_maxW>2500) P_maxW=2500;
+    id_dw_calibrate=Id_2A;
+    if (DM_SLAVE==0) {
+        id_up_calibrate=HI_Id_EXT0;
+        if (P_maxW>2500) P_maxW=2500;
 	}
-if (DM_SLAVE==1) 
-	{
-	id_up_calibrate=HI_Id_EXT1;
-	if (P_maxW>8000) P_maxW=8000;
+    if (DM_SLAVE==1) {
+        id_up_calibrate=HI_Id_EXT1;
+        if (P_maxW>8000) P_maxW=8000;
 	}
-if (DM_SLAVE>1)
-	{
-	id_up_calibrate=HI_Id_EXT2;
-	if (P_maxW>14000) P_maxW=14000;
+    if (DM_SLAVE>1) {
+        id_up_calibrate=HI_Id_EXT2;
+        if (P_maxW>14000) P_maxW=14000;
 	}
-if (id_up_calibrate>max_set_Id) id_up_calibrate=max_set_Id>>1;
-if (!EEPROM_read_string(FIRST_EEPROM_CALIBRATE, sizeof(calibrate), (unsigned char*)(&calibrate))) //читать со след. байта после конфигурации
-	{
-	if (DM_SLAVE==0)
-		{
-		calibrate.pwm1=PWM1_Id_EXT0;
-		calibrate.setI1=SETId1_EXT0;
-		calibrate.pwm2=PWM2_Id_EXT0;
-		calibrate.setI2=SETId2_EXT0;
-		}
-	if (DM_SLAVE==1)
-		{
-		calibrate.pwm1=PWM1_Id_EXT1;
-		calibrate.setI1=SETId1_EXT1;
-		calibrate.pwm2=PWM2_Id_EXT1;
-		calibrate.setI2=SETId2_EXT1;
-		}
-	if (DM_SLAVE>1)
-		{
-		calibrate.pwm1=PWM1_Id_EXT2;
-		calibrate.setI1=SETId1_EXT2;
-		calibrate.pwm2=PWM2_Id_EXT2;
-		calibrate.setI2=SETId2_EXT2;
-		}
-	calibrate.id.byte=0;
+    if (id_up_calibrate > max_set_Id) id_up_calibrate = max_set_Id >> 1;
+    if (read_clb() == false) {
+        if (DM_SLAVE == 0) {
+            Clb.pwm1=PWM1_Id_EXT0;
+            Clb.setI1=SETId1_EXT0;
+            Clb.pwm2=PWM2_Id_EXT0;
+            Clb.setI2=SETId2_EXT0;
+        }
+        if (DM_SLAVE == 1) {
+            Clb.pwm1=PWM1_Id_EXT1;
+            Clb.setI1=SETId1_EXT1;
+            Clb.pwm2=PWM2_Id_EXT1;
+            Clb.setI2=SETId2_EXT1;
+        }
+        if (DM_SLAVE > 1) {
+            Clb.pwm1=PWM1_Id_EXT2;
+            Clb.setI1=SETId1_EXT2;
+            Clb.pwm2=PWM2_Id_EXT2;
+            Clb.setI2=SETId2_EXT2;
+        }
+        Clb.id.byte=0;
 	}
-
-max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
-
-LCD_clear();
-if (CSU_cfg.bit.LCD_ON)		Init_WH2004(1);
-else						Init_WH2004(0);	
-
-if (CSU_cfg.bit.LED_ON)
-	{
-	DDRC = 0xFF;
-	PORTC = 0xFF;	
+    max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
+    LCD_clear();
+    if (CSU_cfg.bit.LCD_ON) Init_WH2004(1);
+    else Init_WH2004(0);	
+    if (CSU_cfg.bit.LED_ON) {
+        DDRC = 0xFF;
+        PORTC = 0xFF;	
 	}
 }
 //-------------------------------------------------------------------------------------

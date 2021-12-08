@@ -1,7 +1,4 @@
-/*
- * Описатель параметров конфигурации
- */
-
+#pragma message	("@(#)config.c")
 #include <sys/config.h>
 
 /* EEPROM параметры конфигураци */
@@ -9,6 +6,8 @@ static __eeprom edata_t eData;
 
 /* RAM копия параметров конфигураци */
 __no_init cfg_t Cfg;
+__no_init num_t Num;
+__no_init clb_t Clb;
 
 /* Default Config Data */
 static const cfg_t DefaultCfg = {
@@ -52,14 +51,65 @@ static const cfg_t DefaultCfg = {
 
 void read_cfg (void) {
     Cfg = eData.Cfg;
-    uint8_t crc = eData.Crc;
+    uint8_t crc = eData.Crc1;
     if (crc != calc_crc((uint8_t *)&Cfg, sizeof(Cfg)))
         Cfg = DefaultCfg;
+    Num = eData.Num;
+    crc = eData.Crc2;
+    if (crc != calc_crc((uint8_t *)&Num, sizeof(Num)))
+        memset((void *)&Num, 0xff, sizeof(Num));
+}
+
+bool read_clb (void) {
+    Clb = eData.Clb;
+    uint8_t crc = eData.Crc3;
+    if (crc == calc_crc((uint8_t *)&Clb, sizeof(Clb))) return true;
+    else return false;
+}
+
+void save_clb (void) {
+    eData.Clb = Clb;
+    eData.Crc3 = calc_crc((uint8_t *)&Clb, sizeof(Clb));
 }
 
 void save_cfg (void) {
     eData.Cfg = Cfg;
-    eData.Crc = calc_crc((uint8_t *)&Cfg, sizeof(Cfg));
+    eData.Crc1 = calc_crc((uint8_t *)&Cfg, sizeof(Cfg));
+}
+
+void read_num (uint8_t *dest) {
+    memcpy(dest, (void *)&Num, sizeof(Num));
+}
+
+void save_num (uint8_t *src) {
+    memcpy((void *)&Num, src, sizeof(Num));
+    eData.Num = Num;
+    eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
+}
+
+bool read_mtd (uint8_t num, mtd_t *pm) {
+    *pm = eData.MtdStg[num].u.mtd;
+    uint8_t crc = eData.MtdStg[num].crc;
+    if (crc == calc_crc((uint8_t *)pm, sizeof(mtd_t))) {
+        if (pm->fld.data_type != MTD_ID) return true;
+    }
+    return false;
+}
+
+void save_mtd (uint8_t *src) {
+    memcpy((void *)&Num, src, sizeof(Num));
+    eData.Num = Num;
+    eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
+}
+
+void read_stg (uint8_t num, uint8_t *stg) {
+    memcpy(dest, (void *)&Num, sizeof(Num));
+}
+
+void save_stg (uint8_t *stg) {
+    memcpy((void *)&Num, src, sizeof(Num));
+    eData.Num = Num;
+    eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
 }
 
 /* Вычисление контрольной суммы CRC8 */

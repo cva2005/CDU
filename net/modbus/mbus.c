@@ -1,14 +1,10 @@
-#pragma message	("@(#)mbus.c     1.00    09/09/22 OWEN")
+#pragma message	("@(#)mbus.c")
 
 /*
  * Драйвер сетевого протокола MODBUS
  */
 
 #include <sys/system.h>
-//#include <sys/config.h>
-//#include <sys/floatErr.h>
-//#include <meas/meas.h>
-//#include <net/dsc.h>
 #include "mbus.h"
 #include "mbus_imp.h"
 
@@ -117,7 +113,7 @@ static void frame_parse(BUS_MODE mode)
         rs_buff = RtuBuff;
     }
     if (rs_buff[0] != MB_COMMON) { /* не широковещательный адрес */
-        if (rs_buff[0] != (MY_ADR)) {
+        if (rs_buff[0] != (Cfg.MY_ADR)) {
             return; /* адрес не совпал */
         }
     } else { /* широковещательный адрес */

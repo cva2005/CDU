@@ -1,3 +1,4 @@
+#pragma message	("@(#)wh2004.c")
 #include "wh2004.h"
 #include "csu/csu.h"
 #include "net/usart.h"

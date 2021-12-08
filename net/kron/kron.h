@@ -1,7 +1,6 @@
-#pragma message	("@(#)kron.h     1.00    09/09/22 OWEN")
-
 #ifndef KRON_H
 #define KRON_H
+#pragma message	("@(#)kron.h")
 
 /*
  * Драйвер сетевого протокола DCON

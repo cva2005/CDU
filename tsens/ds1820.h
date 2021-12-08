@@ -1,13 +1,12 @@
-/*--------------COPY THIS VARIABELS IN MAIN MODULE-------------------------------------
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-//----------------Real Temperature  (Tmp_DS18B20Z.c) variabels-------------------------
-unsigned int Temperature; //use if need
-unsigned char Err_Thermometr; //use if need
-//-------------------------------------------------------------------------------------
+#ifndef DS1820_H
+#define DS1820_H
+#pragma message	("@(#)ds1820.h")
 
----------------------------------------------------------------------------------------*/
 #define READ_ERR_CNT 8
-
 #define Direction_Wr (DDRB|=0x03)
 #define Direction_Rd (DDRB&=0xFC)
 #define Write_1 PORTB=(PINB|0x03)
@@ -38,3 +37,9 @@ unsigned char CRC8_Tmp(unsigned char data, unsigned char CRC);
 unsigned char Read_Current_Temperature(Temp_type *tmp1, Temp_type *tmp2);
 unsigned char Thermometr_Convert_Finish(void);
 unsigned char Thermometr_Start_Convert(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* DS1820_H */

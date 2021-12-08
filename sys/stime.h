@@ -4,6 +4,7 @@ extern "C" {
 
 #ifndef STIME_H
 #define STIME_H
+#pragma message	("@(#)stime.h")
 
 /*
  * Системное время

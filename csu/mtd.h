@@ -1,15 +1,12 @@
-#ifndef METHOD_H_
-#define METHOD_H_
+#ifndef MTD_H_
+#define MTD_H_
+#pragma message	("@(#)mtd.h")
 
-//#define SIZE_STAGE sizeof(stage_type)
-//#define SIZE_METHOD sizeof(method_type)
+#ifdef	__cplusplus
+extern "C" {
+#endif
 
-#define SIZE_STAGE 32
-#define SIZE_METHOD 32
-
-
-typedef struct 
-	{
+typedef struct {
 	unsigned char T		:1;
 	unsigned char I		:1;	
 	unsigned char U		:1;
@@ -18,15 +15,13 @@ typedef struct
 	unsigned char C		:1;
 	unsigned char reserv1 :1;
 	unsigned char reserv2 :1;
-	}stop_flag_type; 
+} stop_flag_t; 
 
-typedef union
-	{
-	struct
-		{
+typedef union {
+	struct {
 		unsigned char data_type;//1
 		unsigned char type; //2
-		stop_flag_type stop_flag; //3
+		stop_flag_t stop_flag; //3
 		unsigned int I_ch; //4,5
 		unsigned int U_ch; //6,7
 		unsigned int I_dch; //8,9
@@ -41,16 +36,13 @@ typedef union
 		unsigned char end_H; //24
 		unsigned char end_M; //25
 		unsigned char end_S; //26
-		} fld;
+	} fld;
 	unsigned char byte[32];
 	unsigned int word[16];
-	}stage_type;
+} stg_t;
 
-typedef 
-	union 
-	{
-	struct	 
-		{
+typedef union {
+	struct {
 		unsigned char data_type;//1
 		unsigned char name[17]; //2-18
 		unsigned int Im; //19, 20
@@ -61,19 +53,20 @@ typedef
 		unsigned char Cnt;//26
 		unsigned char Nstage;//27
 		//unsigned int Next_Method; //28, 29
-		}fld;
+	} fld;
 	unsigned char byte[32];
 	unsigned int word[16];
-	}method_type;
+} mtd_t;
 	
 
-typedef struct
-	{
+typedef struct {
 	unsigned int I;
 	unsigned int U;
 	unsigned int dU;
 	unsigned int max_U;
-	}finish_type;
+} finish_t;
+
+#define MTD_N       15
 
 
 unsigned char finish_conditions(void);
@@ -88,8 +81,16 @@ void create_method(unsigned char method);
 unsigned int find_free_memory(unsigned char m_cnt);
 void delete_all_method(void);
 
-extern unsigned char method_cnt, stage_cnt, cycle_cnt;
-extern unsigned int Method_ARD[15];
+//extern unsigned char method_cnt, stage_cnt, cycle_cnt;
+extern uint8_t mCnt, sCnt, cCnt;
+extern unsigned int Method_ARD[MTD_N];
 extern unsigned int Wr_ADR;
+extern stg_t Stage;
+extern mtd_t Method;
+extern finish_t finish;
 
-#endif /* METHOD_H_ */
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* MTD_H */

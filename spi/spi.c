@@ -1,6 +1,7 @@
 /*
  * Äנאיגונ SPI Master
  */
+#pragma message	("@(#)spi.c")
 #include "../sys/system.h"
 #include "spi.h"
 #include "spi_imp.h"

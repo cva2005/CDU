@@ -1,4 +1,4 @@
-#pragma message	("@(#)net.c     1.00    09/08/12 OWEN")
+#pragma message	("@(#)net.c")
 
 /*
  * Äנאיגונ RS485

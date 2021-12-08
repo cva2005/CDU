@@ -1,5 +1,6 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
+#pragma message	("@(#)sysytem.h")
 
 #ifdef	__cplusplus
 extern "C" {
@@ -16,7 +17,6 @@ extern "C" {
 #include <math.h>
 #include <ina90.h>
 #include <ioavr.h>
-#include "../ee/eeprom.h"
 #include "config.h"
 #include "stime.h"
 #include "net/net.h"

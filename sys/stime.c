@@ -1,4 +1,4 @@
-#pragma message	("@(#)stime.c     1.00    11/09/12 OWEN")
+#pragma message	("@(#)stime.c")
 
 /*
  * Системное время

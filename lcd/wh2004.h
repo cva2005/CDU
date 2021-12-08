@@ -1,3 +1,11 @@
+#ifndef WH2004_H
+#define WH2004_H
+#pragma message	("@(#)wh2004.h")
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 #define WH2004L_wr_inst PORTA=PORTA&0xFC
 #define WH2004L_wr_data PORTA=(PORTA&0xFD)|0x01
 #define WH2004L_rd_busy PORTA=(PORTA&0xFE)|0x02
@@ -62,3 +70,9 @@
 #define sh_rus 193
 #define c_rus 229
 #define C_rus 225
+ 
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* WH2004_H */

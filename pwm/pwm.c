@@ -1,3 +1,4 @@
+#pragma message	("@(#)pwm.c")
 #include "../sys/system.h"
 #include "../csu/csu.h"
 #include "../lcd/wh2004.h"

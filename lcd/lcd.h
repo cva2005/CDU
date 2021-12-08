@@ -1,3 +1,11 @@
+#ifndef LDC_H
+#define LDC_H
+#pragma message	("@(#)ldc.h")
+
+#ifdef	__cplusplus
+extern "C" {
+#endif
+
 //#define Mode_pos  6
 //#define Dsf_pos  9
 #define T1_pos  3
@@ -45,3 +53,9 @@ void calculate_temp(signed char *temp, char *point);
 void calculate_param(unsigned int val, unsigned int k, char *point);
 void calculate_time(unsigned char P1, unsigned char P2, unsigned char P3, char *point);
 void LCD_change_mode(unsigned char *mode);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LDC_H */

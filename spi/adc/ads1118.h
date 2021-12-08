@@ -1,13 +1,6 @@
-/*
- * ADS1118.h
- *
- * Created: 17.10.2012 16:50:57
- *  Author: anp
- */ 
-
-
 #ifndef ADS1118_H_
 #define ADS1118_H_
+#pragma message	("@(#)ads1118.h")
 
 
 //#define DDR_SPI PORTB

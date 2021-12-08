@@ -1,10 +1,10 @@
+#pragma message	("@(#)ldc.c")
 #include <system.h>
 #include "wh2004.h"
 #include "lcd.h"
 #include "tsens/ds1820.h"
 #include "csu/csu.h"
 #include "csu/mtd.h"
-#include "ee/eeprom.h"
 
 extern CSU_type CSU_cfg;
 
@@ -400,7 +400,7 @@ LCD[3][0]=Z_rus;
 LCD[3][1]='a';
 LCD[3][2]=v_rus;
 LCD[3][3]='N';
-EEPROM_read_number(&LCD[3][4]);
+read_num(&LCD[3][4]);
 
 LCD[3][14]='v';
 LCD[3][15]='.';

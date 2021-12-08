@@ -1,7 +1,6 @@
 #ifndef KRON_IMP_H
 #define KRON_IMP_H
-
-#pragma message	("@(#)kron_imp.h     1.00    09/09/22 OWEN")
+#pragma message	("@(#)kron_imp.h")
 
 /*
  * Драйвер сетевого протокола KRON
