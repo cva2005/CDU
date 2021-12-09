@@ -467,7 +467,7 @@ WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 5); //отобразить*/
 
 
 //----------------------------------------------ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА------------------
-if (PWM_status==discharge) //если мы в режиме разряда, значит ток надо расчитывать по другому
+if (PWM_status==DISCHARGE) //если мы в режиме разряда, значит ток надо расчитывать по другому
 	{
 	if (ADC_ADS1118[ADC_DI].word!=ADC_last[ADC_MI].word)
 		{
@@ -489,7 +489,7 @@ else
 		calculate_param(ADC_ADS1118[ADC_MI].word, K_I, &LCD[1][I_pos+1]);
 		WH2004_string_wr(&LCD[1][I_pos],line1+I_pos, 5); //отобразить
 		
-		if (PWM_status!=stop_charge) //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
+		if (PWM_status!=STOP) //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
 			{
 			calculate_param(set_I , K_I , &LCD[1][Is_pos]);
 			WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 4); //отобразить	
@@ -504,7 +504,7 @@ else
 		WH2004_string_wr(&LCD[2][I_pos],line2+I_pos, 5); //отобразить
 		}*/
 //----------------------------------------------ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА-----------------		
-if (CSU_Enable!=stop_charge)
+if (CSU_Enable!=STOP)
 	{
 	if (stage_cnt_last!=stage_cnt) //на последнем методе проверяется 
 		{
@@ -514,11 +514,11 @@ if (CSU_Enable!=stop_charge)
 		}
 	}
 //----------------------------------------------ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ-----------------
-if (PWM_status!=stop_charge)
+if (PWM_status!=STOP)
 	{
 	if (Sec_last!=Sec) 
 		{		
-		if (PWM_status==discharge)
+		if (PWM_status==DISCHARGE)
 			calculate_C(-1, ADC_ADS1118[ADC_DI].word, K_Id, &LCD[3][C_pos]);
 		else
 			calculate_C(1, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
@@ -797,7 +797,7 @@ else
 		}		
 //----------------------------------ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ----------------------------------
 #ifndef DEBUG_ALG
-	if (PWM_status==stop_charge)
+	if (PWM_status==STOP)
 		{
 		if (LCD[2][19]!=' ')
 			{
@@ -817,8 +817,8 @@ else
 			}
 		else
 			{
-			if (((I_St)&&(PWM_status==charge))||
-				((PWM_status==discharge)&&(ADC_ADS1118[ADC_MU].word>(set_U+5))))
+			if (((I_St)&&(PWM_status==CHARGE))||
+				((PWM_status==DISCHARGE)&&(ADC_ADS1118[ADC_MU].word>(set_U+5))))
 				{
 				if (LCD[2][19]!='I') 
 					{

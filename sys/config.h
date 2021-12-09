@@ -58,18 +58,15 @@ typedef struct {
 
 #define EEPROM_SIZE     1024
 #define MS_SIZE sizeof(stg_t) > sizeof(mtd_t) ? sizeof(stg_t) : sizeof(mtd_t)
+
 /* metod/stage type */
 typedef struct {
-    union {
-        mtd_t mtd;
-        stg_t stg;
-    } u;
-    //uint8_t w[MS_SIZE];
+    mtd_t data;
     uint8_t crc;
 } ms_t;
 
-#define MS_N (EEPROM_SIZE - sizeof(Cfg) - sizeof(Crc1) - sizeof(Num)\
-     - sizeof(Crc2) - sizeof(Clb) - sizeof(Crc3)) / MS_SIZE
+#define MS_N (EEPROM_SIZE - sizeof(Cfg) - sizeof(Num)\
+     - sizeof(uint8_t) * 3) / MS_SIZE
 /* тип структуры EEPROM */
 typedef struct {
     cfg_t Cfg;
@@ -89,6 +86,8 @@ void read_num (uint8_t *num);
 void save_num (uint8_t *src);
 bool read_clb (void);
 bool read_mtd (uint8_t num, mtd_t *pm);
+bool read_stg (uint8_t num, stg_t *ps);
+void save_alg (uint8_t num, void *p);
 void save_cfg (void);
 void save_clb (void);
 uint8_t calc_crc (uint8_t *buf, uint8_t len);

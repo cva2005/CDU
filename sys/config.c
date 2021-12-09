@@ -88,28 +88,26 @@ void save_num (uint8_t *src) {
 }
 
 bool read_mtd (uint8_t num, mtd_t *pm) {
-    *pm = eData.MtdStg[num].u.mtd;
+    *pm = eData.MtdStg[num].data;
     uint8_t crc = eData.MtdStg[num].crc;
     if (crc == calc_crc((uint8_t *)pm, sizeof(mtd_t))) {
-        if (pm->fld.data_type != MTD_ID) return true;
+        if (pm->fld.data_type == MTD_ID) return true;
     }
     return false;
 }
 
-void save_mtd (uint8_t *src) {
-    memcpy((void *)&Num, src, sizeof(Num));
-    eData.Num = Num;
-    eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
+void save_alg (uint8_t num, void *p) {
+    eData.MtdStg[num].data = *((mtd_t *)p);
+    eData.MtdStg[num].crc = calc_crc((uint8_t *)p, sizeof(mtd_t));
 }
 
-void read_stg (uint8_t num, uint8_t *stg) {
-    memcpy(dest, (void *)&Num, sizeof(Num));
-}
-
-void save_stg (uint8_t *stg) {
-    memcpy((void *)&Num, src, sizeof(Num));
-    eData.Num = Num;
-    eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
+bool read_stg (uint8_t num, stg_t *ps) {
+    *((mtd_t *)ps) = eData.MtdStg[num].data;
+    uint8_t crc = eData.MtdStg[num].crc;
+    if (crc == calc_crc((uint8_t *)ps, sizeof(stg_t))) {
+        if (ps->fld.data_type == STG_ID) return true;
+    }
+    return false;
 }
 
 /* Вычисление контрольной суммы CRC8 */

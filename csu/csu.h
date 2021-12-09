@@ -176,11 +176,11 @@ extern "C" {
 #define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
 
 //Состояние для переменной PWM_Status (текущий режим ШИМ), ZR_mode (заданный режим), CSU_Enable (Режи в котором запущен блок)
-#define stop_charge 0//const for PWM_Status
-#define charge 1 //const for PWM_Status
-#define discharge 2//const for PWM_Status
-#define pulse 3 //const for ZR_mode
-#define pause 4 //const for ZR_mode
+#define STOP        0//const for PWM_Status
+#define CHARGE      1 //const for PWM_Status
+#define DISCHARGE   2//const for PWM_Status
+#define PULSE       3 //const for ZR_mode
+#define PAUSE       4 //const for ZR_mode
 
 enum{
 	S_STOP,				//0 - преобразователь остановлен

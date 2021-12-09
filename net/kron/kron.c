@@ -12,13 +12,13 @@
 #include "kron.h"
 #include "kron_imp.h"
 
+static inline void TxData (void);
 static void frame_parse(void);
 static rx_pack_type Buff; /* буфер приема/передачи */
 BUS_STATE KronBusState; /* машина сотояния приема кадра */
 static unsigned char IpBuff; /* указатель данных в буфере приема */
 unsigned char KronIdleCount; /* счетчик интервалов времени */
 static unsigned int preset_I,  preset_Id, preset_U;
-static unsigned char NEED_TX = 0;
 
 /* драйвер KRON SLAVE устройства */
 void kron_drv(unsigned char ip, unsigned char len)
@@ -51,7 +51,8 @@ void kron_drv(unsigned char ip, unsigned char len)
 #define rd  Buff.fld.data
 /* разбор кадра KRON */
 static void frame_parse (void) {
-    uint8_t cnt, multi_adr = 0;
+    uint8_t cnt;
+    bool multi_adr = false;
 	if (rx.length <= (IpBuff - 5)) {
 		if (!Cfg.bf1.PCC_ON) { //Если не установлен флаг управления с ПК
 			/* если это пакет даных, то не обрабатывает его если не установлен флаг управления с ПК */
@@ -65,22 +66,23 @@ static void frame_parse (void) {
 			if ((rx.dest_adr & MULTI_ADR) == 0) return;
 			else {
 				if ((rx.dest_adr & 0x7F) != (Cfg.MY_ADR & 0x60)) return;
-				else multi_adr = 1;
+				else multi_adr = true;
 			}
 		}
 		if ((rx.start == CHAR_RS) && !rx.src_adr) { //если принят верный пакет
 			if (calc_crc(Buff.byte, rx.length + 4) != Buff.byte[rx.length + 4]) return;
 			if (rx.length > 1) { //если в пакете есть поле типа пакета
-				if (rx.type == 0x01) { //Если приянт пакет с данными
+                switch (rx.type) {
+                case DATA_PKT:
 					if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
-						if ((rd.rx_data.cmd & 0x0F) == charge) { //если режим "заряд"
+						if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //если режим "заряд"
 							if (set_I != rd.rx_data.setI) change_UI = 1;
 							if (rd.rx_data.setI > Cfg.B[ADC_MI])
 								preset_I = rd.rx_data.setI - Cfg.B[ADC_MI];
 							else preset_I = 0;
 							if (preset_I > max_set_I) preset_I = max_set_I;
 						}
-						if ((rd.rx_data.cmd & 0x0F) == discharge) { //если режим "разряд"
+						if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //если режим "разряд"
 							if (set_Id != rd.rx_data.setI) change_UI = 1;
 							if (rd.rx_data.setI > Cfg.B[ADC_DI])
 								preset_Id = rd.rx_data.setI - Cfg.B[ADC_DI];
@@ -120,9 +122,9 @@ static void frame_parse (void) {
 							if (((CSU_Enable|RELAY_EN) != rd.rx_data.cmd) || (Error != 0))
                                 Stop_CSU(rd.rx_data.cmd);
 						}	
-					}				
-				}
-				if (rx.type == 0x02) { //Если принят пакет конфигурирования данных пользователя
+					}
+                    break;
+                case USER_CFG:
 					if (rx.length >= 12) { //если поле данных конфигурирования не пустое
 						if (rd.rx_usr.cmd.bit.ADR_SET) {
 							if ((rd.rx_usr.Adress!=0)&&(rd.rx_usr.Adress!=0xFF)) 
@@ -141,8 +143,8 @@ static void frame_parse (void) {
 						calc_cfg();		
 						if (rd.rx_usr.cmd.bit.EEPROM) save_cfg();
 					}
-				}
-				if (rx.type == 0x03) { //Если принят пакет конфигурирования системных даных
+                    break;
+                case SYS_CFG:
 					if (rx.length >= 0x0C) { //если поле данных конфигурирования не пустое
 						rd.rx_sys.mode.bit.RELAY_MODE = 1;
 						rd.rx_sys.cmd.bit.TE_DATA = 0;	
@@ -166,40 +168,49 @@ static void frame_parse (void) {
 						calc_cfg();
 						if (rd.rx_sys.cmd.bit.EEPROM) save_cfg();
 					}
-				}		
-				if (rx.type == 0x04) { //Если принят пакет с версией ПО
+                    break;
+                case VER_PKT:
 					if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
 						if (rd.rx_ver.cmd.bit.EEPROM!=0)
 							save_num(&rd.rx_ver.number[0]);
 						if (Cfg.bf1.LCD_ON) LCD_wr_connect(1);
 					}						
-				}
-				if (rx.type == 0x05) { //Если принят пакет с алгоритмом программы
-					if (CSU_Enable!=0) Stop_CSU(0);
-					if (rd.rx_alg.cmd == 0x01) {	
+                    break;
+                case ALG_PKT:
+					if (CSU_Enable != 0) Stop_CSU(0);
+                    switch (rd.rx_alg.cmd) {
+                    case FIND_CMD:
 						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
-						for (cnt = 1; cnt < 15; cnt++) Method_ARD[cnt] = 0;
-						Method_ARD[0] = METHOD_START_ADR;
-						Wr_ADR = find_free_memory(mCnt);
-					}
-					if (rd.rx_alg.cmd == 0x20) {
+						for (cnt = 0; cnt < MTD_N; cnt++) StageNum[cnt] = 0;
+						WrNum = find_free();
+                        break;
+                    case DEL_CMD:
 						delete_all_method();
-						Wr_ADR = METHOD_START_ADR;
-					}
-					if (rd.rx_alg.cmd == 0x03) {
-						if (Wr_ADR < EEPROM_SIZE) {
-							EEPROM_write_string(Wr_ADR, rd.rx_alg.size, &rd.rx_alg.data[0]);
-							Wr_ADR += rd.rx_alg.size;
+						WrNum = 0;
+                        break;
+                    case SAVE_CMD:
+						if (WrNum < MS_N) {
+							save_alg(WrNum, &rd.rx_alg.data[0]);
+							WrNum++;
 						}
-					}
-					if (rd.rx_alg.cmd == 0x04) Wr_ADR = METHOD_START_ADR;
-				}
-				if (rx.type == 0x06) //Если принят пакет с запросом EEPROM
-					Wr_ADR = METHOD_START_ADR;
-            /* Если нет поля с типом пакета (пакет нулевой длины), то считать что это запрос данных */
-			} else rx.type = 1;
-			if ((rx.dest_adr != BROAD_ADR) && !multi_adr) NEED_TX = rx.type;
-			else NEED_TX = 0;
-		}
+                        break;
+                    case RST_CMD:
+                        WrNum = 0;
+                    }
+                    break;
+                case EEPR_PKT:
+					WrNum = 0;
+                    break;
+                default:
+                    /* Если нет поля с типом пакета (пакет нулевой длины),
+                    то считать что это запрос данных */
+                    rx.type = DATA_PKT;
+                }
+            }
+            if ((rx.dest_adr != BROAD_ADR) && !multi_adr) TxData();
+        }
     }
+}
+
+static inline void TxData (void) {
 }

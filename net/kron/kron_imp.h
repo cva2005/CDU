@@ -17,10 +17,23 @@ extern "C" {
 #define KRON_BUFF_LEN       KRON_RX_MAX
 #define RX_LENGTH           KRON_BUFF_LEN
 #define TX_LENGTH           50
-#define SYS_ADR 0xFF
-#define BROAD_ADR 0xFE
-#define MULTI_ADR 0x80
+#define SYS_ADR             0xFF
+#define BROAD_ADR           0xFE
+#define MULTI_ADR           0x80
 
+/* packet type */
+#define DATA_PKT            1
+#define USER_CFG            2
+#define SYS_CFG             3
+#define VER_PKT             4
+#define ALG_PKT             5
+#define EEPR_PKT            6
+
+/* command type */
+#define FIND_CMD            1
+#define DEL_CMD             0x20 // ToDo: or 2?
+#define SAVE_CMD            3
+#define RST_CMD             4
 //------------------------------------биты контроля
 typedef union
 {

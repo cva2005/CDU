@@ -278,7 +278,7 @@ int main( void )
 	//--------------------------------------------АВТОСТАРТ---------------------
 		if 	(CSU_cfg2.bit.autostart) //если включён автостарт
 			{
-			if (PWM_status==stop_charge) //если преобразователь выключен
+			if (PWM_status==STOP) //если преобразователь выключен
 				{
 				if (autosrart.restart_cnt) //если количество перезапусков неисчерпано
 					{
@@ -286,7 +286,7 @@ int main( void )
 						{
 						if (autosrart.u_pwm>ADC_ADS1118[ADC_MU].word) //если текущее напряжение на выходе меньше чем напряжение запуска
 							{
-							if (CSU_Enable==stop_charge)
+							if (CSU_Enable==STOP)
 								{
 								autosrart.restart_time=AUTOSTART_TIME;
 								}
@@ -353,12 +353,12 @@ static void Correct_UI (void) {
       err_i = i_power_limit(P_maxW, set_Id);
       err_i -= ADC_ADS1118[ADC_DI].word;
     }
-	  if (PWM_status == charge) {
+	  if (PWM_status == CHARGE) {
   	  if (State == DISCHARGE_ST) {
         State = CHARGE_ST;
         goto pulse_mode;
       }
-    } else if (PWM_status == discharge) {
+    } else if (PWM_status == DISCHARGE) {
   	  if (State == CHARGE_ST) {
         State = DISCHARGE_ST;
         pulse_mode:
@@ -374,7 +374,7 @@ static void Correct_UI (void) {
       Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
       Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
     }
-	  if (PWM_status == charge) {
+	  if (PWM_status == CHARGE) {
       /*if (!Stable) {
         if (StbCnt < ST_TIME) {
           StbCnt++;
@@ -725,7 +725,7 @@ void Err_check(void)
 //---------Проверка на обрыв РМ-----------------------
 	if (DM_SLAVE>0)
 		{
-		if ((CSU_cfg.bit.DIAG_WIDE)&&(PWM_status==discharge)) //Если включена расширеная диагностика
+		if ((CSU_cfg.bit.DIAG_WIDE)&&(PWM_status==DISCHARGE)) //Если включена расширеная диагностика
 			{
 			if ((dm_loss_cnt>0)&&(dm_loss_cnt<10))	
 				{
@@ -746,12 +746,12 @@ void Err_check(void)
 //---------Проверка на обрыв нагрузки-----------------
 	if ((CSU_cfg.bit.I0_SENSE)&&(CSU_cfg.bit.GroupM==0)) //Если установлена диагностика обрыва нагрузки и блок работает не в группе
 		{
-		if ((PWM_status==charge)&&(set_I!=0))
+		if ((PWM_status==CHARGE)&&(set_I!=0))
 			{
 			if (ADC_ADS1118[ADC_MI].word>=I_0t1A) No_akb_cnt=70; //проверка отсутвия АКБ
 			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
 			}
-		if ((PWM_status==discharge)&&(set_Id!=0))
+		if ((PWM_status==DISCHARGE)&&(set_Id!=0))
 			{
 			if (ADC_ADS1118[ADC_DI].word>=Id_0t1A) No_akb_cnt=70; //проверка отсутвия АКБ
 			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
@@ -759,11 +759,11 @@ void Err_check(void)
 		}
 
 //---------Проверка перегрева----------------------------
-	if (PWM_status==discharge)
+	if (PWM_status==DISCHARGE)
 		{
 		if ((Temp2.fld.V>MAX_T2dch)&&(Temp2.word!=0xFFFF)) Error=ERR_OVERTEMP2; //проверка перегрева разрядных транзисторов
 		}
-	if (PWM_status==charge)
+	if (PWM_status==CHARGE)
 		{
 		if ((Temp1.fld.V>MAX_T1)&&(Temp1.word!=0xFFFF)) Error=ERR_OVERTEMP1; //проверка перегрева транзисторов
 		if ((Temp2.fld.V>MAX_T2ch)&&(Temp2.word!=0xFFFF)) Error=ERR_OVERTEMP2; //проверка перегрева выпрямительных диодов
@@ -789,7 +789,7 @@ void Err_check(void)
 //---------Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя-----
 if (CSU_cfg.bit.DIAG_WIDE)
 	{
-	if ((PWM_status==stop_charge)&&(CSU_cfg.bit.GroupM==0)) //Если преобразователь выключен и блок работает не в группе
+	if ((PWM_status==STOP)&&(CSU_cfg.bit.GroupM==0)) //Если преобразователь выключен и блок работает не в группе
 		{
 		if ((ADS1118_St[ADC_MUp]!=0)&&(ADS1118_St[ADC_MU]!=0)) //Если есть данные о напряжении
 			{
@@ -819,7 +819,7 @@ if (CSU_cfg.bit.DIAG_WIDE)
 	if (Overload) Error=ERR_OVERLOAD; //проверка защиты от перегрузки
 	if (Error) //Если есть ошибка 
 		{
-			if (PWM_status!=stop_charge) Stop_PWM(0); //если преобразователь не выключен: выключить преобразователь
+			if (PWM_status!=STOP) Stop_PWM(0); //если преобразователь не выключен: выключить преобразователь
 			if (RELAY_EN)
 			{
 				RELAY_OFF; //Если реле не разомкнуто, разомкнуть реле
@@ -853,7 +853,7 @@ if (PWM_status!=0)
 	}
 CSU_Enable=mode&0x0F;
 
-if (CSU_Enable==pause) {
+if (CSU_Enable==PAUSE) {
 	if (RELAY_EN!=0) {
 		RELAY_OFF; //Выключить реле
 		ALARM_OUT(1);
@@ -862,14 +862,14 @@ if (CSU_Enable==pause) {
 	return;
 }
 
-if (CSU_Enable==discharge) DE(1);
+if (CSU_Enable==DISCHARGE) DE(1);
 if (RELAY_EN==0)
 	{
 	RELAY_ON; //Включить реле
 	delay_ms(100);	
 	}
 
-if (CSU_Enable==charge)
+if (CSU_Enable==CHARGE)
 	{
 #if !PID_CONTROL
 	if ((CSU_cfg.bit.LED_ON)&&(connect_st==0))
@@ -882,7 +882,7 @@ if (CSU_Enable==charge)
 	soft_start(CSU_cfg.bit.DIAG_WIDE&&control_setU&&(CSU_cfg.bit.GroupM==0));
 	ADC_ADS1118[ADC_MI].word=0;
 	}
-if (CSU_Enable==discharge)
+if (CSU_Enable==DISCHARGE)
 	{
 	soft_start_disch();	
 	ADC_ADS1118[ADC_DI].word=0;
@@ -950,7 +950,7 @@ else LED_POL(0);//LED|=0x08;
 	
 if (CSU_Enable!=0) LED_PWR(1);//LED&=0xBF;
 
-if (PWM_status==charge)
+if (PWM_status==CHARGE)
 	{
 	if (I_St) {LED_STI(1);LED_STU(0);}//LED=LED&0xDF|0x10;
 	else	  {LED_STI(0);LED_STU(1);}//LED=LED&0xEF|0x20;
@@ -974,7 +974,7 @@ if (correct_off>0) correct_off--;	//Время в течении которого запрещена любая сме
 if (ADC_wait>0) ADC_wait--;	//Максимально допустимое время ожидания оцифровки для АЦП
 if (dm_loss_cnt>0) dm_loss_cnt--; //Задрежка после пуска перед проверкой обрыва РМ
 
-if ((CSU_cfg2.bit.autostart)&&(PWM_status==stop_charge))
+if ((CSU_cfg2.bit.autostart)&&(PWM_status==STOP))
 	{
 	if (autosrart.restart_time>0) autosrart.restart_time--;	
 	}

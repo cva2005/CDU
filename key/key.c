@@ -1,11 +1,11 @@
 #pragma message	("@(#)key.c")
+#include <sys/config.h>
+#include "csu/csu.h"
+#include "csu/mtd.h"
+#include "lcd/wh2004.h"
+#include "lcd/lcd.h"
+#include "pwm/pwm.h"
 #include "key.h"
-#include "../csu/csu.h"
-#include "../csu/mtd.h"
-#include "../net/usart.h"
-#include "../lcd/wh2004.h"
-#include "../lcd/lcd.h"
-#include "../pwm/pwm.h"
 
 extern CSU_type CSU_cfg;
 extern unsigned char  CSU_Enable, ZR_mode;
@@ -21,7 +21,6 @@ extern char LCD[4][20];
 extern unsigned char LCD_mode;
 
 extern unsigned char method_cnt;
-extern method_type Method;
 extern unsigned char SAVE_Method;
 
 extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
@@ -93,7 +92,7 @@ void key_up(void)
 				}
 			case pr_I:
 				{
-				if (ZR_mode==discharge)
+				if (ZR_mode==DISCHARGE)
 					{
 					//set_Id++;
 					set_Id+=Step;
@@ -146,7 +145,7 @@ void key_up(void)
 		}//if (CSU_Enable==0)
 	else
 		{
-		if (ZR_mode==discharge)
+		if (ZR_mode==DISCHARGE)
 			{
 			set_Id++;
 			if (set_Id>max_set_Id) set_Id=Id_0t2A;
@@ -184,7 +183,7 @@ void key_dw(void)
 				}
 			case pr_I:
 				{
-				if (ZR_mode==discharge)
+				if (ZR_mode==DISCHARGE)
 					{
 					//set_Id--;
 					set_Id-=Step;
@@ -234,7 +233,7 @@ void key_dw(void)
 		}//if (CSU_Enable==0)
 	else
 		{
-		if (ZR_mode==discharge)
+		if (ZR_mode==DISCHARGE)
 			{
 			set_Id--;
 			if ((set_Id<Id_0t2A)||(set_Id>max_set_Id)) set_Id=max_set_Id;

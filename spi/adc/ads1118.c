@@ -61,12 +61,12 @@ if (DRDY) return(0);
 
 if (*channel==ADC_MU)
 	{
-	if (CSU_Enable==discharge) ADC_cfg_wr.bit.MUX=ADC_DI;
+	if (CSU_Enable==DISCHARGE) ADC_cfg_wr.bit.MUX=ADC_DI;
 	else ADC_cfg_wr.bit.MUX=ADC_MI;
 	}
 else
 	{
-	if 	((*channel==ADC_MUp)||((PWM_set==0)&&(PWM_status!=stop_charge))) ADC_cfg_wr.bit.MUX=ADC_MU;
+	if 	((*channel==ADC_MUp)||((PWM_set==0)&&(PWM_status!=STOP))) ADC_cfg_wr.bit.MUX=ADC_MU;
 	//if 	(*channel==ADC_MUp) ADC_cfg_wr.bit.MUX=ADC_MU;
 	else ADC_cfg_wr.bit.MUX=ADC_MUp;
 	}

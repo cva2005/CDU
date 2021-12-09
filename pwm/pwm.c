@@ -75,7 +75,7 @@ void Start_PWM_T1(unsigned char mode) {
   P_wdU = P_WDU_start; //Задать ширину импульса для канала А
   P_wdI = P_WDI_start; //Задать ширину импульса для канала Б
   TCCR1A = (1 << COM1B1) | (1 << WGM11); // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
-  if (mode == charge) TCCR1A |= 1 << COM1A1; // OC1A инверсный
+  if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
   TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10); //0x11; //CK=CLK ,режим FAST PWM:ICR1	
   //delay_us(10);
   PWM_status = mode; //установить признак что PWM работает в режиме заряда
@@ -85,7 +85,7 @@ void Start_PWM_T1(unsigned char mode) {
 void soft_start(unsigned char control_out)
 {
 
-Start_PWM_T1(charge);			//запустить преобразователь
+Start_PWM_T1(CHARGE);			//запустить преобразователь
 
 if (control_out)
 	{
@@ -133,7 +133,7 @@ void soft_start_disch(void)
 {unsigned int I;
 
 	
-Start_PWM_T1(discharge);
+Start_PWM_T1(DISCHARGE);
 
 //#if !PID_CONTROL
 I=i_power_limit(P_maxW, set_Id); //Проверка превышения общей мощности
@@ -157,7 +157,7 @@ void Correct_PWM(unsigned char pr)
  
 if (fast_correct) return;
 
-if (PWM_status==charge)
+if (PWM_status==CHARGE)
 	{
 	if (pr&0x01)
 		{
@@ -194,7 +194,7 @@ if (PWM_status==charge)
 		}
 	}
 	
-if (PWM_status==discharge)
+if (PWM_status==DISCHARGE)
 	{
 	limit_id=i_power_limit(P_maxW, set_Id); //Проверка превышения общей мощности
 	if ((P_wdI>limit_id)&&((pr&0x40)!=0x40)) limit_id+=(Id_0t1A); //Если снижаем ток свеху вниз, при этом разрешено поставить немного завышеный ток

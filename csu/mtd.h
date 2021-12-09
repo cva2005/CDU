@@ -66,25 +66,25 @@ typedef struct {
 	unsigned int max_U;
 } finish_t;
 
-#define MTD_N       15
+#define MTD_N           15
+#define DEF_MTD_STAGE   1
 
-
-unsigned char finish_conditions(void);
-void stage_status(void);
-void calculate_method(void);
-void calculate_stage(void);
-void read_method(void);
-void read_stage(unsigned char stage);
-void Start_method(unsigned char new);
-void Stop_method(void);
-void create_method(unsigned char method);
-unsigned int find_free_memory(unsigned char m_cnt);
-void delete_all_method(void);
+unsigned char finish_conditions (void);
+void stage_status (void);
+void calculate_method (void);
+void calculate_stage (void);
+void read_method (void);
+void read_stage (unsigned char stage);
+void Start_method (unsigned char new);
+void Stop_method (void);
+void create_method (unsigned char method);
+uint8_t find_free (void);
+void delete_all_method (void);
 
 //extern unsigned char method_cnt, stage_cnt, cycle_cnt;
 extern uint8_t mCnt, sCnt, cCnt;
-extern unsigned int Method_ARD[MTD_N];
-extern unsigned int Wr_ADR;
+extern uint8_t StageNum[MTD_N];
+extern unsigned int WrNum;
 extern stg_t Stage;
 extern mtd_t Method;
 extern finish_t finish;

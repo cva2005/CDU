@@ -1,4 +1,5 @@
 #pragma message	("@(#)mtd.c")
+#include <sys/config.h>
 #include "csu.h"
 #include "mtd.h"
 #include "lcd/wh2004.h"
@@ -8,8 +9,8 @@
 stg_t Stage;
 mtd_t Method;
 finish_t finish;
-uint8_t pMtd[MTD_N] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint8_t mCnt = 0, sCnt = 0, cCnt = 0;
+uint8_t StageNum[MTD_N] = {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //unsigned int Method_ARD[MTD_N]={MTD_ADDR,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 //unsigned int Wr_ADR = MTD_ADDR;
 
@@ -34,26 +35,26 @@ unsigned char finish_conditions(void)
 {
 if (Stage.fld.stop_flag.I) //если есть признак окончания по току
 	{
-	if (Stage.fld.type==discharge)
+	if (Stage.fld.type==DISCHARGE)
 		{
 		if (ADC_ADS1118[ADC_DI].word<=finish.I) return(1); //при разряде проверить что ток стал меньше минимального допустимого
 		}
 	else
 		{
-		if (CSU_Enable==charge)
+		if (CSU_Enable==CHARGE)
 			{if (ADC_ADS1118[ADC_MI].word<=finish.I) return(1);} //при заряде проверить что ток стал меньше минимально допустимого
 		}	
 	//если условия выполняются то не сбрасывать счётчик антидребезга
 	}
 if (Stage.fld.stop_flag.U) //если есть признак окончания по напряженияю
 	{
-	if ((Stage.fld.type==discharge)||(Stage.fld.type==pause))
+	if ((Stage.fld.type==DISCHARGE)||(Stage.fld.type==PAUSE))
 		{
 		if (ADC_ADS1118[ADC_MU].word<=finish.U) return(1); //при разряде проверить что напряжение меньше допустимого
 		}
 	else
 		{
-		if (CSU_Enable==charge)
+		if (CSU_Enable==CHARGE)
 			{if (ADC_ADS1118[ADC_MU].word>=finish.U) return(1);} //при заряде проверить что напряжение больше допустимого
 		}
 	//если условия выполняются то не сбрасывать счётчик антидребезга
@@ -88,20 +89,20 @@ return(0);
 //проверка текущего сосотяния этапа
 void stage_status(void)
 {
-if (Stage.fld.type==pulse) //если задан импульсный режим
+if (Stage.fld.type==PULSE) //если задан импульсный режим
 	{
 	if (pulse_step==0)		//истекло время импульса?
 		{
-		if (CSU_Enable==discharge) //если был разряд, то сменить его на заряд
+		if (CSU_Enable==DISCHARGE) //если был разряд, то сменить его на заряд
 			{
 			set_U=set_UmemC;		//установить напряжение заряда
-			Start_CSU(charge);
+			Start_CSU(CHARGE);
 			pulse_step=Stage.fld.T_ch*60; //расчитать длительность импульса
 			}	
 		else
 			{
 			set_U=set_UmemD;
-			Start_CSU(discharge);
+			Start_CSU(DISCHARGE);
 			pulse_step=Stage.fld.T_dch*60;
 			}
 		}	
@@ -116,17 +117,17 @@ if (finish_cnt==0) //условия окончания выполняются и вышло время антидребезга?
 		read_stage(stage_cnt); //прочитать следующий этап
 		calculate_stage();
 		change_UI=1;
-		if (Stage.fld.type==discharge) 
+		if (Stage.fld.type==DISCHARGE) 
 			{
-			if (PWM_status!=discharge) Start_CSU(discharge);
+			if (PWM_status!=DISCHARGE) Start_CSU(DISCHARGE);
 			}
-		if ((Stage.fld.type==charge)||(Stage.fld.type==pulse))
+		if ((Stage.fld.type==CHARGE)||(Stage.fld.type==PULSE))
 			{
-			if (PWM_status!=charge) Start_CSU(charge);
+			if (PWM_status!=CHARGE) Start_CSU(CHARGE);
 			}
-		if (Stage.fld.type==pause) 
+		if (Stage.fld.type==PAUSE) 
 			{
-			if (CSU_Enable!=pause) Start_CSU(pause);//Start_CSU(charge);
+			if (CSU_Enable!=PAUSE) Start_CSU(PAUSE);//Start_CSU(charge);
 			}
 		}
 	else //если следующего этапа нет
@@ -195,7 +196,7 @@ S=(((uint32_t)Method.fld.Um)*((uint32_t)Stage.fld.U_dch)*10UL)/K_U;
 set_UmemD=(unsigned int)S;
 if (set_UmemD>max_set_U) set_UmemD=max_set_U;
 
-if (Stage.fld.type==discharge) set_U=set_UmemD;
+if (Stage.fld.type==DISCHARGE) set_U=set_UmemD;
 else set_U=set_UmemC;
 
 if (Stage.fld.stop_flag.U)
@@ -210,14 +211,14 @@ if (Stage.fld.stop_flag.dU)
 	}
 if (Stage.fld.stop_flag.I)
 	{
-	if (Stage.fld.type==discharge)
+	if (Stage.fld.type==DISCHARGE)
 		S=(((uint32_t)Method.fld.Im)*((uint32_t)Stage.fld.end_I)*10UL)/K_Id;
 	else
 		S=(((uint32_t)Method.fld.Im)*((uint32_t)Stage.fld.end_I)*10UL)/K_I;
 	finish.I=(unsigned int)S;
 	}
 
-if (Stage.fld.type==stop_charge) Stage.fld.type=pause;
+if (Stage.fld.type==STOP) Stage.fld.type=PAUSE;
 
 finish.max_U=0;
 
@@ -231,11 +232,16 @@ finish_cnt=100; //установить паузу в определении условий окончания
 }
 
 void read_method (void) {
-    if (read_mtd(pMtd[mCnt], &Method) == false) {
-        if (mCnt > MTD_DEF)
-            mCnt = 0; //если не причтался не заводской метод, то установить на первый заводской метод
-        if (read_mtd(pMtd[mCnt], &Method) == false)
-            create_method(mCnt); //если не прочитался заводской метод, то создать его
+    uint8_t i, n = mCnt;
+    for (i = 0; i < mCnt; i++) {
+        n += StageNum[i];
+    }
+    if (read_mtd(n, &Method) == false) {
+        if (mCnt != MTD_DEF) mCnt = n = 0;
+        else n = 1;
+        //если не причтался не заводской метод, то установить на первый заводской метод
+        if (read_mtd(n, &Method) == false)
+            create_method(n); //если не прочитался заводской метод, то создать его
     }
     sCnt = 0;
     read_stage(0);
@@ -244,9 +250,12 @@ void read_method (void) {
 }
 
 void read_stage (unsigned char stage) {
-    if (!EEPROM_read_string(Method_ARD[method_cnt]+SIZE_METHOD+(SIZE_STAGE*stage),
-                            SIZE_STAGE, &Stage.byte[0])) Error = ERR_STAGE;
-    if (Stage.fld.data_type != 0x55) Error = ERR_STAGE;
+    uint8_t i, n = mCnt;
+    for (i = 0; i < mCnt; i++) {
+        n += StageNum[i];
+    }
+    n += stage;
+    if (read_stg(n, &Stage) == false) Error = ERR_STAGE;
 }
 
 void Start_method (unsigned char mtd) {
@@ -262,7 +271,7 @@ void Start_method (unsigned char mtd) {
 		//S=(((uint32_t)set_U)*K_U)/100000UL;
 		//Method.fld.Um=(unsigned int)S;
 		//расчитать ток в амперах
-		if (Stage.fld.type==discharge) S=(((uint32_t)set_Id)*K_Id);//100000UL;
+		if (Stage.fld.type==DISCHARGE) S=(((uint32_t)set_Id)*K_Id);//100000UL;
 		else S=(((uint32_t)set_I)*K_I);//100000UL;
 		error_calc=S%1000000UL;
 		if ((error_calc/100000UL)>4) S+=1000000UL; //убрать погрешность
@@ -282,10 +291,10 @@ void Start_method (unsigned char mtd) {
 	stage_cnt=0;	//Установить первый этап
 	read_stage(stage_cnt);
 	calculate_stage();
-	if (Stage.fld.type==discharge) Start_CSU(discharge);
+	if (Stage.fld.type==DISCHARGE) Start_CSU(DISCHARGE);
 	else {
-		if (Stage.fld.type==pause) Start_CSU(pause);	
-		else Start_CSU(charge);	
+		if (Stage.fld.type==PAUSE) Start_CSU(PAUSE);	
+		else Start_CSU(CHARGE);	
 	}	
 }
 
@@ -346,7 +355,7 @@ void create_method (unsigned char method) {
         Method.fld.Nstage=1;
         EEPROM_write_string(Method_ARD[0], SIZE_METHOD, &Method.byte[0]);
         Stage.fld.data_type=0x55;
-        Stage.fld.type=charge;
+        Stage.fld.type=CHARGE;
         Stage.fld.stop_flag.T=0;
         Stage.fld.stop_flag.I=0;
         #ifdef CHARGER_24
@@ -391,7 +400,7 @@ void create_method (unsigned char method) {
         Method.fld.Nstage=1;
         EEPROM_write_string(Method_ARD[1], SIZE_METHOD, &Method.byte[0]);
         Stage.fld.data_type=0x55;
-        Stage.fld.type=discharge;
+        Stage.fld.type=DISCHARGE;
         Stage.fld.stop_flag.T=0;
         Stage.fld.stop_flag.I=0;
         Stage.fld.stop_flag.U=0;
@@ -414,7 +423,23 @@ void create_method (unsigned char method) {
 	}
 }
 
-unsigned int find_free_memory (unsigned char m_cnt) {
+uint8_t find_free (void) {
+    uint8_t i, s, n = mCnt;
+    for (i = 0; i < mCnt/*MS_N*/; i++) {
+        n += StageNum[i];
+    }
+    mtd_t mtd;
+    i = mCnt;
+    while (n < MS_N) {
+        if (read_mtd(n, &mtd) == false) return n;
+        i++;
+        s = mtd.fld.Nstage;
+        StageNum[i] = s;
+        n++;
+        n += s;
+    }
+}
+#if 0
     unsigned char result;
     unsigned int ADR;
     method_t MTD;
@@ -427,7 +452,7 @@ unsigned int find_free_memory (unsigned char m_cnt) {
         ADR=Method_ARD[m_cnt-1]+SIZE_METHOD+(SIZE_STAGE*MTD.fld.Nstage); //посчитать адрес следующего метода
 	}
     return (ADR);
-}
+#endif
 
 void delete_all_method (void) {
     unsigned int ADR;
