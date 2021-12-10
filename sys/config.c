@@ -35,7 +35,7 @@ static const cfg_t DefaultCfg = {
 	EXT_Id_bit, // unsigned EXT_Id :1;
 	0, // unsigned EXTt_pol :1;
 	RELAY_MODE_bit, // unsigned RELAY_MODE :1;
-    DM_ext, // uint8_t DM_SLAVE;
+    DM_ext, // uint8_t dmSlave;
     MY_ADR_const, // uint8_t MY_ADR;
     B_U_const,
     B_I_const,
@@ -77,7 +77,7 @@ void save_cfg (void) {
     eData.Crc1 = calc_crc((uint8_t *)&Cfg, sizeof(Cfg));
 }
 
-void read_num (uint8_t *dest) {
+void read_num (char *dest) {
     memcpy(dest, (void *)&Num, sizeof(Num));
 }
 

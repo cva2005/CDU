@@ -6,8 +6,6 @@
 #include "csu/csu.h"
 #include "csu/mtd.h"
 
-extern CSU_type CSU_cfg;
-
 extern char LCD[4][20];
 extern unsigned char Cursor_pos[PR_number], Cursor_point;
 extern unsigned char LCD_mode;
@@ -28,7 +26,6 @@ extern Temp_type Temp1_last, Temp2_last; //значения температуры на дисплее
 extern unsigned char cycle_cnt_last, stage_cnt_last, Sec_last;
 
 extern unsigned char stage_cnt, cycle_cnt;
-extern method_type Method;
 extern C_type C;
 
 //------------------------------------------------------------------------------------------------

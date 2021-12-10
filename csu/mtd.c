@@ -1,10 +1,11 @@
 #pragma message	("@(#)mtd.c")
 #include <sys/config.h>
-#include "csu.h"
-#include "mtd.h"
 #include "lcd/wh2004.h"
 #include "lcd/lcd.h"
-#include "net/usart.h"
+#include "spi/adc/ads1118.h"
+#include "net/net.h"
+#include "csu.h"
+#include "mtd.h"
 
 stg_t Stage;
 mtd_t Method;
@@ -19,13 +20,12 @@ extern unsigned int pulse_step; //время импульса заряд/разря при импульсном режи
 extern unsigned int dU_time;
 extern unsigned char SAVE_Method;
 extern unsigned int TEST1, TEST2, TEST3, TEST4;
-extern CSU_type CSU_cfg;
 extern unsigned char PWM_status, CSU_Enable, ZR_mode, Error;
 extern unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD; //переменный для параметров задаваемого тока и напряжения
-extern unsigned int K_I, K_U, K_Id, max_set_I, max_set_Id, max_set_U;
+extern unsigned int max_set_I, max_set_Id, max_set_U;
 extern unsigned char Hour, Min, Sec, Hour_Stage, Min_Stage, Sec_Stage;
 //extern unsigned char Hour_Z, Min_Z, Sec_Z;
-extern ADC_Type  ADC_ADS1118[4]; //данные измерений с ADS1118
+//extern ADC_Type  ADC_ADS1118[4]; //данные измерений с ADS1118
 extern C_type C;
 extern unsigned char change_UI;
 extern char LCD[4][20];

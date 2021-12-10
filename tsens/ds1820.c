@@ -2,12 +2,10 @@
 #include "../sys/system.h"
 #include "../net/usart.h"
 #include "ds1820.h"
-/*
-Function of Init sequence for DS18B20
-RETURNS VALUE:
-	1-connected
-	0-not connected
-*/
+
+unsigned char Err_Thermometr, Err1_cnt=0, Err2_cnt=0; //use if need
+Temp_type Temp1, Temp2;
+
 unsigned char Tmp_Presence_pulse(void)
 {//unsigned int i;
  unsigned char data_accept;

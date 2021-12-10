@@ -21,13 +21,13 @@
 
 unsigned long alarm_del;
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
-autosrart_t autosrart;
-//calibrate_t calibrate;
+//autosrart_t autosrart;
+//Clb_t Clb;
 //--------------------------------переменные для состояния и режимов работы
 unsigned char PWM_status=0, CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
 unsigned char self_ctrl=0; //управление методом заряда производится самостоятельно или удалённо
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD; //переменные для параметров задаваемого тока и напряжения
-unsigned int id_dw_calibrate, id_up_calibrate;
+unsigned int id_dw_Clb, id_up_Clb;
 unsigned int  No_akb_cnt=0, dm_loss_cnt=0;
 unsigned int  pid_t = 0;
 unsigned char SAVE_Method=0;
@@ -38,10 +38,8 @@ unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
 unsigned char PWM_set=0; //если не 0, то необходимый ШИМ установлен (достигнут) - значит можно читать канал АЦП с напряжением до реле
 
-CSU_type CSU_cfg;
-CSU2_type CSU_cfg2;
-unsigned char DM_SLAVE=DM_ext;
-unsigned int maxI, maxId, maxU; //макисмальные значения в формате 3600 (36.00 В)
+//unsigned char dmSlave=DM_ext;
+//unsigned int maxI, maxId, maxU; //макисмальные значения в формате 3600 (36.00 В)
 unsigned char ERR_Ext=0;		//фильтр на чтения внешнего датчика температуры
 
 //--------------------------------переменные для сканирования клавиш
@@ -51,20 +49,10 @@ unsigned int  KeyPress;
 unsigned char Hour=0, Min=0, Sec=0, mSec=0, Hour_Stage, Min_Stage, Sec_Stage;
 //unsigned char Hour_Z=10, Min_Z=0, Sec_Z;
 //---------------------Переменные для измерений----------------------
-ADS1118_type ADC_cfg_wr, ADC_cfg_rd; //регистры конфигурирования для ADS1118
-ADC_Type  ADC_ADS1118[4]; //данные измерений с ADS1118
-unsigned int ADC_O[4]; //данные АЦП без изменений (бе вычета коэфициента В)
-unsigned char ADS1118_St[4]; //состояние даных АЦП: данные обработаны/не обработаны
-unsigned char ADS1118_chanal=0, ADC_finish=0;
-unsigned char ADC_wait=200, Err_ADC_cnt=0, OUT_err_cnt=0;
 
-unsigned int K_I, K_U, K_Id, K_Ip, max_set_U, max_set_I, max_set_Id,  P_maxW;  //коэфициэнты К и максимальные значения тока напряженяи в значениях АЦП
-unsigned int B[4]={B_U_const, B_I_const, B_Id_const, B_Up_const};
+unsigned int max_set_U, max_set_I, max_set_Id;  //коэфициэнты К и максимальные значения тока напряженяи в значениях АЦП
+//unsigned int B[4]={B_U_const, B_I_const, B_Id_const, B_Up_const};
 unsigned int max_pwd_I=MAX_CK, max_pwd_U=MAX_CK, max_pwd_Id=0; //максимально допустимая ширина импульсов при регулировании тока и напряжения
-
-unsigned int B_I[3]={B_I_const, B_I_extId_1, B_I_extId_2}; //Ток, потребляемый доп. разрядным модулем (дополнитльное смещение 0 при подключении разрядного модуля)
-//int K_PWD_Id_ext[3]={K_PWD_Id, K_PWD_Id_ext1, K_PWD_Id_ext2};
-//int B_PWD_Id_ext[3]={B_PWD_Id, B_PWD_Id_ext1, B_PWD_Id_ext2};
 
 C_type C;	//ёмкость АКБ
 //---------------------Переменные для LCD----------------------------
@@ -76,17 +64,15 @@ unsigned char  Cursor_pos[PR_number] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle},
 unsigned char LCD_refresh=0; //время между обновлениями ЖКИ
 unsigned char LCD_mode=0;
 //----------------Real Temperature  (Tmp_DS18B20Z.c) variabels-------------------------
-unsigned char Err_Thermometr, Err1_cnt=0, Err2_cnt=0; //use if need
-Temp_type Temp1, Temp2;
 unsigned char time_rd=0; //время между чтениями датчиков температуры
 //----------------UART  (usart.c) variabels-------------------------
-unsigned char tx_point=0;
+/*unsigned char tx_point=0;
 tx_pack_type tx_pack;
 unsigned char rx_point=0;
 rx_pack_type rx_pack;
 unsigned char connect_st=0, time_wait=255;
 unsigned char tx_lenght;
-unsigned char MY_ADR;
+unsigned char MY_ADR;*/
 
 typedef enum {
   RESET_ST,
@@ -350,7 +336,7 @@ static void Correct_UI (void) {
       err_i = set_I - ADC_ADS1118[ADC_MI].word;
     } else {
       ADS1118_St[ADC_DI] = 0;
-      err_i = i_power_limit(P_maxW, set_Id);
+      err_i = i_power_limit(Cfg.P_maxW, set_Id);
       err_i -= ADC_ADS1118[ADC_DI].word;
     }
 	  if (PWM_status == CHARGE) {
@@ -545,35 +531,35 @@ if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1)))
 				if (P_wdI>0) P_wdI--;
 				PWM_set=0;
 				}
-			if (calibrate.id.bit.control) //если установлен флаг необходимости контроля калибровки тока разряда
+			if (Clb.id.bit.control) //если установлен флаг необходимости контроля калибровки тока разряда
 				{
 				if (U_over) //если напряжение достаточное для того чтобы выйти на стабилизацию тока (аккумулятор исправный и не "просел")
 					{
-					if (err_I>(Id_0t2A)) {calibrate.id.bit.error=1;} //если есть ошибка по току,  то установить флаг ошибки калибровки
-					else {calibrate.id.bit.error=0;}   //если ошибки не большая , то установить флаг что калибровка блока впорядке
-					if (DM_SLAVE>0)
-						{if (err_I>(Id_0t1A+ADC_ADS1118[ADC_DI].word/100*5)) calibrate.id.bit.save=1;} //если ошибка по току слишком большая то установить флаг необходимости сохранения коэфициентов в EEPROM
+					if (err_I>(Id_0t2A)) {Clb.id.bit.error=1;} //если есть ошибка по току,  то установить флаг ошибки калибровки
+					else {Clb.id.bit.error=0;}   //если ошибки не большая , то установить флаг что калибровка блока впорядке
+					if (Cfg.dmSlave > 0)
+						{if (err_I>(Id_0t1A+ADC_ADS1118[ADC_DI].word/100*5)) Clb.id.bit.save=1;} //если ошибка по току слишком большая то установить флаг необходимости сохранения коэфициентов в EEPROM
 					else
-						{if (err_I>(Id_0t2A)) calibrate.id.bit.save=1;} //если ошибка по току слишком большая то установить флаг необходимости сохранения коэфициентов в EEPROM
-					calibrate.id.bit.control=0; //установить флаг, что контроль калибровки проведён
+						{if (err_I>(Id_0t2A)) Clb.id.bit.save=1;} //если ошибка по току слишком большая то установить флаг необходимости сохранения коэфициентов в EEPROM
+					Clb.id.bit.control=0; //установить флаг, что контроль калибровки проведён
 					}
 				}
-			if (calibrate.id.bit.error) //если есть ошибка в калибровке РМ
+			if (Clb.id.bit.error) //если есть ошибка в калибровке РМ
 				{
 				if ((Id_under==0)&&(Id_over==0)) //если ток застабилизировался на заданном уровне
 					{
-					if (limit_Id<id_dw_calibrate) //если ток допустимый для сохранения калибровки на малых токах
+					if (limit_Id<id_dw_Clb) //если ток допустимый для сохранения калибровки на малых токах
 						{
-						calibrate.setI1=limit_Id;//set_Id;
-						calibrate.pwm1=P_wdI;
-						calibrate.id.bit.dw_finish=1;
+						Clb.setI1=limit_Id;//set_Id;
+						Clb.pwm1=P_wdI;
+						Clb.id.bit.dw_finish=1;
 						max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
 						}
-					if (limit_Id>id_up_calibrate)//если ток допустимый для калибровки на больших токах
+					if (limit_Id>id_up_Clb)//если ток допустимый для калибровки на больших токах
 						{
-						calibrate.setI2=limit_Id;//set_Id;
-						calibrate.pwm2=P_wdI;
-						calibrate.id.bit.up_finish=1;
+						Clb.setI2=limit_Id;//set_Id;
+						Clb.pwm2=P_wdI;
+						Clb.id.bit.up_finish=1;
 						max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
 						}
 					}
@@ -606,67 +592,61 @@ if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1)))
 #endif
 //-------------------------------------------------------------------------------------
 void calc_cfg (void) {
-    uint32_t M=0UL;
-    Error=0;
+    Error = 0;
 
-    if(maxI>5000) maxI=5000;
-    M=((uint32_t)maxI*100000UL)/K_I; //вычисляем в значениях АЦП (добавляем 5 нулей чтобы увеличить точность и делим на К)
-    max_set_I=(unsigned int) M;
-    if (CSU_cfg.bit.GroupM) max_set_I=max_set_I+(I_1A);
-    if (DM_SLAVE==0)
-        {if(maxId>maxId_EXT0) maxId=maxId_EXT0;}
-    else 
-        {if(maxId>maxId_EXT12) maxId=maxId_EXT12;}
-    M=((uint32_t)maxId*100000UL)/K_Id;
-    max_set_Id=M;
-    if (CSU_cfg.bit.GroupM) max_set_Id=max_set_Id+(Id_1A);
-    if(maxU>4000) maxU=4000;
-    M=((uint32_t)maxU*100000UL)/K_U;
-    max_set_U=M;
-    M=(uint32_t)max_set_I*100UL/K_PWD_I+B_PWD_I;
-    max_pwd_I=(unsigned int) M;
-    if (max_pwd_I<85) max_pwd_I=85;
-    M=(uint32_t)max_set_U*100UL/K_PWD_U+B_PWD_U;
-    max_pwd_U=(unsigned int) M;
-    if (DM_SLAVE>2) DM_SLAVE=2;
-    if (DM_SLAVE>0) CSU_cfg.bit.EXT_Id=1;
-    else CSU_cfg.bit.EXT_Id=0;
-    //B[ADC_MI]=B_I[DM_SLAVE]; //смещение тока установить в зависимости от того сколько РМ подключено
-    ADC_O[ADC_MU]=B[ADC_MU]; //Убрать ошибку "Переполюсовка" пока АЦП не будет оцифрован
-    ADC_O[ADC_MI]=B[ADC_MI]; //Убрать ошибку "Обрыв РМ"
-    autosrart.u_pwm=((uint32_t)autosrart.u_set*100000UL)/K_U;
-    autosrart.restart_cnt=autosrart.cnt_set;
-    autosrart.restart_time=autosrart.time_set;
-    if (CSU_cfg2.bit.autostart!=0) CSU_cfg.bit.DEBUG_ON=1;
-
-    id_dw_calibrate=Id_2A;
-    if (DM_SLAVE==0) {
-        id_up_calibrate=HI_Id_EXT0;
-        if (P_maxW>2500) P_maxW=2500;
+    if (Cfg.maxI > 5000) Cfg.maxI = 5000;
+    max_set_I = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
+    if (CSU_cfg.bit.GroupM) max_set_I = max_set_I + I_A(1,0);
+    if (Cfg.dmSlave == 0) {
+        if (Cfg.maxId>maxId_EXT0) Cfg.maxId = maxId_EXT0;
+    } else {
+        if (Cfg.maxId > maxId_EXT12) Cfg.maxId = maxId_EXT12;
+    }
+    max_set_Id = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
+    if (CSU_cfg.bit.GroupM) max_set_Id = max_set_Id + I_A(1,0);
+    if (Cfg.maxU > 4000) Cfg.maxU = 4000;
+    max_set_U = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
+    max_pwd_I = (uint32_t)max_set_I * 100UL / K_PWD_I + B_PWD_I;
+    if (max_pwd_I < 85) max_pwd_I = 85;
+    max_pwd_U = (uint32_t)max_set_U * 100UL / K_PWD_U + B_PWD_U;
+    if (Cfg.dmSlave > 2) Cfg.dmSlave = 2;
+    if (Cfg.dmSlave > 0) CSU_cfg.bit.EXT_Id = 1;
+    else CSU_cfg.bit.EXT_Id = 0;
+    //B[ADC_MI]=B_I[dmSlave]; //смещение тока установить в зависимости от того сколько РМ подключено
+    ADC_O[ADC_MU] = B[ADC_MU]; //Убрать ошибку "Переполюсовка" пока АЦП не будет оцифрован
+    ADC_O[ADC_MI] = B[ADC_MI]; //Убрать ошибку "Обрыв РМ"
+    autosrart.u_pwm = ((uint32_t)autosrart.u_set*100000UL) / Cfg.K_U;
+    autosrart.restart_cnt = autosrart.cnt_set;
+    autosrart.restart_time = autosrart.time_set;
+    if (CSU_cfg2.bit.autostart) CSU_cfg.bit.DEBUG_ON = 1;
+    id_dw_Clb = Id_A(2,0);
+    if (Cfg.dmSlave == 0) {
+        id_up_Clb = HI_Id_EXT0;
+        if (Cfg.P_maxW > 2500) Cfg.P_maxW = 2500;
 	}
-    if (DM_SLAVE==1) {
-        id_up_calibrate=HI_Id_EXT1;
-        if (P_maxW>8000) P_maxW=8000;
+    if (Cfg.dmSlave == 1) {
+        id_up_Clb = HI_Id_EXT1;
+        if (Cfg.P_maxW > 8000) Cfg.P_maxW = 8000;
 	}
-    if (DM_SLAVE>1) {
-        id_up_calibrate=HI_Id_EXT2;
-        if (P_maxW>14000) P_maxW=14000;
+    if (Cfg.dmSlave > 1) {
+        id_up_Clb = HI_Id_EXT2;
+        if (Cfg.P_maxW > 14000) Cfg.P_maxW = 14000;
 	}
-    if (id_up_calibrate > max_set_Id) id_up_calibrate = max_set_Id >> 1;
+    if (id_up_Clb > max_set_Id) id_up_Clb = max_set_Id >> 1;
     if (read_clb() == false) {
-        if (DM_SLAVE == 0) {
+        if (Cfg.dmSlave == 0) {
             Clb.pwm1=PWM1_Id_EXT0;
             Clb.setI1=SETId1_EXT0;
             Clb.pwm2=PWM2_Id_EXT0;
             Clb.setI2=SETId2_EXT0;
         }
-        if (DM_SLAVE == 1) {
+        if (Cfg.dmSlave == 1) {
             Clb.pwm1=PWM1_Id_EXT1;
             Clb.setI1=SETId1_EXT1;
             Clb.pwm2=PWM2_Id_EXT1;
             Clb.setI2=SETId2_EXT1;
         }
-        if (DM_SLAVE > 1) {
+        if (Cfg.dmSlave > 1) {
             Clb.pwm1=PWM1_Id_EXT2;
             Clb.setI1=SETId1_EXT2;
             Clb.pwm2=PWM2_Id_EXT2;
@@ -688,11 +668,11 @@ unsigned int i_power_limit(unsigned int p, unsigned int i)
 {uint32_t U, Id;
 	p_limit=0;
 	//U=adc_to_value(ADC_ADS1118[ADC_MU].word, ku_cfg.K[ADC_MU], 0, BASE_D)/1000000UL;
-	U=(((uint32_t)ADC_ADS1118[ADC_MU].word)*((uint32_t)K_U))/1000000UL;	
+	U=(((uint32_t)ADC_ADS1118[ADC_MU].word)*((uint32_t)Cfg.K_U))/1000000UL;	
 	if (U>0)
 		{
 		//Id=value_to_adc((((uint64_t)p*10000000ULL)/(uint64_t)U), ku_cfg.K[ADC_DI], 0, BASE_D);
-		Id=(((uint64_t)p*10000000ULL)/(uint64_t)U)/K_Id;
+		Id=(((uint64_t)p*10000000ULL)/(uint64_t)U)/Cfg.K_Id;
 		if ((Id<32768)&&(Id>0))
 			{
 			if (i>(uint16_t)Id) 
@@ -723,7 +703,7 @@ void Err_check(void)
 			}*/
 		}
 //---------Проверка на обрыв РМ-----------------------
-	if (DM_SLAVE>0)
+	if (Cfg.dmSlave>0)
 		{
 		if ((CSU_cfg.bit.DIAG_WIDE)&&(PWM_status==DISCHARGE)) //Если включена расширеная диагностика
 			{
@@ -733,11 +713,11 @@ void Err_check(void)
 			//		{
 			//		Error=ERR_DISCH_PWR;
 			//		}	
-				if (ADC_ADS1118[ADC_DI].word>Id_0t1A)
+				if (ADC_ADS1118[ADC_DI].word>Id_A(0,1))
 					{
 					if ((set_U<ADC_ADS1118[ADC_MU].word)&&(p_limit==0)&&(set_Id>(ADC_ADS1118[ADC_DI].word<<1)))
 						Error=ERR_DM_LOSS;
-					if ((set_Id>(ADC_ADS1118[ADC_DI].word+Id_0t2A))&&(P_wdI==max_pwd_Id))//если реальный ток в 2 раза меньше заданного
+					if ((set_Id>(ADC_ADS1118[ADC_DI].word+Id_A(0,2)))&&(P_wdI==max_pwd_Id))//если реальный ток в 2 раза меньше заданного
 						Error=ERR_DM_LOSS;
 					}
 				}
@@ -748,12 +728,12 @@ void Err_check(void)
 		{
 		if ((PWM_status==CHARGE)&&(set_I!=0))
 			{
-			if (ADC_ADS1118[ADC_MI].word>=I_0t1A) No_akb_cnt=70; //проверка отсутвия АКБ
+			if (ADC_ADS1118[ADC_MI].word>=Id_A(0,1)) No_akb_cnt=70; //проверка отсутвия АКБ
 			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
 			}
 		if ((PWM_status==DISCHARGE)&&(set_Id!=0))
 			{
-			if (ADC_ADS1118[ADC_DI].word>=Id_0t1A) No_akb_cnt=70; //проверка отсутвия АКБ
+			if (ADC_ADS1118[ADC_DI].word>=Id_A(0,1)) No_akb_cnt=70; //проверка отсутвия АКБ
 			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
 			}
 		}
@@ -793,7 +773,7 @@ if (CSU_cfg.bit.DIAG_WIDE)
 		{
 		if ((ADS1118_St[ADC_MUp]!=0)&&(ADS1118_St[ADC_MU]!=0)) //Если есть данные о напряжении
 			{
-			if ((ADC_ADS1118[ADC_MU].word>U_0t8V)&&(ADC_ADS1118[ADC_MUp].word<U_0t2V)) {if (OUT_err_cnt<250) OUT_err_cnt++;}
+			if ((ADC_ADS1118[ADC_MU].word>U_V(0,8))&&(ADC_ADS1118[ADC_MUp].word<U_V(0,2))) {if (OUT_err_cnt<250) OUT_err_cnt++;}
 			else OUT_err_cnt=0;
 			
 			if (OUT_err_cnt>2) Error=ERR_OUT; //если на выходе после реле напряжение есть, а до реле напряжения нет, значит КЗ выхода
@@ -874,9 +854,9 @@ if (CSU_Enable==CHARGE)
 #if !PID_CONTROL
 	if ((CSU_cfg.bit.LED_ON)&&(connect_st==0))
 		{
-		if (ADC_ADS1118[ADC_MU].word>U_16V) set_U=U_31V;
-		else set_U=U_16V;
-		set_I=I_1A;
+		if (ADC_ADS1118[ADC_MU].word>U_V(16,0)) set_U=U_V(31,0);
+		else set_U=U_V(16,0);
+		set_I=I_A(1,0);
 		}
 #endif
 	soft_start(CSU_cfg.bit.DIAG_WIDE&&control_setU&&(CSU_cfg.bit.GroupM==0));

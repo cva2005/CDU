@@ -7,7 +7,6 @@
 
 extern int TEST1, TEST2, TEST3, TEST4;
 
-extern calibrate_t calibrate;
 extern unsigned char PWM_status, Error;
 extern ADC_Type  ADC_ADS1118[4];
 extern unsigned char ADS1118_St[4]; //состояние обработаны данные или нет
@@ -15,9 +14,6 @@ extern unsigned char ADC_finish;
 extern unsigned int set_I, set_U, set_Id;
 extern unsigned int K_U, K_I, K_Id;
 extern unsigned int P_maxW;
-
-extern CSU_type CSU_cfg;
-extern unsigned char DM_SLAVE;
 
 extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
 extern unsigned int fast_correct;
@@ -116,8 +112,8 @@ change_UI=0;
 unsigned int calculate_pwd(unsigned int val, unsigned char limit)
 {int32_t P=0L, K, B;
 
-	K=(1000L*(calibrate.setI2-calibrate.setI1))/(calibrate.pwm2-calibrate.pwm1); //рассчитать зхначения K
-	B=calibrate.pwm1-((int32_t)calibrate.setI1*1000L/K); //рассчитать зхначения B
+	K=(1000L*(Clb.setI2-Clb.setI1))/(Clb.pwm2-Clb.pwm1); //рассчитать зхначения K
+	B=Clb.pwm1-((int32_t)Clb.setI1*1000L/K); //рассчитать зхначения B
 	P=(int32_t)val*1000L/K+B;
 	if (P<0) P=0;
 	if (P>MAX_CK) P=MAX_CK;
@@ -145,7 +141,7 @@ ADS1118_St[ADC_DI]=0;
 ADC_finish=0;
 correct_off=20; //запретить корректировку ШИМ, пока не стабилизируется напряжение
 change_UI=0;
-calibrate.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибровку
+Clb.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибровку
 dm_loss_cnt=100;
 }
 
@@ -197,7 +193,7 @@ if (PWM_status==CHARGE)
 if (PWM_status==DISCHARGE)
 	{
 	limit_id=i_power_limit(P_maxW, set_Id); //Проверка превышения общей мощности
-	if ((P_wdI>limit_id)&&((pr&0x40)!=0x40)) limit_id+=(Id_0t1A); //Если снижаем ток свеху вниз, при этом разрешено поставить немного завышеный ток
+	if ((P_wdI>limit_id)&&((pr&0x40)!=0x40)) limit_id+=Id_A(0,1); //Если снижаем ток свеху вниз, при этом разрешено поставить немного завышеный ток
 	I_p=calculate_pwd(limit_id, 1);
 	
 	while ((I_p!=P_wdI)&&(P_wdI!=max_pwd_Id)&&(P_wdI!=0))

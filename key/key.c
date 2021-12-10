@@ -7,7 +7,7 @@
 #include "pwm/pwm.h"
 #include "key.h"
 
-extern CSU_type CSU_cfg;
+//extern CSU_type CSU_cfg;
 extern unsigned char  CSU_Enable, ZR_mode;
 extern unsigned char self_ctrl; //управление методом заряда производится самостоятельно или удалённо
 extern unsigned char Cursor_pos[PR_number], Cursor_point;
@@ -28,7 +28,7 @@ extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
 unsigned char scan_key(unsigned char *key)
 {unsigned char cnt=0, mask;
 
-if (CSU_cfg.bit.EXT_Id) mask=0x08;
+if (Cfg.bf1.EXT_Id) mask=0x08;
 else mask=0;
 
 *key=KEY_MASK|mask; //прочитать кнопки
@@ -96,13 +96,13 @@ void key_up(void)
 					{
 					//set_Id++;
 					set_Id+=Step;
-					if (set_Id>max_set_Id) set_Id=Id_0t2A;
+					if (set_Id>max_set_Id) set_Id=Id_A(0,2);
 					}
 				else
 					{
 					//set_I++;
 					set_I+=Step;
-					if (set_I>max_set_I) set_I=I_0t2A;
+					if (set_I>max_set_I) set_I=I_A(0,2);
 					}
 				//Key_delay=2;
 				SAVE_Method=1;
@@ -112,7 +112,7 @@ void key_up(void)
 				{
 				//set_U++;
 				set_U+=Step;
-				if (set_U>max_set_U) set_U=U_0t2V;
+				if (set_U>max_set_U) set_U=U_V(0,2);
 				//Key_delay=2;
 				SAVE_Method=1;
 				break;
@@ -148,19 +148,19 @@ void key_up(void)
 		if (ZR_mode==DISCHARGE)
 			{
 			set_Id++;
-			if (set_Id>max_set_Id) set_Id=Id_0t2A;
+			if (set_Id>max_set_Id) set_Id=Id_A(0,2);
 			}
 		else
 			{
 			if (I_St)
 				{
 				set_I++;
-				if (set_I>max_set_I) set_I=I_0t2A;
+				if (set_I>max_set_I) set_I=I_A(0,2);
 				}
 			else
 				{
 				set_U++;
-				if (set_U>max_set_U) set_U=U_0t2V;
+				if (set_U>max_set_U) set_U=U_V(0,2);
 				//Key_delay=2;
 				}
 			}
@@ -187,13 +187,13 @@ void key_dw(void)
 					{
 					//set_Id--;
 					set_Id-=Step;
-					if ((set_Id<Id_0t2A)||(set_Id>max_set_Id)) set_Id=max_set_Id;
+					if ((set_Id < Id_A(0,2)) || (set_Id > max_set_Id)) set_Id = max_set_Id;
 					}
 				else
 					{
 					//set_I--;
 					set_I-=Step;
-					if ((set_I<I_0t2A)||(set_I>max_set_I)) set_I=max_set_I;
+					if ((set_I < I_A(0,2)) || (set_I > max_set_I)) set_I = max_set_I;
 					}
 				//	Key_delay=2;
 				SAVE_Method=1;
@@ -203,9 +203,9 @@ void key_dw(void)
 				{
 				//set_U--;
 				set_U-=Step;
-				if ((set_U<U_0t2V)||(set_U>max_set_U)) set_U=max_set_U;
+				if ((set_U < U_V(0,2)) || (set_U > max_set_U)) set_U = max_set_U;
 				//Key_delay=2;
-				SAVE_Method=1;
+				SAVE_Method = 1;
 				break;
 				}
 			case pr_time:
@@ -236,19 +236,19 @@ void key_dw(void)
 		if (ZR_mode==DISCHARGE)
 			{
 			set_Id--;
-			if ((set_Id<Id_0t2A)||(set_Id>max_set_Id)) set_Id=max_set_Id;
+			if ((set_Id<Id_A(0,2))||(set_Id>max_set_Id)) set_Id=max_set_Id;
 			}
 		else
 			{
 			if (I_St)
 				{
 				set_I--;
-				if ((set_I<I_0t2A)||(set_I>max_set_I)) set_I=max_set_I;
+				if ((set_I<I_A(0,2))||(set_I>max_set_I)) set_I=max_set_I;
 				}
 			else
 				{
 				set_U--;
-				if ((set_U<U_0t2V)||(set_U>max_set_U)) set_U=max_set_U;
+				if ((set_U<U_V(0,2))||(set_U>max_set_U)) set_U=max_set_U;
 				//Key_delay=2;
 				}
 			}

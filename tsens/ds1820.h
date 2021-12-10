@@ -37,6 +37,8 @@ unsigned char CRC8_Tmp(unsigned char data, unsigned char CRC);
 unsigned char Read_Current_Temperature(Temp_type *tmp1, Temp_type *tmp2);
 unsigned char Thermometr_Convert_Finish(void);
 unsigned char Thermometr_Start_Convert(void);
+extern unsigned char Err_Thermometr, Err1_cnt, Err2_cnt; //use if need
+extern Temp_type Temp1, Temp2;
 
 #ifdef __cplusplus
 }

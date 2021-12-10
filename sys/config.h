@@ -21,11 +21,11 @@ typedef struct {
     uint16_t maxI;
     uint16_t maxId;
     uint16_t P_maxW;
-    CSU_cfg_bit bf1;
-    uint8_t DM_SLAVE;
+    bf1_t bf1;
+    uint8_t dmSlave;
     uint8_t MY_ADR;
     uint16_t B[4];
-    CSU2_cfg_bit bf2; 
+    bf2_t bf2; 
     uint8_t time_set;
     uint16_t u_set;
     uint8_t cnt_set;
@@ -65,8 +65,8 @@ typedef struct {
     uint8_t crc;
 } ms_t;
 
-#define MS_N (EEPROM_SIZE - sizeof(Cfg) - sizeof(Num)\
-     - sizeof(uint8_t) * 3) / MS_SIZE
+#define CFG_SIZE (sizeof(Cfg) + sizeof(Num) + sizeof(uint8_t) * 3)
+#define MS_N (EEPROM_SIZE - CFG_SIZE) / MS_SIZE
 /* тип структуры EEPROM */
 typedef struct {
     cfg_t Cfg;
@@ -82,7 +82,7 @@ extern __no_init cfg_t Cfg;
 extern __no_init num_t Num;
 extern __no_init clb_t Clb;
 void read_cfg (void);
-void read_num (uint8_t *num);
+void read_num (char *num);
 void save_num (uint8_t *src);
 bool read_clb (void);
 bool read_mtd (uint8_t num, mtd_t *pm);

@@ -25,7 +25,7 @@ extern unsigned char NEED_TX;
 extern autosrart_t autosrart;
 extern CSU_type CSU_cfg;
 extern CSU2_type CSU_cfg2;
-extern unsigned char DM_SLAVE;
+extern unsigned char dmSlave;
 extern unsigned char PWM_status, CSU_Enable, Error;
 extern unsigned char self_ctrl; //управление методом заряда производится самостоятельно или удалённо
 extern Temp_type Temp1, Temp2;
@@ -164,7 +164,7 @@ if (type==3) //Если необходимо отправить пакет конфигурирования системных даных
 	tx_pack.fld.data.tx_sys.maxI=maxI;
 	tx_pack.fld.data.tx_sys.maxId=maxId;
 	tx_pack.fld.data.tx_sys.maxPd=P_maxW;
-	tx_pack.fld.data.tx_sys.dm_cnt=DM_SLAVE;
+	tx_pack.fld.data.tx_sys.dm_cnt=dmSlave;
 	tx_pack.fld.data.tx_sys.slave_cnt_u=0;
 	tx_pack.fld.data.tx_sys.slave_cnt_i=0;
 	tx_pack.fld.data.tx_sys.cfg=CSU_cfg2.bit.autostart;
@@ -176,10 +176,10 @@ if (type==3) //Если необходимо отправить пакет конфигурирования системных даных
 	}
 if (type==4) //Если необходимо отправить с версией блока
 	{
-	tx_pack.fld.data.tx_ver.hard_ver=Rev_ver;
-	tx_pack.fld.data.tx_ver.hard_mode=Rev_mode;
-	tx_pack.fld.data.tx_ver.soft_ver=Soft_ver;
-	tx_pack.fld.data.tx_ver.soft_mode=Soft_mod;
+	tx_pack.fld.data.tx_ver.hard_ver = Rev_ver;
+	tx_pack.fld.data.tx_ver.hard_mode = Rev_mode;
+	tx_pack.fld.data.tx_ver.soft_ver = Soft_ver;
+	tx_pack.fld.data.tx_ver.soft_mode = Soft_mod;
 	read_num(&tx_pack.fld.data.tx_ver.number[0]);
 	tx_lenght_calc=sizeof(tx_ver_type);
 	}
@@ -369,7 +369,7 @@ if (rx_point>4) //если принято больше 4-х байт
 						P_maxW=rx_pack.fld.data.rx_sys.maxPd;
 						if (rx_pack.fld.header.length>=0x0D) //Если есть данные о количестве РМ
 							{
-							DM_SLAVE=rx_pack.fld.data.rx_sys.dm_cnt;
+							dmSlave=rx_pack.fld.data.rx_sys.dm_cnt;
 							}
 						if (rx_pack.fld.header.length>=17) //если есть поле дополнительной конфигурации
 							{

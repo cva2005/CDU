@@ -2,7 +2,7 @@
 #define LAST_EEPROM_CFG 36//последний байт конфигурации (куда записан CRC)
 #define START_EEPROM_NUMBER 50
 #define LAST_EEPROM_NUMBER  59
-#define FIRST_EEPROM_CALIBRATE 60
+#define FIRST_EEPROM_Clb 60
 #define METHOD_START_ADR 96 //область расположения методов заряда
 #define EEPROM_SIZE 1024
 

@@ -6,30 +6,10 @@
 extern "C" {
 #endif
 
-#define REV84 1
-#ifdef REV80
-#define Rev_ver 8
-#define Rev_mode 00
-#endif
-#ifdef REV81
-#define Rev_ver 8
-#define Rev_mode 10
-#endif
-#ifdef REV82
-#define Rev_ver 8
-#define Rev_mode 20
-#endif
-#ifdef REV83
-#define Rev_ver 8
-#define Rev_mode 30
-#endif
-#ifdef REV84
-#define Rev_ver 8
-#define Rev_mode 40
-#endif
-
-#define Soft_ver 8
-#define Soft_mod 49
+#define HW_VER          8
+#define HW_MODE         40
+#define SW_VER          9
+#define SW_MODE         00
 
 //---------------------НАСТРОЙКИ ПО УМОЛЧАНИЮ---------------------------
 //#define DEBUG_ALG
@@ -74,7 +54,6 @@ extern "C" {
 //----------------------------------------------------------------------
 #define MTD_DEF 1 // - количество методов по умолчанию (0 - 1 метод, 1 - 2 метода)
 
-#ifdef REV84 //======================================================ВЕРСИЯ 8.4 (8.49)===============================================================
 //-------------------параметры тока и напряжения------
 #define maxU_const  4000		//ограничение напряжения		xx00
 #define maxI_const  4500		//ограничение тока				xx00
@@ -88,21 +67,6 @@ extern "C" {
 #define	K_Up_const 12620//12465//12532  //
 #define K_I_const 15516//15692//15589   //R1=10000 R2=383 Uadc=2,048 Ushunt=75.55mV Imax=75.55*50/75=50.37A (K=503666667/32768=15371)
 #define K_Id_const 16226//16256//15816  //R1=10000 R2=383 Uadc=2,048 Ushunt=78.45mV Idmax=78.45*50/75=52.3A (K=523000000/32768=15961)
-#else //======================================================ДО ВЕРСИИ 8.4==================================================================
-//-------------------параметры тока и напряжения------
-#define maxU_const  4000		//ограничение напряжения		xx00
-#define maxI_const  5000		//ограничение тока				xx00
-#define maxId_const 1800		//ограничение тока разряда		xx00
-#define maxPd_const 2000		//ограничение мощности разряда	xxx0
-
-#define maxId_EXT0	1800		//максимальный ток разряда если нет разрядных модулей
-#define maxId_EXT12	5000		//максимальный ток разряда если есть разрядные модули
-//-------------------коэффициенты---------------------
-#define K_U_const 12615//12650  //R1=26700+1500 R2=1500 Uadc=2,048 Umax=40,55V (K=405500000/(32768-1147)=12375)
-#define	K_Up_const 12465//12532  //
-#define K_I_const 15692//15589   //R1=10000 R2=383 Uadc=2,048 Ushunt=75.55mV Imax=75.55*50/75=50.37A (K=503666667/32768=15371)
-#define K_Id_const 16226//16256//15816  //R1=10000 R2=383 Uadc=2,048 Ushunt=78.45mV Idmax=78.45*50/75=52.3A (K=523000000/32768=15961)
-#endif //=====================================================================================================================================
 
 #define B_U_const 1147    //R1=26700; R2=383; Ushift=0.070709; B_U=Ushift*32767/2.048=1131.31
 #define B_Up_const 60	  //Смещение нулевого значения АЦП при измерении U до выходного реле
@@ -192,57 +156,41 @@ enum{
 	S_WORK,		//6 - работа
 };
 
-typedef union
-	{
+typedef union {
 	unsigned int word;
 	unsigned char byte[2];
-	}ADC_Type;
+} ADC_Type;
 	
-typedef	struct
-	{
-	unsigned char EEPROM :1;
-	unsigned char ADR_SET :1;
-	unsigned char IN_DATA :1;
-	unsigned char OUT_DATA :1;
-	unsigned char TE_DATA :1;
-	unsigned char FAN_CONTROL :1;
-	unsigned char DIAG_WIDE :1;
-	unsigned char I0_SENSE :1;	
-	unsigned char LCD_ON :1;
-	unsigned char LED_ON :1;
-	unsigned char PCC_ON :1;
-	unsigned char DEBUG_ON :1;
-	unsigned char GroupM :1;
-	unsigned char EXT_Id :1;
-	unsigned char EXTt_pol :1;
-	unsigned char RELAY_MODE :1;
-	}CSU_cfg_bit;
-
-typedef union{
-	CSU_cfg_bit bit;
-	unsigned char byte[2];
-	unsigned int word;
-} CSU_type;
+typedef	struct {
+	unsigned EEPROM         :1;
+	unsigned ADR_SET        :1;
+	unsigned IN_DATA        :1;
+	unsigned OUT_DATA       :1;
+	unsigned TE_DATA        :1;
+	unsigned FAN_CONTROL    :1;
+	unsigned DIAG_WIDE      :1;
+	unsigned I0_SENSE       :1;	
+	unsigned LCD_ON         :1;
+	unsigned LED_ON         :1;
+	unsigned PCC_ON         :1;
+	unsigned DEBUG_ON       :1;
+	unsigned GroupM         :1;
+	unsigned EXT_Id         :1;
+	unsigned EXTt_pol       :1;
+	unsigned RELAY_MODE     :1;
+} bf1_t;
 
 typedef	struct {
-    unsigned char autostart :1;
-    unsigned char cdu_dsch_dsb :1;
-} CSU2_cfg_bit;
+    unsigned autostart      :1;
+    unsigned cdu_dsch_dsb   :1;
+} bf2_t;
 
-typedef union{
-    CSU2_cfg_bit bit;
-	unsigned char byte[2];
-	unsigned int word;
-} CSU2_type;
-
-typedef struct 
-	{
+typedef struct  {
 	signed int	C;
 	signed int dC;
-	}C_type;
+} C_type;
 
-typedef struct  
-	{
+typedef struct {
 	//unsigned char en; //автостарт вкл/выкл
 	unsigned char restart_cnt; //счётчик перезапусков
 	unsigned char cnt_set;
@@ -250,7 +198,7 @@ typedef struct
 	unsigned char time_set;
 	unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
 	unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
-	}autosrart_t;
+} autosrart_t;
 
 #define ADC_MU 0  //канал АЦП для измерения напряжения
 #define ADC_MI 1  //канал АПЦ для измерения тока
@@ -258,70 +206,29 @@ typedef struct
 #define ADC_MUp 3  //канал АЦП для измерения входного тока
 
 //Рабочие значения тока и напряжения (для блокировок)
-#define U_0t2V   2000000/K_U
-#define U_0t8V   8000000/K_U
-#define U_2V  20000000/K_U 
-#define U_16V  160000000/K_U 
-#define U_20V  200000000/K_U
-#define U_24V  240000000/K_U
-#define U_24t6V  246000000/K_U
-#define U_31V  310000000/K_U
+#define U_V(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_U
+#define I_A(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_I
+#define Id_A(x,y)   (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_Id
+#define I_adc(x)    (uint32_t)(x * 100000UL + y * 1000000UL) / Cfg.K_I
+#define Id_adc(x)   (uint32_t)(x * 100000UL + y * 1000000UL) / Cfg.K_Id
 
-#define I_0t1A  1000000/K_I
-#define I_0t2A  2000000/K_I
-#define I_1A   10000000/K_I
-
-#define Id_0t1A 1000000/K_Id
-#define Id_0t2A 2000000/K_Id
-#define Id_1A   10000000/K_Id
-#define Id_2A   20000000/K_Id
-#define Id_5A   50000000/K_Id
-#define Id_8A   80000000/K_Id
-#define Id_10A  100000000/K_Id
-
-#ifdef REV84 //======================================================ВЕРСИЯ 8.4===============================================================
 //----------коэфициенты для запуска РМ--------------------------
-	#define HI_Id_EXT0    59000000/K_Id //граница тока, после которого разрешена калибровка верхнего значения
-	#define SETId1_EXT0    Id_0t2A
-	#define PWM1_Id_EXT0  60//150 //
-	#define SETId2_EXT0  Id_8A
-	#define PWM2_Id_EXT0  2391//4665 //
-
+#define HI_Id_EXT0      59000000 / Cfg.K_Id //граница тока, после которого разрешена калибровка верхнего значения
+#define SETId1_EXT0     Id_A(0,2)
+#define PWM1_Id_EXT0    60//150 //
+#define SETId2_EXT0     Id_A(8,0)
+#define PWM2_Id_EXT0    2391//4665 //
 //Для резисторов РМ: верх 0.51к+10к, низ 1к
-	#define HI_Id_EXT1	 200000000/K_Id
-	#define SETId1_EXT1    3000000/K_Id
-	#define PWM1_Id_EXT1 20
-	#define SETId2_EXT1  300000000/K_Id
-	#define PWM2_Id_EXT1 2375 //1474-30A//1258 - 25А //730 - ток 15А; 473 - 10А
-
-	#define HI_Id_EXT2	 250000000/K_Id
-	#define SETId1_EXT2    3000000/K_Id
-	#define PWM1_Id_EXT2 11
-	#define SETId2_EXT2  300000000/K_Id
-	#define PWM2_Id_EXT2 1364//*/
-//----------
-#else //======================================================ДО ВЕРСИИ 8.4==================================================================
-//----------коэфициенты для запуска РМ--------------------------
-	#define HI_Id_EXT0    59000000/K_Id
-	#define SETId1_EXT0    2000000/K_Id //0,2A
-	#define PWM1_Id_EXT0  150 //
-	#define SETId2_EXT0  100000000/K_Id
-	#define PWM2_Id_EXT0  4665 //
-
-//Для резисторов РМ: верх 0.51к+10к, низ 1к
-	#define HI_Id_EXT1	 200000000/K_Id
-	#define SETId1_EXT1    3000000/K_Id
-	#define PWM1_Id_EXT1 51
-	#define SETId2_EXT1  300000000/K_Id
-	#define PWM2_Id_EXT1 4123 //1474-30A//1258 - 25А //730 - ток 15А; 473 - 10А
-
-	#define HI_Id_EXT2	 250000000/K_Id
-	#define SETId1_EXT2    3000000/K_Id
-	#define PWM1_Id_EXT2 17
-	#define SETId2_EXT2  300000000/K_Id
-	#define PWM2_Id_EXT2 2326//*/
-//----------
-#endif //=====================================================================================================================================
+#define HI_Id_EXT1	    200000000 / Cfg.K_Id
+#define SETId1_EXT1     3000000 / Cfg.K_Id
+#define PWM1_Id_EXT1    20
+#define SETId2_EXT1     300000000 / Cfg.K_Id
+#define PWM2_Id_EXT1    2375 //1474-30A//1258 - 25А //730 - ток 15А; 473 - 10А
+#define HI_Id_EXT2	    250000000 / Cfg.K_Id
+#define SETId1_EXT2     3000000 / Cfg.K_Id
+#define PWM1_Id_EXT2    11
+#define SETId2_EXT2     300000000 / Cfg.K_Id
+#define PWM2_Id_EXT2    1364//*/
 
 unsigned char U_align_st(void);
 unsigned int i_power_limit(unsigned int p, unsigned int i);

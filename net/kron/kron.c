@@ -9,12 +9,14 @@
 #include "csu/mtd.h"
 #include "key/key.h"
 #include "lcd/lcd.h"
+#include "tsens/ds1820.h"
+#include "spi/adc/ads1118.h"
 #include "kron.h"
 #include "kron_imp.h"
 
-static inline void TxData (void);
+static inline void tx_reply ();
 static void frame_parse(void);
-static rx_pack_type Buff; /* буфер приема/передачи */
+static rs_pkt_t Buff; /* буфер приема/передачи */
 BUS_STATE KronBusState; /* машина сотояния приема кадра */
 static unsigned char IpBuff; /* указатель данных в буфере приема */
 unsigned char KronIdleCount; /* счетчик интервалов времени */
@@ -145,7 +147,7 @@ static void frame_parse (void) {
 					}
                     break;
                 case SYS_CFG:
-					if (rx.length >= 0x0C) { //если поле данных конфигурирования не пустое
+					if (rx.length >= 12) { //если поле данных конфигурирования не пустое
 						rd.rx_sys.mode.bit.RELAY_MODE = 1;
 						rd.rx_sys.cmd.bit.TE_DATA = 0;	
 						((uint8_t *)&Cfg.bf1)[0] = rd.rx_sys.cmd.byte;
@@ -156,8 +158,8 @@ static void frame_parse (void) {
 						Cfg.maxI = rd.rx_sys.maxI;
 						Cfg.maxId = rd.rx_sys.maxId;
 						Cfg.P_maxW = rd.rx_sys.maxPd;
-						if (rx.length >= 0x0D) //Если есть данные о количестве РМ
-							Cfg.DM_SLAVE = rd.rx_sys.dm_cnt;
+						if (rx.length >= 13) //Если есть данные о количестве РМ
+							Cfg.dmSlave = rd.rx_sys.dm_cnt;
 						if (rx.length >= 17) //если есть поле дополнительной конфигурации
 							*((uint16_t *)&Cfg.bf2) = rd.rx_sys.cfg;	
 						if (rx.length >= 22) { //если есть информация об автозапуске
@@ -207,10 +209,97 @@ static void frame_parse (void) {
                     rx.type = DATA_PKT;
                 }
             }
-            if ((rx.dest_adr != BROAD_ADR) && !multi_adr) TxData();
+            if ((rx.dest_adr != BROAD_ADR) && !multi_adr) tx_reply();
         }
     }
 }
 
-static inline void TxData (void) {
+#define tx  Buff.fld.header
+#define td  Buff.fld.data
+static inline void tx_reply () {
+    unsigned char cnt, tx_lenght_calc=0;
+    tx.start=0x5A;
+    tx.dest_adr=0;
+    tx.src_adr=Cfg.MY_ADR;
+    switch (tx.type) {
+    case DATA_PKT:
+        if (PWM_status==0) td.tx_data.operation = PWM_status | RELAY_EN; //Если ШИМ остановлен, то добавить сосотяние реле
+        else td.tx_data.operation = PWM_status;
+        td.tx_data.error=Error;
+        if (PWM_status == DISCHARGE) td.tx_data.I = ADC_O[ADC_DI];
+        else td.tx_data.I = ADC_O[ADC_MI];
+        td.tx_data.U = ADC_O[ADC_MU];
+        td.tx_data.Ip = ADC_O[ADC_MUp];
+        td.tx_data.t1 = Temp1.word;
+        td.tx_data.t2 = Temp2.word;
+        tx_lenght_calc = sizeof(tx_data_type);
+        if (Cfg.bf1.IN_DATA==0) tx_lenght_calc--;
+        else td.tx_data.In_st = (KEY_MASK ^ 0xF8) >> 3;
+        if (Cfg.bf1.OUT_DATA == 0) tx_lenght_calc--;
+        else td.tx_data.Out_st = FAN_ST;
+        break;
+    case USER_CFG:
+        td.tx_usr.cmd = ((uint8_t *)&Cfg.bf1)[0];	
+        td.tx_usr.new_adr = Cfg.MY_ADR;
+        td.tx_usr.K_I = Cfg.K_I;
+        td.tx_usr.K_U = Cfg.K_U;
+        td.tx_usr.K_Ip = Cfg.K_Ip;
+        td.tx_usr.K_Id = Cfg.K_Id;
+        td.tx_usr.B_I = Cfg.B[ADC_MI];
+        td.tx_usr.B_U = Cfg.B[ADC_MU];
+        td.tx_usr.B_Ip = Cfg.B[ADC_MUp];
+        td.tx_usr.B_Id = Cfg.B[ADC_DI];
+        td.tx_usr.D_I=7;
+        td.tx_usr.D_U=7;
+        td.tx_usr.D_Id=7;
+        td.tx_usr.D_Ip=7;
+        if (rd.rx_usr.cmd.bit.ADR_SET) tx.src_adr = rx.dest_adr; //подставить другой адрес в ответе, если происходит изменени адреса
+        //rx_pack.fld.data.rx_usr.cmd.bit.ADR_SET=0;
+        //tx_lenght_calc=sizeof(tx_usr_type)-12; //-12 только для того чтобы работала старая CE1
+        tx_lenght_calc=sizeof(tx_usr_type); 
+        break;
+    case SYS_CFG:
+        td.tx_sys.cmd.byte = ((uint8_t *)&Cfg.bf1)[0];	
+        td.tx_sys.mode.byte = ((uint8_t *)&Cfg.bf1)[1];
+        td.tx_sys.maxU = Cfg.maxU;
+        td.tx_sys.maxI = Cfg.maxI;
+        td.tx_sys.maxId = Cfg.maxId;
+        td.tx_sys.maxPd = Cfg.P_maxW;
+        td.tx_sys.dm_cnt = Cfg.dmSlave;
+        td.tx_sys.slave_cnt_u=0;
+        td.tx_sys.slave_cnt_i=0;
+        td.tx_sys.cfg = Cfg.bf2.autostart;
+        td.tx_sys.autostart_try = Cfg.cnt_set;//AUTOSTART_CNT;
+        td.tx_sys.restart_timout = Cfg.time_set * 16;
+        td.tx_sys.autostart_u = Cfg.u_set;
+        tx_lenght_calc = sizeof(tx_sys_type);
+        break;
+    case VER_PKT:
+        td.tx_ver.hard_ver = HW_VER;
+        td.tx_ver.hard_mode = HW_MODE;
+        td.tx_ver.soft_ver = SW_VER;
+        td.tx_ver.soft_mode = SW_MODE;
+        read_num(&td.tx_ver.number[0]);
+        tx_lenght_calc = sizeof(tx_ver_type);
+        break;
+    case ALG_PKT:
+        td.tx_alg.mem_point = MS_SIZE * (MS_N - WrNum);
+        tx_lenght_calc = sizeof(tx_alg_type);
+        if (WrNum < EEPROM_SIZE) td.tx_alg.result = 0;
+        else td.tx_alg.result = 1;
+        break;
+    case EEPR_PKT: // ToDo: next cycle transmit
+        EEPROM_read_string(Wr_ADR, 32, &td.tx_EEPROM.D[0]);
+        td.tx_EEPROM.ADR = Wr_ADR;
+        Wr_ADR += 32;
+        if (Wr_ADR < EEPROM_SIZE) NEED_TX = type;
+        tx_lenght_calc=sizeof(tx_EEPROM_type);
+        time_wait=100;
+	}
+    tx.length=tx_lenght_calc + 2; //прибавить два байта к длине: номер пакета и тип пакета
+    tx_lenght_calc = td.length + 5; //прибавить ещё 4 байта заголовка и 1 байт CRC
+    tx_pack.byte[tx_lenght_calc - 1] = 0;
+    for (cnt=0; cnt<(tx_lenght_calc-1);cnt++)
+        tx_pack.byte[tx_lenght_calc-1]=CRC8_Tmp(tx_pack.byte[cnt], tx_pack.byte[tx_lenght_calc-1]);	
+    Putch(tx_pack.byte[0], tx_lenght_calc);
 }

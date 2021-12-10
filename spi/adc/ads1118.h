@@ -35,5 +35,11 @@ void SPI_MasterInit(void);
 unsigned char SPI_MasterTransmit(unsigned char cData);
 void Init_ADS1118(void);
 unsigned char Read_ADS1118(unsigned char *channel);
+extern ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
+extern ADC_Type ADC_ADS1118[4];
+extern unsigned int ADC_O[4];
+extern unsigned char ADS1118_St[4];
+extern unsigned char ADS1118_chanal, ADC_finish, ADC_wait;
+extern unsigned char ADS1118_St[4];
 
 #endif /* ADS1118_H_ */

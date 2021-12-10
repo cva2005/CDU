@@ -1,18 +1,15 @@
 #pragma message	("@(#)ads1118.c")
-#include "../../sys/system.h"
-#include "../../net/usart.h"
-#include "../../csu/csu.h"
+#include "sys/system.h"
+#include "net/net.h"
+#include "csu/csu.h"
 #include "ads1118.h"
 
-extern ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
-extern ADC_Type  ADC_ADS1118[4];
-extern unsigned int ADC_O[4];
-extern unsigned char ADS1118_St[4];
-extern unsigned char PWM_status, CSU_Enable;
-extern unsigned char PWM_set;
-
-extern unsigned char ADC_finish, ADC_wait;
-extern unsigned int B[4];
+ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
+ADC_Type  ADC_ADS1118[4];
+unsigned int ADC_O[4];
+unsigned char ADS1118_St[4];
+unsigned char ADS1118_chanal=0, ADC_finish=0;
+unsigned char ADC_wait=200, Err_ADC_cnt=0, OUT_err_cnt=0;
 
 void SPI_MasterInit(void)
 {

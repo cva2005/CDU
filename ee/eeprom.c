@@ -11,7 +11,7 @@ extern unsigned int maxI, maxId, maxU;
 extern unsigned int P_maxW;
 extern CSU_type CSU_cfg;
 extern CSU2_type CSU_cfg2;
-extern unsigned char DM_SLAVE;
+extern unsigned char dmSlave;
 extern unsigned char MY_ADR;
 extern autosrart_t autosrart;
 
@@ -65,7 +65,7 @@ void EEPROM_save_cfg(void)
 	EEPROM_write_int(12, maxId);
 	EEPROM_write_int(14, P_maxW);
 	EEPROM_write_int(16, CSU_cfg.word);
-	EEPROM_write(18, DM_SLAVE);
+	EEPROM_write(18, dmSlave);
 	EEPROM_write(19, MY_ADR);
 	EEPROM_write_int(20, B[ADC_MU]);
 	EEPROM_write_int(22, B[ADC_MI]);
@@ -96,7 +96,7 @@ void EEPROM_read_cfg(void)
 		maxId=EEPROM_read_int(12);
 		P_maxW=EEPROM_read_int(14);
 		CSU_cfg.word=EEPROM_read_int(16);
-		DM_SLAVE=EEPROM_read(18);
+		dmSlave=EEPROM_read(18);
 		MY_ADR=EEPROM_read(19);
 		B[ADC_MU]=EEPROM_read_int(20);
 		B[ADC_MI]=EEPROM_read_int(22);
@@ -115,7 +115,7 @@ void EEPROM_read_cfg(void)
 		K_Ip=K_Up_const;
 		
 		B[ADC_MU]=B_U_const;
-		B[ADC_MI]=B_I[DM_SLAVE]; //смещение тока установить в зависимости от того сколько РМ подключено
+		B[ADC_MI]=B_I[dmSlave]; //смещение тока установить в зависимости от того сколько РМ подключено
 		B[ADC_DI]=B_Id_const;
 		B[ADC_MUp]=B_Up_const;
 		
@@ -131,7 +131,7 @@ void EEPROM_read_cfg(void)
 		P_maxW=maxPd_const;
 		
 		MY_ADR=MY_ADR_const;
-		DM_SLAVE=DM_ext;
+		dmSlave=DM_ext;
 		
 		CSU_cfg.word=0;
 		//CSU_cfg.bit.EEPROM=1;

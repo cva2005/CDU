@@ -15,8 +15,9 @@ extern "C" {
 #define CHAR_TS             0x5A /* символ начала кадра */
 #define CHAR_RS             0xA5 /* символ начала кадра */
 #define KRON_BUFF_LEN       KRON_RX_MAX
-#define RX_LENGTH           KRON_BUFF_LEN
-#define TX_LENGTH           50
+#define RX_LEN              KRON_BUFF_LEN
+#define TX_LEN             50
+#define BUFF_SIZE           RX_LEN > TX_LEN ? RX_LEN : TX_LEN
 #define SYS_ADR             0xFF
 #define BROAD_ADR           0xFE
 #define MULTI_ADR           0x80
@@ -34,10 +35,9 @@ extern "C" {
 #define DEL_CMD             0x20 // ToDo: or 2?
 #define SAVE_CMD            3
 #define RST_CMD             4
-//------------------------------------биты контроля
-typedef union
-{
-	struct	{
+
+typedef union {
+	struct {
 		unsigned char FAN1_ON :1;
 		unsigned char FAN2_ON :1;
 		unsigned char FAN3_ROFF :1;
@@ -46,14 +46,12 @@ typedef union
 		unsigned char RESERV2 :1;
 		unsigned char RESERV3 :1;
 		unsigned char RESERV4 :1;
-	}bit;
+	} bit;
 	unsigned char byte;
-}control_type;
+} control_type;
 
-//------------------------------------биты команды
-typedef union
-{
-	struct	{
+typedef union {
+	struct {
 		unsigned char EEPROM :1;
 		unsigned char ADR_SET :1;
 		unsigned char IN_DATA :1;
@@ -62,13 +60,12 @@ typedef union
 		unsigned char FAN_CONTROL :1;
 		unsigned char DIAG_WIDE :1;
 		unsigned char I0_SENSE :1;
-	}bit;
+	} bit;
 	unsigned char byte;
-}rx_cmd_type;
-//------------------------------------биты режима работы
-typedef union
-	{
-	struct	{
+} rx_cmd_type;
+
+typedef union {
+	struct {
 		unsigned char LCD_ON :1;
 		unsigned char LED_ON :1;
 		unsigned char PCC_ON :1;
@@ -77,32 +74,27 @@ typedef union
 		unsigned char EXT_Id :1;
 		unsigned char EXTt_pol :1;
 		unsigned char RELAY_MODE :1;
-	}bit;
+	} bit;
 	unsigned char byte;
-	}rx_mode_type;
+} rx_mode_type;
 
-//------------------------------------заголовок пакета
-typedef	struct
-	{
+typedef	struct {
 	unsigned char start;
 	unsigned char dest_adr;
 	unsigned char src_adr;
 	unsigned char length;
 	unsigned char number;
 	unsigned char type;
-	}header_type;
+} header_type;
 
-//------------------------------------пакет данных
-typedef	struct
-	{
+typedef	struct {
 	unsigned char cmd;
 	control_type control;
 	unsigned int setI;
 	unsigned int setU;
-	}rx_data_type;
+} rx_data_type;
 	
-typedef	struct
-{
+typedef	struct {
 	unsigned char operation;
 	unsigned char error;
 	unsigned int I;
@@ -112,11 +104,9 @@ typedef	struct
 	unsigned int t2;
 	unsigned char In_st;
 	unsigned char Out_st;
-}tx_data_type;
+} tx_data_type;
 
-//------------------------------------пакет конфигурирования пользователя
-typedef	struct
-	{
+typedef	struct {
 	rx_cmd_type cmd;
 	unsigned char Adress;
 	unsigned int K_I;
@@ -131,10 +121,9 @@ typedef	struct
 	unsigned char D_U;
 	unsigned char D_Ip;
 	unsigned char D_Id;
-	}rx_usr_type;
+} rx_usr_type;
 	
-typedef	struct
-	{
+typedef	struct {
 	unsigned char cmd;
 	unsigned char new_adr;
 	unsigned int K_I;
@@ -149,12 +138,9 @@ typedef	struct
 	unsigned char D_U;
 	unsigned char D_Ip;
 	unsigned char D_Id;
-	}tx_usr_type;
+} tx_usr_type;
 
-
-//------------------------------------пакет конфигурирования системы
-typedef	struct
-	{
+typedef	struct {
 	rx_cmd_type cmd;
 	rx_mode_type mode;
 	unsigned int maxU;
@@ -168,10 +154,9 @@ typedef	struct
 	unsigned char autostart_try;
 	unsigned int restart_timout;
 	unsigned int autostart_u;
-	}rx_sys_type;
+} rx_sys_type;
 	
-typedef	struct
-	{
+typedef	struct {
 	rx_cmd_type cmd;
 	rx_mode_type mode;
 	unsigned int maxU;
@@ -185,14 +170,13 @@ typedef	struct
 	unsigned char autostart_try; //18
 	unsigned int restart_timout; //19, 20
 	unsigned int autostart_u; //21, 22
-	}tx_sys_type;
-//------------------------------------пакет с версией блока
-typedef	struct
-{
+} tx_sys_type;
+
+typedef	struct {
 	rx_cmd_type cmd;
 	unsigned char reserv;
 	unsigned char number[8];
-}rx_ver_type;
+} rx_ver_type;
 
 typedef	struct
 {
@@ -203,59 +187,71 @@ typedef	struct
 	char number[8];
 }tx_ver_type;
 //---------------------------------пакет для загрузки алгоритмов
-typedef	struct
-	{
+typedef	struct {
 	unsigned char cmd;	
 	unsigned char size;
 	unsigned char data[32];
-	}rx_alg_type; 
+} rx_alg_type; 
 	
-typedef	struct
-	{
+typedef	struct {
 	unsigned char result;
 	unsigned int mem_point;
-	}tx_alg_type;
+} tx_alg_type;
 
-//---------------------------------пакет для передачи состояния EEPROM
-typedef	struct
-	{
+typedef	struct {
 	unsigned int ADR;
 	unsigned char D[32];
-	}tx_EEPROM_type;
+} tx_EEPROM_type;
 
-//------------------------------------ПАКЕТ
-typedef union
-	{struct		 
-		{
+#if 0
+typedef union {
+    struct {
 		header_type header;
-		union
-			{
+		union {
 			rx_sys_type rx_sys;
 			rx_usr_type rx_usr;
 			rx_data_type rx_data;
 			rx_ver_type rx_ver;
 			rx_alg_type rx_alg;
-			}data;	
-		}fld;
+		}data;	
+	} fld;
 	unsigned char byte[RX_LENGTH];
-	}rx_pack_type;
+} rx_pack_type;
 	
-typedef union
-	{struct
-		{
+typedef union {
+    struct {
 		header_type header;
-		union
-			{
+		union {
 			tx_sys_type tx_sys;
 			tx_usr_type tx_usr;
 			tx_data_type tx_data;
 			tx_ver_type tx_ver;
 			tx_alg_type tx_alg;
 			tx_EEPROM_type tx_EEPROM;
-			}data;
-		}fld;
+		} data;
+	} fld;
 	unsigned char byte[TX_LENGTH];
-	}tx_pack_type;
+} tx_pack_type;
+#endif
+typedef union {
+    struct {
+		header_type header;
+		union {
+			rx_sys_type rx_sys;
+			rx_usr_type rx_usr;
+			rx_data_type rx_data;
+			rx_ver_type rx_ver;
+			rx_alg_type rx_alg;
+			tx_sys_type tx_sys;
+			tx_usr_type tx_usr;
+			tx_data_type tx_data;
+			tx_ver_type tx_ver;
+			tx_alg_type tx_alg;
+			tx_EEPROM_type tx_EEPROM;
+		} data;
+	} fld;
+	unsigned char byte[BUFF_SIZE];
+} rs_pkt_t;
 
 #ifdef __cplusplus
 }
