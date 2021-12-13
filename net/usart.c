@@ -19,7 +19,7 @@ extern unsigned char tx_lenght;
 extern unsigned char connect_st;
 extern unsigned char time_wait;
 
-extern unsigned char MY_ADR;
+extern unsigned char addr;
 extern unsigned char NEED_TX;
 
 extern autosrart_t autosrart;
@@ -39,8 +39,8 @@ extern unsigned char change_UI;
 
 extern unsigned int B[4];
 
-extern unsigned char method_cnt, stage_cnt, cycle_cnt;//номера метода, этапа и цикла
-extern unsigned int Method_ARD[15];
+extern unsigned char Mtd_cnt, Stg_cnt, cycle_cnt;//номера метода, этапа и цикла
+extern unsigned int Mtd_ARD[15];
 extern unsigned int Wr_ADR;
 
 //---------------------инициализаци€ usart`a---------------------
@@ -111,7 +111,7 @@ void Tx_Data(unsigned char type)
 {unsigned char cnt, tx_lenght_calc=0;
 tx_pack.fld.header.start=0x5A;
 tx_pack.fld.header.dest_adr=0;
-tx_pack.fld.header.src_adr=MY_ADR;
+tx_pack.fld.header.src_adr=addr;
 //tx_pack.fld.header.length=TX_LENGTH-5;
 tx_pack.fld.header.number=rx_pack.fld.header.number;
 tx_pack.fld.header.type=type;
@@ -138,7 +138,7 @@ if (type==1) //≈сли необходимо отправить пакет с данными
 if (type==2) //≈сли необходимо отправить пакет конфигурировани€ пользовательских даных
 	{
 	tx_pack.fld.data.tx_usr.cmd=CSU_cfg.byte[0];	
-	tx_pack.fld.data.tx_usr.new_adr=MY_ADR;
+	tx_pack.fld.data.tx_usr.new_adr=addr;
 	tx_pack.fld.data.tx_usr.K_I=K_I;
 	tx_pack.fld.data.tx_usr.K_U=K_U;
 	tx_pack.fld.data.tx_usr.K_Ip=K_Ip;
@@ -232,14 +232,14 @@ if (rx_point>4) //если прин€то больше 4-х байт
 			if ((rx_pack.fld.header.dest_adr!=SYS_ADR)&&(rx_pack.fld.header.type==2)) return; //если это запрос пользовательской конфигурации не с системного адреса
 			}
 		
-		if ((rx_pack.fld.header.dest_adr!=MY_ADR)&&(rx_pack.fld.header.dest_adr!=SYS_ADR)&&(rx_pack.fld.header.dest_adr!=BROAD_ADR))  //≈сли на совпадает адрес получател€, то проверить мультикастовый пакет или нет
+		if ((rx_pack.fld.header.dest_adr!=addr)&&(rx_pack.fld.header.dest_adr!=SYS_ADR)&&(rx_pack.fld.header.dest_adr!=BROAD_ADR))  //≈сли на совпадает адрес получател€, то проверить мультикастовый пакет или нет
 			{
 			if ((rx_pack.fld.header.dest_adr&MULTI_ADR)==0) return;
 			else
 				{
-				if ((rx_pack.fld.header.dest_adr&0x7F)!=(MY_ADR&0x60)) return;
+				if ((rx_pack.fld.header.dest_adr&0x7F)!=(addr&0x60)) return;
 				else multi_adr=1;
-				//if ((rx_pack.fld.header.dest_adr|MY_ADR)!=rx_pack.fld.header.dest_adr) return;
+				//if ((rx_pack.fld.header.dest_adr|addr)!=rx_pack.fld.header.dest_adr) return;
 				//else multi_adr=1;
 				}
 			}
@@ -335,7 +335,7 @@ if (rx_point>4) //если прин€то больше 4-х байт
 						if (rx_pack.fld.data.rx_usr.cmd.bit.ADR_SET) 
 							{
 							if ((rx_pack.fld.data.rx_usr.Adress!=0)&&(rx_pack.fld.data.rx_usr.Adress!=0xFF)) 
-								MY_ADR=rx_pack.fld.data.rx_usr.Adress;	
+								addr=rx_pack.fld.data.rx_usr.Adress;	
 							}
 						K_I=rx_pack.fld.data.rx_usr.K_I;
 						K_U=rx_pack.fld.data.rx_usr.K_U;
@@ -401,15 +401,15 @@ if (rx_point>4) //если прин€то больше 4-х байт
 					if (CSU_Enable!=0) Stop_CSU(0);
 					if (rx_pack.fld.data.rx_alg.cmd==0x01) 
 						{	
-						method_cnt=0; stage_cnt=0; cycle_cnt=0;//номера метода, этапа и цикла
-						for (cnt=1; cnt<15; cnt++) Method_ARD[cnt]=0;
-						Method_ARD[0]=METHOD_START_ADR;
-						Wr_ADR=find_free_memory(method_cnt);
+						Mtd_cnt=0; Stg_cnt=0; cycle_cnt=0;//номера метода, этапа и цикла
+						for (cnt=1; cnt<15; cnt++) Mtd_ARD[cnt]=0;
+						Mtd_ARD[0]=Mtd_START_ADR;
+						Wr_ADR=find_free_memory(Mtd_cnt);
 						}
 					if (rx_pack.fld.data.rx_alg.cmd==0x20)
 						{
-						delete_all_method();
-						Wr_ADR=METHOD_START_ADR;
+						delete_all_Mtd();
+						Wr_ADR=Mtd_START_ADR;
 						}
 					if (rx_pack.fld.data.rx_alg.cmd==0x03)
 						{
@@ -421,12 +421,12 @@ if (rx_point>4) //если прин€то больше 4-х байт
 						}
 					if (rx_pack.fld.data.rx_alg.cmd==0x04)
 						{
-						Wr_ADR=METHOD_START_ADR;
+						Wr_ADR=Mtd_START_ADR;
 						}
 					}
 				if (rx_pack.fld.header.type==0x06) //≈сли прин€т пакет с запросом EEPROM
 					{
-					Wr_ADR=METHOD_START_ADR;
+					Wr_ADR=Mtd_START_ADR;
 					}					
 				}//if (rx_pack.fld.length>1)	
 			else rx_pack.fld.header.type=1; //≈сли нет пол€ с типом пакета (пакет нулевой длины), то считать что это запрос данных					

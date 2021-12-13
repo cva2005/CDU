@@ -36,7 +36,7 @@ static const cfg_t DefaultCfg = {
 	0, // unsigned EXTt_pol :1;
 	RELAY_MODE_bit, // unsigned RELAY_MODE :1;
     DM_ext, // uint8_t dmSlave;
-    MY_ADR_const, // uint8_t MY_ADR;
+    addr_const, // uint8_t addr;
     B_U_const,
     B_I_const,
     B_Id_const,
@@ -87,7 +87,7 @@ void save_num (uint8_t *src) {
     eData.Crc2 = calc_crc((uint8_t *)&Num, sizeof(Num));
 }
 
-bool read_mtd (uint8_t num, mtd_t *pm) {
+bool eeread_mtd (uint8_t num, mtd_t *pm) {
     *pm = eData.MtdStg[num].data;
     uint8_t crc = eData.MtdStg[num].crc;
     if (crc == calc_crc((uint8_t *)pm, sizeof(mtd_t))) {
@@ -96,18 +96,18 @@ bool read_mtd (uint8_t num, mtd_t *pm) {
     return false;
 }
 
-void save_alg (uint8_t num, void *p) {
-    eData.MtdStg[num].data = *((mtd_t *)p);
-    eData.MtdStg[num].crc = calc_crc((uint8_t *)p, sizeof(mtd_t));
-}
-
-bool read_stg (uint8_t num, stg_t *ps) {
+bool eeread_stg (uint8_t num, stg_t *ps) {
     *((mtd_t *)ps) = eData.MtdStg[num].data;
     uint8_t crc = eData.MtdStg[num].crc;
     if (crc == calc_crc((uint8_t *)ps, sizeof(stg_t))) {
         if (ps->fld.data_type == STG_ID) return true;
     }
     return false;
+}
+
+void save_alg (uint8_t num, void *p) {
+    eData.MtdStg[num].data = *((mtd_t *)p);
+    eData.MtdStg[num].crc = calc_crc((uint8_t *)p, sizeof(mtd_t));
 }
 
 /* Вычисление контрольной суммы CRC8 */

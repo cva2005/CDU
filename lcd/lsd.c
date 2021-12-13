@@ -6,33 +6,18 @@
 #include "csu/csu.h"
 #include "csu/mtd.h"
 
-extern char LCD[4][20];
-extern unsigned char Cursor_pos[PR_number], Cursor_point;
-extern unsigned char LCD_mode;
-extern unsigned char LCD_refresh;
+char LCD[4][20];
+ADC_Type ADC_last[4];
+Temp_type Temp1_last, Temp2_last;
+unsigned char Sec_last=0xFF, cycle_cnt_last, Stg_cnt_last;
+unsigned char  Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point=0;
+unsigned char LCD_refresh=0;
+unsigned char LCD_mode=0;
+cap_t Cap; // Capacity of Battery
 
-extern unsigned char connect_st;
-extern unsigned char CSU_Enable;
-extern unsigned char PWM_status, ZR_mode, Error, p_limit;
-extern ADC_Type  ADC_ADS1118[4];
-extern ADC_Type  ADC_last[4]; //Значения прошлых измерений
-extern unsigned int K_I, K_U, K_Id;
-extern unsigned char Hour, Min, Sec;
-//extern unsigned char Hour_Z, Min_Z, Sec_Z;
-extern unsigned int set_I, set_U, set_Id;
-
-extern Temp_type Temp1, Temp2;
-extern Temp_type Temp1_last, Temp2_last; //значения температуры на дисплее
-extern unsigned char cycle_cnt_last, stage_cnt_last, Sec_last;
-
-extern unsigned char stage_cnt, cycle_cnt;
-extern C_type C;
-
-//------------------------------------------------------------------------------------------------
-char hex_to_ASCII(unsigned char N)
-{
-if (N>9) return('x');
-else     return(N+0x30);
+char hex_to_ASCII(unsigned char n) {
+    if (n > 9) return ('x');
+    else return (n + 0x30);
 }
 
 void int_to_ASCII(unsigned int val, char *point)
@@ -52,35 +37,34 @@ if (Z!=0)
 	{
 	cur_val=((uint32_t)val*(uint32_t)k)/10000*2778UL;//+(uint32_t)b;
 	cur_val=cur_val/100000UL;
-	C.dC+=((int)cur_val)*Z;
-	if (C.dC>10000)
+	Cap.dC+=((int)cur_val)*Z;
+	if (Cap.dC > 10000)
 		{
-		C.C++;
-		C.dC-=10000;
+		Cap.C++;
+		Cap.dC -= 10000;
 		}		
-	if (C.dC<-10000)
+	if (Cap.dC < -10000)
 		{
-		C.C--;
-		C.dC+=10000;
+		Cap.C--;
+		Cap.dC += 10000;
 		}		
 	}
 	
-if (C.C<0)
+if (Cap.C < 0)
 	{
 	point[0]='-';
-	display_val=(-1)*C.C;	
+	display_val = (-1) * Cap.C;	
 	}
 else
 	{
 	point[0]='+';
-	display_val=C.C;
+	display_val = Cap.C;
 	}
-	
-point[1]=hex_to_ASCII((display_val%10000)/1000);
-point[2]=hex_to_ASCII((display_val%1000)/100);
-point[3]=hex_to_ASCII((display_val%100)/10);
-point[4]=',';
-point[5]=hex_to_ASCII(display_val%10);
+    point[1]=hex_to_ASCII((display_val%10000)/1000);
+    point[2]=hex_to_ASCII((display_val%1000)/100);
+    point[3]=hex_to_ASCII((display_val%100)/10);
+    point[4]=',';
+    point[5]=hex_to_ASCII(display_val%10);
 }
 
 void calculate_param(unsigned int val, unsigned int k, char *point)
@@ -419,12 +403,12 @@ if (CSU_cfg.bit.LCD_ON==0) return;
 	
 if (LCD_mode!=0) LCD_change_mode(&LCD_mode);
 //-------------------отображение названия метода-----------------------
-for (cnt=0; cnt<13; cnt++) LCD[0][2+cnt]=Method.fld.name[cnt];
+for (cnt=0; cnt<13; cnt++) LCD[0][2+cnt]=Mtd.fld.name[cnt];
 //-------------------отображение номера цикла--------------
-LCD[0][19]=hex_to_ASCII(Method.fld.Cnt);
-LCD[1][19]=hex_to_ASCII(Method.fld.Nstage);
+LCD[0][19]=hex_to_ASCII(Mtd.fld.Cnt);
+LCD[1][19]=hex_to_ASCII(Mtd.fld.NStg);
 //-------------------отображение времени-------------------
-calculate_time(Method.fld.Hm, Method.fld.Mm, Method.fld.Sm, &LCD[3][T_pos]);
+calculate_time(Mtd.fld.Hm, Mtd.fld.Mm, Mtd.fld.Sm, &LCD[3][T_pos]);
 //------------------отображение ёмкости--------------------
 C.C=0; C.dC=0;
 calculate_C(0, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
@@ -445,7 +429,7 @@ ADC_last[ADC_MI].word=0xFFFF;
 ADC_last[ADC_DI].word=0xFFFF;
 Sec_last=0xFF;
 cycle_cnt_last=0xFF;
-stage_cnt_last=0xFF;
+Stg_cnt_last=0xFF;
 Temp1_last.word=0xFFFF;
 Temp2_last.word=0xFFFF;
 }
@@ -503,11 +487,11 @@ else
 //----------------------------------------------ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА-----------------		
 if (CSU_Enable!=STOP)
 	{
-	if (stage_cnt_last!=stage_cnt) //на последнем методе проверяется 
+	if (Stg_cnt_last!=Stg_cnt) //на последнем методе проверяется 
 		{
-		LCD[1][19]=hex_to_ASCII(stage_cnt+1); //отображать значения на 1 больше, т.к. нумерация этапов начинается с 0
+		LCD[1][19]=hex_to_ASCII(Stg_cnt+1); //отображать значения на 1 больше, т.к. нумерация этапов начинается с 0
 		WH2004_string_wr(&LCD[1][19],line1+19, 1); //отобразить
-		stage_cnt_last=stage_cnt;
+		Stg_cnt_last=Stg_cnt;
 		}
 	}
 //----------------------------------------------ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ-----------------
@@ -713,7 +697,7 @@ if (Error)
 		LCD[3][14]='e';
 		LCD[3][16]='U';
 		}
-	if (Error==ERR_STAGE)
+	if (Error==ERR_Stg)
 		{
 		LCD[3][0]=E_rus;
 		LCD[3][1]=t_rus;

@@ -7,23 +7,8 @@
 #include "pwm/pwm.h"
 #include "key.h"
 
-//extern CSU_type CSU_cfg;
-extern unsigned char  CSU_Enable, ZR_mode;
-extern unsigned char self_ctrl; //управление методом заряда производится самостоятельно или удалённо
-extern unsigned char Cursor_pos[PR_number], Cursor_point;
-extern unsigned int set_I, set_Id, set_U;
-extern unsigned char Hour, Min, Sec;
-//extern unsigned char Hour_Z, Min_Z;
-extern unsigned int K_I, K_U, K_Id, max_set_I, max_set_Id, max_set_U;
-extern unsigned char LCD_refresh;
-extern unsigned char Key_delay, Step;
-extern char LCD[4][20];
-extern unsigned char LCD_mode;
-
-extern unsigned char method_cnt;
-extern unsigned char SAVE_Method;
-
-extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
+unsigned char key_n=0, Key_delay=0, Step=1;
+unsigned int  KeyPress;
 
 unsigned char scan_key(unsigned char *key)
 {unsigned char cnt=0, mask;
@@ -49,13 +34,13 @@ void key_power(void)
 		{
 		self_ctrl=1;
 		LCD_refresh=0;		
-		Start_method(1);	
+		start_mtd(1);	
 		Key_delay=50;
 		}
 	else					
 		{
 		Stop_CSU(0);
-		read_method();
+		read_mtd();
 		update_LCD_set();
 		Key_delay=50;
 		}
@@ -66,7 +51,7 @@ void key_set(void)
 if (CSU_Enable==0)  //если блок не запущен
 	{
 	Cursor_point++;
-	if (Cursor_point==PR_number) Cursor_point=0;
+	if (Cursor_point == PR_NUM) Cursor_point=0;
 	}
 else 
 	{
@@ -85,8 +70,8 @@ void key_up(void)
 			{
 			case pr_mode:
 				{
-				method_cnt++;
-				read_method();
+				mCnt++;
+				read_mtd();
 				Key_delay=20;
 				break;
 				}
@@ -105,7 +90,7 @@ void key_up(void)
 					if (set_I>max_set_I) set_I=I_A(0,2);
 					}
 				//Key_delay=2;
-				SAVE_Method=1;
+				SaveMtd = true;
 				break;
 				}
 			case pr_U:
@@ -114,31 +99,31 @@ void key_up(void)
 				set_U+=Step;
 				if (set_U>max_set_U) set_U=U_V(0,2);
 				//Key_delay=2;
-				SAVE_Method=1;
+				SaveMtd = true;
 				break;
 				}
 			case pr_time:
 				{
 				//Min_Z++;
-				if (Method.fld.Hm<100)
+				if (Mtd.fld.Hm<100)
 					{
-					Method.fld.Mm+=Step;
-					if (Method.fld.Mm>59)
+					Mtd.fld.Mm+=Step;
+					if (Mtd.fld.Mm>59)
 						{
-						Method.fld.Hm++;
-						Method.fld.Mm=0;
+						Mtd.fld.Hm++;
+						Mtd.fld.Mm=0;
 						}
 					}
 				Key_delay=10;
-				SAVE_Method=1;
+				SaveMtd = true;
 				break;
 				}
 			case pr_cycle:
 				{
-				Method.fld.Cnt++;
-				if (Method.fld.Cnt>10) Method.fld.Cnt=1;
+				Mtd.fld.Cnt++;
+				if (Mtd.fld.Cnt>10) Mtd.fld.Cnt=1;
 				Key_delay=20;
-				SAVE_Method=1;
+				SaveMtd = true;
 				}
 			}
 		update_LCD_set();
@@ -176,8 +161,8 @@ void key_dw(void)
 			{
 			case pr_mode:
 				{		
-				if (method_cnt>0) method_cnt--;
-				read_method();
+				if (mCnt>0) mCnt--;
+				read_mtd();
 				Key_delay=20;
 				break;
 				}
@@ -196,7 +181,7 @@ void key_dw(void)
 					if ((set_I < I_A(0,2)) || (set_I > max_set_I)) set_I = max_set_I;
 					}
 				//	Key_delay=2;
-				SAVE_Method=1;
+				SaveMtd = true;
 				break;
 				}
 			case pr_U:
@@ -205,27 +190,27 @@ void key_dw(void)
 				set_U-=Step;
 				if ((set_U < U_V(0,2)) || (set_U > max_set_U)) set_U = max_set_U;
 				//Key_delay=2;
-				SAVE_Method = 1;
+				SaveMtd = true;
 				break;
 				}
 			case pr_time:
 				{
 				//Min_Z--;
-				Method.fld.Mm-=Step;
-				if (Method.fld.Mm>59)
+				Mtd.fld.Mm-=Step;
+				if (Mtd.fld.Mm>59)
 					{
-					if (Method.fld.Hm>0) Method.fld.Hm--;
-					Method.fld.Mm=59;
+					if (Mtd.fld.Hm>0) Mtd.fld.Hm--;
+					Mtd.fld.Mm=59;
 					}
-				SAVE_Method=1;
+				SaveMtd = true;
 				Key_delay=10;
 				break;
 				}
 			case pr_cycle:
 				{
-				Method.fld.Cnt--;
-				if (Method.fld.Cnt<1) Method.fld.Cnt=10;	
-				SAVE_Method=1;
+				Mtd.fld.Cnt--;
+				if (Mtd.fld.Cnt<1) Mtd.fld.Cnt=10;	
+				SaveMtd = true;
 				Key_delay=20;
 				}				
 			}

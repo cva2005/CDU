@@ -3,7 +3,7 @@
 #define START_EEPROM_NUMBER 50
 #define LAST_EEPROM_NUMBER  59
 #define FIRST_EEPROM_Clb 60
-#define METHOD_START_ADR 96 //область расположения методов заряда
+#define Mtd_START_ADR 96 //область расположения методов заряда
 #define EEPROM_SIZE 1024
 
 void EEPROM_write(unsigned int uiAddress, unsigned char ucData);
@@ -14,7 +14,7 @@ unsigned int EEPROM_read_int(unsigned int uiAddress);
 //void EEPROM_read_cfg(void);
 void EEPROM_save_number(unsigned char *point);
 void EEPROM_read_number(char *point);
-unsigned char EEPROM_read_string(unsigned int method_adr, unsigned char size, unsigned char *str);
-void EEPROM_write_string(unsigned int method_adr, unsigned char size, unsigned char *str);
+unsigned char EEPROM_read_string(unsigned int Mtd_adr, unsigned char size, unsigned char *str);
+void EEPROM_write_string(unsigned int Mtd_adr, unsigned char size, unsigned char *str);
 
-extern unsigned char MY_ADR;
+extern unsigned char addr;

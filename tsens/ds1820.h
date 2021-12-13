@@ -35,7 +35,7 @@ void Read_Byte_Tmp(unsigned char *byte_receive1, unsigned char *byte_receive2);
 unsigned char Read_ROM_Tmp(unsigned char *Temperature);
 unsigned char CRC8_Tmp(unsigned char data, unsigned char CRC);
 unsigned char Read_Current_Temperature(Temp_type *tmp1, Temp_type *tmp2);
-unsigned char Thermometr_Convert_Finish(void);
+unsigned char Thermometr_Convert_Fin(void);
 unsigned char Thermometr_Start_Convert(void);
 extern unsigned char Err_Thermometr, Err1_cnt, Err2_cnt; //use if need
 extern Temp_type Temp1, Temp2;

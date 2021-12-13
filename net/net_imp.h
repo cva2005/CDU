@@ -32,7 +32,7 @@ extern "C" {
 #define	RS485_OUT()     SET_PIN(RS_DIR_PORT, RS_DIR) /* передачу */
 #define IS_RS485_IN()   IS_LAT_CLR(RS_DIR_PORT, RS_DIR) /* акт. прием */
 #define IS_RS485_OUT()  IS_LAT_SET(RS_DIR_PORT, RS_DIR) /* акт. передача */
-/* состо€ние передачи кадра */
+#define	RX_ACTIVE()     IS_RS485_IN()
 #define	TX_ACTIVE()     IS_RS485_OUT()
 
 /* ћакроподстановка дл€ 8 битного таймера RX */

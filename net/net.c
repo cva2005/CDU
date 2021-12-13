@@ -46,7 +46,6 @@ void net_drv(void)
     unsigned char len;
     if (new_ip < old_ip) len = (RX_BUFF_LEN - old_ip) + new_ip;
     else len = new_ip - old_ip;
-
     RxIpOld = new_ip;
     for (unsigned char i = 0; i < NET_FUNC_NUM; i++) {
         if (TX_ACTIVE()) return;

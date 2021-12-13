@@ -35,7 +35,7 @@ extern "C" {
 	#endif		
 #endif
 //-------------------адрес блока---------------------
-#define MY_ADR_const 1
+#define addr_const 1
 //-------------------биты настроек-------------------
 #define IN_DATA_bit 0
 #define OUT_DATA_bit 0
@@ -103,7 +103,7 @@ extern "C" {
 #define ERR_OVERTEMP3		7 //перегрев внешнего радиатора
 #define ERR_SET				8 //неверно задано напряжение (задано меньше чем на выходе ЗРМ)
 #define ERR_ADC				9 //Неисправность АЦП
-#define ERR_STAGE			10 //Неверные параметры этапа
+#define ERR_Stg			10 //Неверные параметры этапа
 #define ERR_OUT				12 //Короткое замыкание выхода
 #define ERR_CONNECTION1		13 //неверное подключение АКБ
 #define ERR_DM_LOSS			14 //обрыв разярдного модуля
@@ -188,7 +188,7 @@ typedef	struct {
 typedef struct  {
 	signed int	C;
 	signed int dC;
-} C_type;
+} cap_t;
 
 typedef struct {
 	//unsigned char en; //автостарт вкл/выкл
@@ -209,8 +209,12 @@ typedef struct {
 #define U_V(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_U
 #define I_A(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_I
 #define Id_A(x,y)   (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_Id
-#define I_adc(x)    (uint32_t)(x * 100000UL + y * 1000000UL) / Cfg.K_I
-#define Id_adc(x)   (uint32_t)(x * 100000UL + y * 1000000UL) / Cfg.K_Id
+#define U_adc(x)    (uint32_t)(x * 100000UL) / Cfg.K_U
+#define I_adc(x)    (uint32_t)(x * 100000UL) / Cfg.K_I
+#define Id_adc(x)   (uint32_t)(x * 100000UL) / Cfg.K_Id
+#define U_m(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_U
+#define I_m(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_I
+#define Id_m(x,y)   (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_Id
 
 //----------коэфициенты для запуска РМ--------------------------
 #define HI_Id_EXT0      59000000 / Cfg.K_Id //граница тока, после которого разрешена калибровка верхнего значения

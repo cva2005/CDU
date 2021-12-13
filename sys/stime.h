@@ -75,7 +75,7 @@ typedef struct {
 	uint32_t run;
 } stime_t;
 
-stime_t get_finish_time(uint32_t delay);
+stime_t get_fin_time(uint32_t delay);
 uint32_t get_time_left(stime_t stime);
 uint32_t get_interval(uint32_t run);
 

@@ -9,7 +9,7 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void kron_drv(unsigned char ip, unsigned char len);
+void kron_drv (unsigned char ip, unsigned char len);
 extern BUS_STATE KronBusState; /* машина сотояния према кадра */
 extern unsigned char KronIdleCount; /* счетчик интервалов времени */
 #define FRAME_KRON_SYNC     10 /* interval of idle */

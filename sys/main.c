@@ -21,48 +21,28 @@
 
 unsigned long alarm_del;
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
-//autosrart_t autosrart;
-//Clb_t Clb;
-//--------------------------------переменные для состояния и режимов работы
-unsigned char PWM_status=0, CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
+unsigned char CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
 unsigned char self_ctrl=0; //управление методом заряда производится самостоятельно или удалённо
-unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD; //переменные для параметров задаваемого тока и напряжения
 unsigned int id_dw_Clb, id_up_Clb;
 unsigned int  No_akb_cnt=0, dm_loss_cnt=0;
 unsigned int  pid_t = 0;
-unsigned char SAVE_Method=0;
-unsigned char finish_cnt; //время до смены этапа
 unsigned int pulse_step; //время импульса заряд/разряд при импульсном режиме
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
-unsigned char PWM_set=0; //если не 0, то необходимый ШИМ установлен (достигнут) - значит можно читать канал АЦП с напряжением до реле
 
 //unsigned char dmSlave=DM_ext;
 //unsigned int maxI, maxId, maxU; //макисмальные значения в формате 3600 (36.00 В)
 unsigned char ERR_Ext=0;		//фильтр на чтения внешнего датчика температуры
 
 //--------------------------------переменные для сканирования клавиш
-unsigned char key_n=0, Key_delay=0, Step=1;
-unsigned int  KeyPress;
 //--------------------------------переменные для часов
-unsigned char Hour=0, Min=0, Sec=0, mSec=0, Hour_Stage, Min_Stage, Sec_Stage;
+unsigned char Hour=0, Min=0, Sec=0, mSec=0, Hour_Stg, Min_Stg, Sec_Stg;
 //unsigned char Hour_Z=10, Min_Z=0, Sec_Z;
 //---------------------Переменные для измерений----------------------
 
-unsigned int max_set_U, max_set_I, max_set_Id;  //коэфициэнты К и максимальные значения тока напряженяи в значениях АЦП
-//unsigned int B[4]={B_U_const, B_I_const, B_Id_const, B_Up_const};
-unsigned int max_pwd_I=MAX_CK, max_pwd_U=MAX_CK, max_pwd_Id=0; //максимально допустимая ширина импульсов при регулировании тока и напряжения
 
-C_type C;	//ёмкость АКБ
 //---------------------Переменные для LCD----------------------------
-char LCD[4][20];
-ADC_Type  ADC_last[4]; //Значения тока и напряжения на дисплее
-Temp_type Temp1_last, Temp2_last; //значения температуры на дисплее
-unsigned char Sec_last=0xFF, cycle_cnt_last, stage_cnt_last;
-unsigned char  Cursor_pos[PR_number] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point=0;
-unsigned char LCD_refresh=0; //время между обновлениями ЖКИ
-unsigned char LCD_mode=0;
 //----------------Real Temperature  (Tmp_DS18B20Z.c) variabels-------------------------
 unsigned char time_rd=0; //время между чтениями датчиков температуры
 //----------------UART  (usart.c) variabels-------------------------
@@ -72,7 +52,7 @@ unsigned char rx_point=0;
 rx_pack_type rx_pack;
 unsigned char connect_st=0, time_wait=255;
 unsigned char tx_lenght;
-unsigned char MY_ADR;*/
+unsigned char addr;*/
 
 typedef enum {
   RESET_ST,
@@ -137,7 +117,7 @@ int main( void )
         delay_ms(500);
         Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
         delay_ms(500);
-        read_method();
+        read_Mtd();
         FAN(0);
     }
     if (CSU_cfg.bit.LCD_ON) LCD_wr_set();
@@ -147,15 +127,15 @@ int main( void )
         Err_check(); //Проверить нет ли ошибок
 //--------------------------------------------Обработка данных с АЦП	
 	Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
-	if (ADC_finish==1) //Если есть оцифрованные каналы
+	if (ADC_Fin==1) //Если есть оцифрованные каналы
 		{
 		if ((CSU_cfg.bit.LED_ON==0)||(connect_st!=0))
 			Correct_UI(); //Проверить необходимость корректировки тока или/и напряжения
-		ADC_finish=0; //Устанвить флаг ожидания окончания следующей оцифровки
+		ADC_Fin=0; //Устанвить флаг ожидания окончания следующей оцифровки
 		}
 //--------------------------------------------Сохранение данных калибровки		
 	if (Clb.id.bit.save == 1) {
-		if (!Clb.id.bit.error && (Clb.id.bit.dw_finish || Clb.id.bit.up_finish)) {
+		if (!Clb.id.bit.error && (Clb.id.bit.dw_Fin || Clb.id.bit.up_Fin)) {
 			save_clb();
 			Clb.id.byte = 0;
 		}
@@ -189,7 +169,7 @@ int main( void )
 				if (CSU_cfg.bit.DIAG_WIDE)
 					{
 					Stop_CSU(0);
-					read_method();
+					read_Mtd();
 					}
 				LCD_wr_set();
 				}				
@@ -218,7 +198,7 @@ int main( void )
 		//if (((PWM_status!=0)||(CSU_Enable==pause))&&(self_ctrl==1)) //Если идёт заряд или разряд и управление зарядом осуществляет ЗРМ самостоятельно
 		if ((CSU_Enable!=0)&&(self_ctrl==1)) //Если идёт заряд или разряд и управление зарядом осуществляет ЗРМ самостоятельно
 			{
-			stage_status(); //проверить статус этапа: испульсный режим или нет, в случае необходимости изменить исмпульс
+			Stg_status(); //проверить статус этапа: испульсный режим или нет, в случае необходимости изменить исмпульс
 			}
 			
 //---------------------------ОБРАБОТЧИК КНОПОК---------------------				
@@ -552,14 +532,14 @@ if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1)))
 						{
 						Clb.setI1=limit_Id;//set_Id;
 						Clb.pwm1=P_wdI;
-						Clb.id.bit.dw_finish=1;
+						Clb.id.bit.dw_Fin=1;
 						max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
 						}
 					if (limit_Id>id_up_Clb)//если ток допустимый для калибровки на больших токах
 						{
 						Clb.setI2=limit_Id;//set_Id;
 						Clb.pwm2=P_wdI;
-						Clb.id.bit.up_finish=1;
+						Clb.id.bit.up_Fin=1;
 						max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
 						}
 					}
@@ -945,7 +925,6 @@ void tmr0_ovf(void)
 {
 //------------------------Параметры зависящие от времени----------------
 if (pid_t) pid_t--;
-if (time_wait>0) time_wait--;	//Время ожидания приёма окончания пакета
 if (connect_st>0) connect_st--; //Время ожидания следующего пакета (по истечении вермени связь считается разорваной)
 if (No_akb_cnt>0) No_akb_cnt--; //Время ожидания пока нарастёт выходной ток (если время истекло, а ток не вырос, значит АКБ не подключена)
 if (time_rd>0) time_rd--;		//Время в течении которого запрещено чтение датчика температуры (пауза между чтениями датчика температуры)
@@ -968,9 +947,9 @@ if ((connect_st==0)||(CSU_cfg.bit.DEBUG_ON==1))
 	if ((CSU_cfg.bit.LCD_ON)||(CSU_cfg.bit.DEBUG_ON))
 		{
 		if (LCD_refresh>0) LCD_refresh--;//Время в течении которго запрещено обновление LCD (пауза между обновлениями LCD)
-		if (finish_cnt>0) finish_cnt--; //время до перехода на следующий этап
+		if (fCnt>0) fCnt--; //время до перехода на следующий этап
 		if (pulse_step>0) pulse_step--; //время смены импульса заряд/разряд в импульсном режиме
-		if ((Stage.fld.stop_flag.dU)&&(dU_time>0)) dU_time--; //Время когда не увеличивается U при заряде щелочного АКБ
+		if ((Stg.fld.stop_flag.dU)&&(dU_time>0)) dU_time--; //Время когда не увеличивается U при заряде щелочного АКБ
 	
 	
 		if (PWM_status!=0) 
@@ -978,7 +957,7 @@ if ((connect_st==0)||(CSU_cfg.bit.DEBUG_ON==1))
 			if (mSec>59) 
 	 			{
 				Sec++;			//секунды метода
-				Sec_Stage++;	//секунды этапа
+				Sec_Stg++;	//секунды этапа
 				mSec=0;
 				}
 			else mSec++;	
@@ -992,15 +971,15 @@ if ((connect_st==0)||(CSU_cfg.bit.DEBUG_ON==1))
 				if (Hour<255) Hour++;	//Часы метода
 				Min=0;
 				}
-			if (Sec_Stage>59)
+			if (Sec_Stg>59)
 				{
-				Min_Stage++;	//Минты этапа
-				Sec_Stage=0;
+				Min_Stg++;	//Минты этапа
+				Sec_Stg=0;
 				}
-			if (Min_Stage>59)
+			if (Min_Stg>59)
 				{
-				Hour_Stage++;	//Часы этапа
-				Min_Stage=0;
+				Hour_Stg++;	//Часы этапа
+				Min_Stg=0;
 				}
 			}
 		}

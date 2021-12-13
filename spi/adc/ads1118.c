@@ -8,7 +8,7 @@ ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
 ADC_Type  ADC_ADS1118[4];
 unsigned int ADC_O[4];
 unsigned char ADS1118_St[4];
-unsigned char ADS1118_chanal=0, ADC_finish=0;
+unsigned char ADS1118_chanal=0, ADC_Fin=0;
 unsigned char ADC_wait=200, Err_ADC_cnt=0, OUT_err_cnt=0;
 
 void SPI_MasterInit(void)
@@ -80,7 +80,7 @@ else ADC_ADS1118[*channel].word=0;
 
 ADS1118_St[*channel]=1; //установить признак что прочитаные новые данные АЦП (данные не обработаны)
 *channel=ADC_cfg_rd.bit.MUX;
-ADC_finish=1;
+ADC_Fin=1;
 ADC_wait=50;
 
 return(1);

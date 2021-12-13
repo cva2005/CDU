@@ -12,7 +12,7 @@ extern unsigned int P_maxW;
 extern CSU_type CSU_cfg;
 extern CSU2_type CSU_cfg2;
 extern unsigned char dmSlave;
-extern unsigned char MY_ADR;
+extern unsigned char addr;
 extern autosrart_t autosrart;
 
 void EEPROM_write(unsigned int uiAddress, unsigned char ucData)
@@ -66,7 +66,7 @@ void EEPROM_save_cfg(void)
 	EEPROM_write_int(14, P_maxW);
 	EEPROM_write_int(16, CSU_cfg.word);
 	EEPROM_write(18, dmSlave);
-	EEPROM_write(19, MY_ADR);
+	EEPROM_write(19, addr);
 	EEPROM_write_int(20, B[ADC_MU]);
 	EEPROM_write_int(22, B[ADC_MI]);
 	EEPROM_write_int(24, B[ADC_DI]);
@@ -97,7 +97,7 @@ void EEPROM_read_cfg(void)
 		P_maxW=EEPROM_read_int(14);
 		CSU_cfg.word=EEPROM_read_int(16);
 		dmSlave=EEPROM_read(18);
-		MY_ADR=EEPROM_read(19);
+		addr=EEPROM_read(19);
 		B[ADC_MU]=EEPROM_read_int(20);
 		B[ADC_MI]=EEPROM_read_int(22);
 		B[ADC_DI]=EEPROM_read_int(24);
@@ -130,7 +130,7 @@ void EEPROM_read_cfg(void)
 		maxId=maxId_const;
 		P_maxW=maxPd_const;
 		
-		MY_ADR=MY_ADR_const;
+		addr=addr_const;
 		dmSlave=DM_ext;
 		
 		CSU_cfg.word=0;
@@ -179,12 +179,12 @@ if (CRC!=EEPROM_read(8+START_EEPROM_NUMBER))
 	}
 }
 
-unsigned char EEPROM_read_string(unsigned int method_adr, unsigned char size, unsigned char *str)
+unsigned char EEPROM_read_string(unsigned int Mtd_adr, unsigned char size, unsigned char *str)
 {unsigned char cnt, CRC=0;
 
 for (cnt=0; cnt<size; cnt++) 
 	{
-	str[cnt]=EEPROM_read(cnt+method_adr);
+	str[cnt]=EEPROM_read(cnt+Mtd_adr);
 	if (cnt<(size-1)) CRC=CRC8_Tmp(str[cnt], CRC);
 	}
 if (CRC!=str[size-1]) return(0);
@@ -192,13 +192,13 @@ return(1);
 
 }
 
-void EEPROM_write_string(unsigned int method_adr, unsigned char size, unsigned char *str)
+void EEPROM_write_string(unsigned int Mtd_adr, unsigned char size, unsigned char *str)
 {unsigned char cnt, CRC=0;
 
 for (cnt=0; cnt<size; cnt++)
 	{
 	if (cnt<(size-1)) CRC=CRC8_Tmp(str[cnt], CRC);
 	else str[cnt]=CRC;
-	EEPROM_write(cnt+method_adr, str[cnt]);
+	EEPROM_write(cnt+Mtd_adr, str[cnt]);
 	}
 }

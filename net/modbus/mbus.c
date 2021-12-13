@@ -113,7 +113,7 @@ static void frame_parse(BUS_MODE mode)
         rs_buff = RtuBuff;
     }
     if (rs_buff[0] != MB_COMMON) { /* не широковещательный адрес */
-        if (rs_buff[0] != (Cfg.MY_ADR)) {
+        if (rs_buff[0] != (Cfg.addr)) {
             return; /* адрес не совпал */
         }
     } else { /* широковещательный адрес */

@@ -132,7 +132,7 @@ unsigned char Thermometr_Start_Convert(void)
  return(error);
 }
 
-unsigned char Thermometr_Convert_Finish(void)
+unsigned char Thermometr_Convert_Fin(void)
 {unsigned char bit_receive;
  Direction_Wr;
  Write_0;			 //Reqwest of read bit
@@ -149,7 +149,7 @@ unsigned char Thermometr_Convert_Finish(void)
  //for (i=0; i<20; i++);   //Wait
  delay_us(35);
  Direction_Rd;
- return (bit_receive); //1 - convert finished, 0 - convert process
+ return (bit_receive); //1 - convert Fined, 0 - convert process
 }
 
 

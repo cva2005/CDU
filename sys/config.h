@@ -23,13 +23,13 @@ typedef struct {
     uint16_t P_maxW;
     bf1_t bf1;
     uint8_t dmSlave;
-    uint8_t MY_ADR;
+    uint8_t addr;
     uint16_t B[4];
     bf2_t bf2; 
     uint8_t time_set;
     uint16_t u_set;
     uint8_t cnt_set;
-    uint8_t Reserved;
+    uint8_t rsv;
 } cfg_t;
 
 #define N_CH        8 // chars in work number
@@ -47,8 +47,8 @@ typedef struct {
 		struct {
 			uint8_t control:1;	//проконтролировать калибровку тока разряда
 			uint8_t error:1;	    //ошибка калибровки тока
-			uint8_t up_finish:1;	//верхний предел откалиброван
-			uint8_t dw_finish:1;	//нижний предел откалиброван
+			uint8_t up_Fin:1;	//верхний предел откалиброван
+			uint8_t dw_Fin:1;	//нижний предел откалиброван
 			uint8_t save:1;			//необходимо сохранить значения в EEPROM
 		} bit;
 		uint8_t byte;
@@ -59,7 +59,7 @@ typedef struct {
 #define EEPROM_SIZE     1024
 #define MS_SIZE sizeof(stg_t) > sizeof(mtd_t) ? sizeof(stg_t) : sizeof(mtd_t)
 
-/* metod/stage type */
+/* metod/Stg type */
 typedef struct {
     mtd_t data;
     uint8_t crc;
@@ -85,8 +85,8 @@ void read_cfg (void);
 void read_num (char *num);
 void save_num (uint8_t *src);
 bool read_clb (void);
-bool read_mtd (uint8_t num, mtd_t *pm);
-bool read_stg (uint8_t num, stg_t *ps);
+bool eeread_mtd (uint8_t num, mtd_t *pm);
+bool eeread_stg (uint8_t num, stg_t *ps);
 void save_alg (uint8_t num, void *p);
 void save_cfg (void);
 void save_clb (void);

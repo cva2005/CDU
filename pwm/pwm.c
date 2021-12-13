@@ -5,23 +5,22 @@
 #include "../spi/adc/ads1118.h"
 #include "pwm.h"
 
-extern int TEST1, TEST2, TEST3, TEST4;
+unsigned int max_pwd_I = MAX_CK, max_pwd_U = MAX_CK, max_pwd_Id = 0;
+unsigned char PWM_status = 0;
+unsigned char PWM_set = 0;
 
-extern unsigned char PWM_status, Error;
+extern int TEST1, TEST2, TEST3, TEST4;
 extern ADC_Type  ADC_ADS1118[4];
 extern unsigned char ADS1118_St[4]; //состояние обработаны данные или нет
-extern unsigned char ADC_finish;
+extern unsigned char ADC_Fin;
 extern unsigned int set_I, set_U, set_Id;
 extern unsigned int K_U, K_I, K_Id;
 extern unsigned int P_maxW;
 
-extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
 extern unsigned int fast_correct;
 extern unsigned char correct_off, change_UI;
-extern unsigned char PWM_set;
-
 extern unsigned int dm_loss_cnt;
-//-------------------------------------------------------------
+
 unsigned short PwmDuty (float out) {
   if (out > 1.0f) out = 1.0f;
   if (out < 0) out = 0;
@@ -103,7 +102,7 @@ if (!Error)
 	}
 ADS1118_St[ADC_MU]=0;
 ADS1118_St[ADC_MI]=0;
-ADC_finish=0;
+ADC_Fin=0;
 correct_off=22; //запретить корректировку ШИМ, пока не стабилизируется напряжение
 change_UI=0;
 }
@@ -138,7 +137,7 @@ P_wdU=0;
 //#endif
 ADS1118_St[ADC_MU]=0;
 ADS1118_St[ADC_DI]=0;
-ADC_finish=0;
+ADC_Fin=0;
 correct_off=20; //запретить корректировку ШИМ, пока не стабилизируется напряжение
 change_UI=0;
 Clb.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибровку
@@ -207,7 +206,7 @@ if (PWM_status==DISCHARGE)
 ADS1118_St[ADC_MU]=0;
 ADS1118_St[ADC_MI]=0;
 ADS1118_St[ADC_DI]=0;
-ADC_finish=0;
+ADC_Fin=0;
 fast_correct=400; //Запретить на 3c. быструю корректировку шим
 change_UI=0;
 }

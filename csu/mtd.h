@@ -51,8 +51,8 @@ typedef union {
 		unsigned char Mm;//24
 		unsigned char Sm;//25
 		unsigned char Cnt;//26
-		unsigned char Nstage;//27
-		//unsigned int Next_Method; //28, 29
+		unsigned char NStg;//27
+		//unsigned int Next_Mtd; //28, 29
 	} fld;
 	unsigned char byte[32];
 	unsigned int word[16];
@@ -64,30 +64,32 @@ typedef struct {
 	unsigned int U;
 	unsigned int dU;
 	unsigned int max_U;
-} finish_t;
+} fin_t;
 
 #define MTD_N           15
-#define DEF_MTD_STAGE   1
+#define DEF_MTD_Stg     1
 
-unsigned char finish_conditions (void);
-void stage_status (void);
-void calculate_method (void);
-void calculate_stage (void);
-void read_method (void);
-void read_stage (unsigned char stage);
-void Start_method (unsigned char new);
-void Stop_method (void);
-void create_method (unsigned char method);
+unsigned char fin_cond (void);
+void stg_status (void);
+void calc_mtd (void);
+void calc_stg (void);
+void read_mtd (void);
+void read_stg (unsigned char num);
+void start_mtd (unsigned char num);
+void stop_mtd (void);
+void create_mtd (unsigned char num);
 uint8_t find_free (void);
-void delete_all_method (void);
+void delete_all_mtd (void);
 
-//extern unsigned char method_cnt, stage_cnt, cycle_cnt;
+extern unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
+extern unsigned int max_set_I, max_set_Id, max_set_U;
 extern uint8_t mCnt, sCnt, cCnt;
-extern uint8_t StageNum[MTD_N];
-extern unsigned int WrNum;
-extern stg_t Stage;
-extern mtd_t Method;
-extern finish_t finish;
+extern uint8_t StgNum[MTD_N];
+extern unsigned int msNum;
+extern stg_t Stg;
+extern mtd_t Mtd;
+extern fin_t Fin;
+extern bool SaveMtd;
 
 #ifdef __cplusplus
 }

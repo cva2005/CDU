@@ -36,7 +36,7 @@ bool run_time(uint32_t start, uint32_t delta)
     return false;
 }
 
-stime_t get_finish_time(uint32_t delay)
+stime_t get_fin_time(uint32_t delay)
 {
 	stime_t time;
 	get_stime(time.run);

@@ -19,7 +19,7 @@ extern "C" {
 #define C_pos 14
 //#define Time_pos  17
 
-#define PR_number 5 //число параметров для редактирования
+#define PR_NUM      5 //число параметров для редактирования
 
 //#define pr_I 0x80
 //#define pr_U 0x8A
@@ -53,6 +53,10 @@ void calculate_temp(signed char *temp, char *point);
 void calculate_param(unsigned int val, unsigned int k, char *point);
 void calculate_time(unsigned char P1, unsigned char P2, unsigned char P3, char *point);
 void LCD_change_mode(unsigned char *mode);
+
+extern char LCD[4][20];
+extern unsigned char  Cursor_pos[PR_NUM], Cursor_point;
+extern unsigned char LCD_refresh;
 
 #ifdef __cplusplus
 }
