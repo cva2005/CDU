@@ -15,16 +15,12 @@ uint16_t msNum = 0;
 bool SaveMtd = false;
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
 unsigned int max_set_U, max_set_I, max_set_Id;
+uint8_t Hour = 0, Min = 0, Sec = 0, mSec = 0, Hour_Stg, Min_Stg, Sec_Stg;
 
 extern unsigned int pulse_step; //время импульса заряд/разря при импульсном режиме
 extern unsigned int dU_time;
 extern unsigned int TEST1, TEST2, TEST3, TEST4;
 extern unsigned char PWM_status, CSU_Enable, ZR_mode, Error;
-extern unsigned char Hour, Min, Sec, Hour_Stg, Min_Stg, Sec_Stg;
-//extern unsigned char Hour_Z, Min_Z, Sec_Z;
-//extern ADC_Type  ADC_ADS1118[4]; //данные измерений с ADS1118
-extern unsigned char change_UI;
-//extern tx_pack_type tx_pack;
 //-------------------------------проверка условий окончания этапа--------------------
 unsigned char fin_cond(void)
 {
@@ -230,12 +226,12 @@ void start_mtd (unsigned char num) {
 		if ((error_calc / 100000UL) > 4) s += 1000000UL; //убрать погрешность
 		Mtd.fld.Im = (uint16_t)((s - error_calc) / 100000UL);
 		if (SaveMtd) {
-			EEPROM_write_string(Mtd_ARD[Mtd_cnt], SIZE_Mtd, &Mtd.byte[0]);
+            save_alg(mCnt, &Mtd);
 			SaveMtd = false;	
 		}			
-		cCnt = 1;    //установить первый цикл
+		cCnt = 1; // set first cycle
 	}
-	sCnt = 0;	//Установить первый этап
+	sCnt = 0; // set first stage
 	read_stg(sCnt);
 	calc_stg();
 	if (Stg.fld.type == DISCHARGE) {
@@ -246,129 +242,82 @@ void start_mtd (unsigned char num) {
 	}	
 }
 
-void stop_mtd(void) {
+void stop_mtd (void) {
     update_LCD_work();
     Stop_CSU(0);
-    if (CSU_cfg.bit.LCD_ON) {
-        CSU_Enable=1;	
-        LCD[0][2]=Z_rus;
-        LCD[0][3]='a';
-        LCD[0][4]=v_rus;
-        LCD[0][5]='e';
-        LCD[0][6]='p';
-        LCD[0][7]=sh_rus;
-        LCD[0][8]='e';
-        LCD[0][9]=n_rus;
-        LCD[0][10]='o';
-        LCD[0][11]=' ';
-        LCD[0][12]=' ';
-        LCD[0][13]=' ';
-        LCD[0][14]=' ';
-        WH2004_string_wr(&LCD[0][2],line0+2, 13); //отобразить
+    if (Cfg.bf1.LCD_ON) {
+        CSU_Enable = 1;	
+        LCD[0][2] = Z_rus;
+        LCD[0][3] = 'a';
+        LCD[0][4] = v_rus;
+        LCD[0][5] = 'e';
+        LCD[0][6] = 'p';
+        LCD[0][7] = sh_rus;
+        LCD[0][8] = 'e';
+        LCD[0][9] = n_rus;
+        LCD[0][10] = 'o';
+        LCD[0][11] = ' ';
+        LCD[0][12] = ' ';
+        LCD[0][13] = ' ';
+        LCD[0][14] = ' ';
+        WH2004_string_wr(&LCD[0][2], line0 + 2, 13); // refrash
 	}
 }
 
-void create_mtd (unsigned char num) {
-    unsigned char cnt;
+void create_mtd (uint8_t num) {
+    if (num < 2) {
+        memset(Mtd.fld.name, ' ', sizeof(Mtd.fld.name));
+        Mtd.fld.data_type = MTD_ID;
+        Mtd.fld.Hm = 10;
+        Mtd.fld.Cnt =
+        Mtd.fld.NStg = 1;
+        Stg.fld.data_type = STG_ID;
+        Mtd.fld.Mm =
+        Mtd.fld.Sm =
+        Stg.fld.stop_flag.T =
+        Stg.fld.stop_flag.I =
+        Stg.fld.stop_flag.U =
+        Stg.fld.stop_flag.dU =
+        Stg.fld.T_ch =
+        Stg.fld.T_dch =
+        Stg.fld.end_I =
+        Stg.fld.end_U =
+        Stg.fld.end_dU =
+        Stg.fld.end_Temp =
+        Stg.fld.end_C =
+        Stg.fld.end_M =
+        Stg.fld.end_S = 0;
+        Mtd.fld.Im =
+        Stg.fld.end_H = 100;
+    } else return;
     if (num == 0) {
-        Mtd_ARD[0]=Mtd_START_ADR;
-        Mtd.fld.data_type=0xAA;	
-        Mtd.fld.name[0]=Z_rus;
-        Mtd.fld.name[1]='a';
-        Mtd.fld.name[2]='p';
-        Mtd.fld.name[3]=ya_rus;
-        Mtd.fld.name[4]=d_rus;
-        for (cnt=5; cnt<18; cnt++) Mtd.fld.name[cnt]=' ';
-        Mtd.fld.Im=100;
-        #ifdef POWER_24
-        Mtd.fld.Im=4000;
-        #endif
-        #ifdef CHARGER_24
-        Mtd.fld.Im=550;
-        #endif
-        Mtd.fld.Um=1440;
-        #ifdef POWER_24
-        Mtd.fld.Um=2400;
-        #endif
-        #ifdef CHARGER_24
-        Mtd.fld.Um=2880;
-        #endif
-        Mtd.fld.Hm=10;
-        #ifdef POWER_24
-        Mtd.fld.Hm=100;
-        #endif
-        Mtd.fld.Mm=0;
-        Mtd.fld.Sm=0;
-        Mtd.fld.Cnt=1;
-        Mtd.fld.NStg=1;
-        EEPROM_write_string(Mtd_ARD[0], SIZE_Mtd, &Mtd.byte[0]);
-        Stg.fld.data_type=0x55;
-        Stg.fld.type=CHARGE;
-        Stg.fld.stop_flag.T=0;
-        Stg.fld.stop_flag.I=0;
-        #ifdef CHARGER_24
-        Stg.fld.stop_flag.I=1;
-        #endif
-        Stg.fld.stop_flag.U=0;
-        Stg.fld.stop_flag.dU=0;
-        Stg.fld.I_ch=10000;
-        Stg.fld.U_ch=10000;
-        Stg.fld.I_dch=0;
-        Stg.fld.U_dch=0;
-        Stg.fld.T_ch=0;
-        Stg.fld.T_dch=0;
-        Stg.fld.end_I=0;
-        #ifdef CHARGER_24
-        Stg.fld.end_I=1000;
-        #endif
-        Stg.fld.end_U=0;
-        Stg.fld.end_dU=0;
-        Stg.fld.end_Temp=0;
-        Stg.fld.end_C=0;
-        Stg.fld.end_H=100;
-        Stg.fld.end_M=0;
-        Stg.fld.end_S=0;
-        EEPROM_write_string(Mtd_ARD[0]+SIZE_Mtd, SIZE_Stg, &Stg.byte[0]);
-	} else if (num==1) {
-        //Mtd_ARD[1]=Mtd_START_ADR+SIZE_Mtd+SIZE_Stg;
-        Mtd.fld.data_type=0xAA;
-        Mtd.fld.name[0]='P';
-        Mtd.fld.name[1]='a';
-        Mtd.fld.name[2]=z_rus;
-        Mtd.fld.name[3]='p';
-        Mtd.fld.name[4]=ya_rus;
-        Mtd.fld.name[5]=d_rus;
-        for (cnt=6; cnt<18; cnt++) Mtd.fld.name[cnt]=' ';
-        Mtd.fld.Im=100;
-        Mtd.fld.Um=1080;
-        Mtd.fld.Hm=10;
-        Mtd.fld.Mm=0;
-        Mtd.fld.Sm=0;
-        Mtd.fld.Cnt=1;
-        Mtd.fld.NStg=1;
-        EEPROM_write_string(Mtd_ARD[1], SIZE_Mtd, &Mtd.byte[0]);
-        Stg.fld.data_type=0x55;
-        Stg.fld.type=DISCHARGE;
-        Stg.fld.stop_flag.T=0;
-        Stg.fld.stop_flag.I=0;
-        Stg.fld.stop_flag.U=0;
-        Stg.fld.stop_flag.dU=0;
-        Stg.fld.I_ch=0;
-        Stg.fld.U_ch=0;
-        Stg.fld.I_dch=10000;
-        Stg.fld.U_dch=10000;
-        Stg.fld.T_ch=0;
-        Stg.fld.T_dch=0;
-        Stg.fld.end_I=0;
-        Stg.fld.end_U=0;
-        Stg.fld.end_dU=0;
-        Stg.fld.end_Temp=0;
-        Stg.fld.end_C=0;
-        Stg.fld.end_H=100;
-        Stg.fld.end_M=0;
-        Stg.fld.end_S=0;
-        EEPROM_write_string(Mtd_ARD[1]+SIZE_Mtd, SIZE_Stg, &Stg.byte[0]);
+        Mtd.fld.name[0] = Z_rus;
+        Mtd.fld.name[1] = 'a';
+        Mtd.fld.name[2] = 'p';
+        Mtd.fld.name[3] = ya_rus;
+        Mtd.fld.name[4] = d_rus;
+        Mtd.fld.Um = 1440;
+        Stg.fld.type = CHARGE;
+        Stg.fld.I_ch =
+        Stg.fld.U_ch = 10000;
+        Stg.fld.I_dch =
+        Stg.fld.U_dch = 0;
+	} else if (num == 1) {
+        Mtd.fld.name[0] = 'P';
+        Mtd.fld.name[1] = 'a';
+        Mtd.fld.name[2] = z_rus;
+        Mtd.fld.name[3] = 'p';
+        Mtd.fld.name[4] = ya_rus;
+        Mtd.fld.name[5] = d_rus;
+        Mtd.fld.Um = 1080;
+        Stg.fld.type = DISCHARGE;
+        Stg.fld.I_ch =
+        Stg.fld.U_ch = 0;
+        Stg.fld.I_dch =
+        Stg.fld.U_dch = 10000;
 	}
+    save_alg(num, &Mtd);
+    save_alg(num + 1, &Stg);
 }
 
 uint8_t find_free (void) {
@@ -390,14 +339,9 @@ uint8_t find_free (void) {
 }
 
 void delete_all_mtd (void) {
-    unsigned int ADR;
-    unsigned char cnt; 
-    ADR=Mtd_START_ADR;
-    while (ADR<EEPROM_SIZE) {
-        EEPROM_write(ADR, 0xFF);
-        ADR+=SIZE_Mtd;
-	}
-    for (cnt=1; cnt<15; cnt++) Mtd_ARD[cnt]=0;
-    Mtd_ARD[0]=Mtd_START_ADR;
-    mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
+    eeclr_alg();
+    for (uint8_t i = 0; i < MS_N; i++) {
+        StgNum[i] = 0;
+    }
+    mCnt = sCnt = cCnt = 0;
 }

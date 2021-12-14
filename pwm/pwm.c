@@ -21,13 +21,20 @@ extern unsigned int fast_correct;
 extern unsigned char correct_off, change_UI;
 extern unsigned int dm_loss_cnt;
 
-unsigned short PwmDuty (float out) {
-  if (out > 1.0f) out = 1.0f;
-  if (out < 0) out = 0;
-  out *= MAX_CK;
-  return (unsigned short)out;
+#pragma vector=INT1_vect
+#pragma type_attribute=__interrupt
+void int_1_ext (void) {
+    Stop_PWM(0);
+    Error = ERR_OVERLOAD;
 }
-//-------------------------------------------------------------
+
+unsigned short PwmDuty (float out) {
+    if (out >= 1.0f) return MAX_CK;
+    if (out <= 0) return 0;
+    out *= MAX_CK;
+    return (unsigned short)out;
+}
+
 void Stop_PWM(unsigned char soft)
 {
 if (soft!=0)
@@ -63,7 +70,6 @@ ADS1118_St[ADC_MUp]=0;
 return;
 }
 
-//-------------------------------------------------------------
 void Start_PWM_T1(unsigned char mode) {
   if (PWM_status!=0) Stop_PWM(0);
   ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
@@ -76,7 +82,6 @@ void Start_PWM_T1(unsigned char mode) {
   PWM_status = mode; //установить признак что PWM работает в режиме заряда
 }
 
-//-------------------------------------------------------------
 void soft_start(unsigned char control_out)
 {
 
@@ -107,7 +112,6 @@ correct_off=22; //запретить корректировку ШИМ, пока не стабилизируется напряжени
 change_UI=0;
 }
 
-//-------------------------------------------------------------
 unsigned int calculate_pwd(unsigned int val, unsigned char limit)
 {int32_t P=0L, K, B;
 
@@ -144,7 +148,6 @@ Clb.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибр
 dm_loss_cnt=100;
 }
 
-//-------------------------------------------------------------
 #if !PID_CONTROL
 void Correct_PWM(unsigned char pr)
 {uint32_t S=0UL;

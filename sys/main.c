@@ -1,10 +1,4 @@
 #pragma message	("@(#)main.c")
-#ifndef ENABLE_BIT_DEFINITIONS
-#define  ENABLE_BIT_DEFINITIONS
-#endif /* ENABLE_BIT_DEFINITIONS */
-
-#include <ina90.h>
-#include <ioavr.h>
 
 #include <system.h>
 #include "pid/pid_r.h"
@@ -21,109 +15,48 @@
 
 unsigned long alarm_del;
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
-unsigned char CSU_Enable=0, ZR_mode=1, Error=0, p_limit=0;
 unsigned char self_ctrl=0; //управление методом заряда производится самостоятельно или удалённо
-unsigned int id_dw_Clb, id_up_Clb;
 unsigned int  No_akb_cnt=0, dm_loss_cnt=0;
-unsigned int  pid_t = 0;
+unsigned int  pid_time = 0;
 unsigned int pulse_step; //время импульса заряд/разряд при импульсном режиме
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
-
-//unsigned char dmSlave=DM_ext;
-//unsigned int maxI, maxId, maxU; //макисмальные значения в формате 3600 (36.00 В)
 unsigned char ERR_Ext=0;		//фильтр на чтения внешнего датчика температуры
-
-//--------------------------------переменные для сканирования клавиш
-//--------------------------------переменные для часов
-unsigned char Hour=0, Min=0, Sec=0, mSec=0, Hour_Stg, Min_Stg, Sec_Stg;
-//unsigned char Hour_Z=10, Min_Z=0, Sec_Z;
-//---------------------Переменные для измерений----------------------
-
-
-//---------------------Переменные для LCD----------------------------
-//----------------Real Temperature  (Tmp_DS18B20Z.c) variabels-------------------------
 unsigned char time_rd=0; //время между чтениями датчиков температуры
-//----------------UART  (usart.c) variabels-------------------------
-/*unsigned char tx_point=0;
-tx_pack_type tx_pack;
-unsigned char rx_point=0;
-rx_pack_type rx_pack;
-unsigned char connect_st=0, time_wait=255;
-unsigned char tx_lenght;
-unsigned char addr;*/
 
-typedef enum {
-  RESET_ST,
-  CHARGE_ST,
-  DISCHARGE_ST
-} state_t;
-state_t State;
-pid_r_instance Pid_U, Pid_Ic, Pid_Id;
-float Uerr, Ierr, Usrt;
-bool InitF, SatU, Stable, DownMode, PulseMode;
-unsigned int StbCnt;
-#define Kp_U        0.0012f
-#define Ti_U        5000.0f
-#define Td_U        20.0f
-#define Kp_Ic       0.0001f
-#define Ti_Ic       1000.0f
-#define Td_Ic       2.0f
-#define Kp_Id       0.0001f
-#define Ti_Id       1000.0f
-#define Td_Id       2.0f
-#define DF_TAU      10.0f
-#define NULL_Iu     0.000f
-#define NULL_Iic    0.000f
-#define NULL_Iid    0.000f
-#define NULL_Xu     0.000f
-#define NULL_Xic    0.000f
-#define NULL_Xid    0.000f
-#define NO_BATT_TIME 70
-#define INF_TAU     50.0f
-#define CURR_DT     100.0f
-#define ST_TIME     100U
-#define DOWN_LIM    100.0f
+#define NO_BATT_TIME    70
+#define INF_TAU         50.0f
+#define CURR_DT         100.0f
+#define ST_TIME         100U
+#define DOWN_LIM        100.0f
 
-static void init_PIDs (void);
-static void Correct_UI (void);
+static void init_gpio (void);
 
-int main( void )
-{
-    Init_Port();
-    //Init_USART();
-    init_rs();
-#if SYS_TMR_DBGU
-    SYS_TMR_ON();
-    set_stime(12345);
-    __enable_interrupt();
-    START_RX(); /* начать прием */
-    while(1) {
-      net_drv(); // проверка драйвера сети
-    }
-#else
-    Init_Timer0();
-#endif
+int main (void) {
+    init_gpio();
     Init_ExtInt();
     Init_ADS1118();
     ALARM_OUT(0);
     Read_temp(); //Запустить на измерение датчик температуры 
     read_cfg();
-    if (CSU_cfg.bit.LCD_ON) LCD_wr_connect(0);
-    if (CSU_cfg.bit.FAN_CONTROL==0) {
+    if (Cfg.bf1.LCD_ON) LCD_wr_connect(0);
+    if (Cfg.bf1.FAN_CONTROL == 0) {
         FAN(1);
         Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
         delay_ms(500);
         Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
         delay_ms(500);
-        read_Mtd();
+        read_mtd();
         FAN(0);
     }
-    if (CSU_cfg.bit.LCD_ON) LCD_wr_set();
-    Error=0;
+    if (Cfg.bf1.LCD_ON) LCD_wr_set();
+    init_rs();
+    SYS_TMR_ON();
+    START_RX(); /* начать прием */
     __enable_interrupt();
-    while(1) {	  	
+    while (1) {	  	
+        net_drv(); // проверка драйвера сети
         Err_check(); //Проверить нет ли ошибок
 //--------------------------------------------Обработка данных с АЦП	
 	Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
@@ -277,104 +210,6 @@ int main( void )
     return 0;
 }
 
-/*
- * Инициализация контуров регулирования
- */
-static void init_PIDs (void) {
-  DownMode = Stable = SatU = InitF = false;
-  StbCnt = 0;
-	pid_r_init(&Pid_U);
-	Pid_U.Kp = Kp_U;
-	Pid_U.Ti = Ti_U;
-	Pid_U.Td = Td_U;
-	Pid_U.Tf = DF_TAU;
-	Pid_U.Xi = NULL_Iu;
-	Pid_U.Xd = NULL_Xu;
-	pid_r_init(&Pid_Ic);
-	Pid_Ic.Kp = Kp_Ic;
-	Pid_Ic.Ti = Ti_Ic;
-	Pid_Ic.Td = Td_Ic;
-	Pid_Ic.Tf = DF_TAU;
-	Pid_Ic.Xi = NULL_Iic;
-	Pid_Ic.Xd = NULL_Xic;
-	pid_r_init(&Pid_Id);
-	Pid_Id.Kp = Kp_Id;
-	Pid_Id.Ti = Ti_Id;
-	Pid_Id.Td = Td_Id;
-	Pid_Id.Tf = DF_TAU;
-	Pid_Id.Xi = NULL_Iid;
-	Pid_Id.Xd = NULL_Xid;
-}
-
-static void Correct_UI (void) {
-  if (ADS1118_St[ADC_MU] && (ADS1118_St[ADC_MI] || ADS1118_St[ADC_DI])) {
-    ADS1118_St[ADC_MU] = 0;
-    int err_i;
-    int err_u = set_U - ADC_ADS1118[ADC_MU].word;
-    if (ADS1118_St[ADC_MI]) {
-      ADS1118_St[ADC_MI] = 0;
-      err_i = set_I - ADC_ADS1118[ADC_MI].word;
-    } else {
-      ADS1118_St[ADC_DI] = 0;
-      err_i = i_power_limit(Cfg.P_maxW, set_Id);
-      err_i -= ADC_ADS1118[ADC_DI].word;
-    }
-	  if (PWM_status == CHARGE) {
-  	  if (State == DISCHARGE_ST) {
-        State = CHARGE_ST;
-        goto pulse_mode;
-      }
-    } else if (PWM_status == DISCHARGE) {
-  	  if (State == CHARGE_ST) {
-        State = DISCHARGE_ST;
-        pulse_mode:
-        PulseMode = true;
-        init_PIDs();
-      }        
-    } else return;
-    if (PulseMode || !InitF) {
-      InitF = true;
-      Usrt = Uerr = (float)err_u;
-      Ierr = (float)err_i;
-    } else {
-      Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
-      Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
-    }
-	  if (PWM_status == CHARGE) {
-      /*if (!Stable) {
-        if (StbCnt < ST_TIME) {
-          StbCnt++;
-        } else {
-          Stable = true;
-          if (Usrt - Uerr > DOWN_LIM) DownMode = true;
-        }
-      }*/
-      float tmp;
-      /*if (SatU) {
-        tmp = Uerr;
-      } else { // !SatU
-        if (Uerr <= 0) SatU = true;
-        tmp = Ierr;
-      }
-      if (!PulseMode && DownMode) {
-        if (tmp > CURR_DT) tmp = CURR_DT;
-        else if (tmp < -CURR_DT) tmp = -CURR_DT;
-      }*/
-      if (Uerr <= 0) tmp = Uerr;
-      else tmp = Ierr;
-      P_wdI = PwmDuty(pid_r(&Pid_Ic, tmp));
-      P_wdU = PwmDuty(pid_r(&Pid_U, Uerr));
-    } else { // discharge
-      if (SatU) {
-        P_wdI = PwmDuty(pid_r(&Pid_Id,  -Uerr));
-      } else { // !SatU
-        if (Uerr > 0) SatU = true;
-        P_wdI = PwmDuty(pid_r(&Pid_Id, Ierr));
-      }
-    }      
-    No_akb_cnt = NO_BATT_TIME;
-  }
-}
 #if 0 // !PID_CONTROL
 void Correct_UI(void)
 {unsigned char U_under=0, U_over=0, I_under=0, I_over=0, Id_under=0, Id_over=0;
@@ -570,79 +405,6 @@ if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1)))
 	}//	if ((ADS1118_St[ADC_MU]==1)&&((ADS1118_St[ADC_MI]==1)||(ADS1118_St[ADC_DI]==1))) //если оцифрованы одновременно: (U и I) или (U и Id)
 }
 #endif
-//-------------------------------------------------------------------------------------
-void calc_cfg (void) {
-    Error = 0;
-
-    if (Cfg.maxI > 5000) Cfg.maxI = 5000;
-    max_set_I = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
-    if (CSU_cfg.bit.GroupM) max_set_I = max_set_I + I_A(1,0);
-    if (Cfg.dmSlave == 0) {
-        if (Cfg.maxId>maxId_EXT0) Cfg.maxId = maxId_EXT0;
-    } else {
-        if (Cfg.maxId > maxId_EXT12) Cfg.maxId = maxId_EXT12;
-    }
-    max_set_Id = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
-    if (CSU_cfg.bit.GroupM) max_set_Id = max_set_Id + I_A(1,0);
-    if (Cfg.maxU > 4000) Cfg.maxU = 4000;
-    max_set_U = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
-    max_pwd_I = (uint32_t)max_set_I * 100UL / K_PWD_I + B_PWD_I;
-    if (max_pwd_I < 85) max_pwd_I = 85;
-    max_pwd_U = (uint32_t)max_set_U * 100UL / K_PWD_U + B_PWD_U;
-    if (Cfg.dmSlave > 2) Cfg.dmSlave = 2;
-    if (Cfg.dmSlave > 0) CSU_cfg.bit.EXT_Id = 1;
-    else CSU_cfg.bit.EXT_Id = 0;
-    //B[ADC_MI]=B_I[dmSlave]; //смещение тока установить в зависимости от того сколько РМ подключено
-    ADC_O[ADC_MU] = B[ADC_MU]; //Убрать ошибку "Переполюсовка" пока АЦП не будет оцифрован
-    ADC_O[ADC_MI] = B[ADC_MI]; //Убрать ошибку "Обрыв РМ"
-    autosrart.u_pwm = ((uint32_t)autosrart.u_set*100000UL) / Cfg.K_U;
-    autosrart.restart_cnt = autosrart.cnt_set;
-    autosrart.restart_time = autosrart.time_set;
-    if (CSU_cfg2.bit.autostart) CSU_cfg.bit.DEBUG_ON = 1;
-    id_dw_Clb = Id_A(2,0);
-    if (Cfg.dmSlave == 0) {
-        id_up_Clb = HI_Id_EXT0;
-        if (Cfg.P_maxW > 2500) Cfg.P_maxW = 2500;
-	}
-    if (Cfg.dmSlave == 1) {
-        id_up_Clb = HI_Id_EXT1;
-        if (Cfg.P_maxW > 8000) Cfg.P_maxW = 8000;
-	}
-    if (Cfg.dmSlave > 1) {
-        id_up_Clb = HI_Id_EXT2;
-        if (Cfg.P_maxW > 14000) Cfg.P_maxW = 14000;
-	}
-    if (id_up_Clb > max_set_Id) id_up_Clb = max_set_Id >> 1;
-    if (read_clb() == false) {
-        if (Cfg.dmSlave == 0) {
-            Clb.pwm1=PWM1_Id_EXT0;
-            Clb.setI1=SETId1_EXT0;
-            Clb.pwm2=PWM2_Id_EXT0;
-            Clb.setI2=SETId2_EXT0;
-        }
-        if (Cfg.dmSlave == 1) {
-            Clb.pwm1=PWM1_Id_EXT1;
-            Clb.setI1=SETId1_EXT1;
-            Clb.pwm2=PWM2_Id_EXT1;
-            Clb.setI2=SETId2_EXT1;
-        }
-        if (Cfg.dmSlave > 1) {
-            Clb.pwm1=PWM1_Id_EXT2;
-            Clb.setI1=SETId1_EXT2;
-            Clb.pwm2=PWM2_Id_EXT2;
-            Clb.setI2=SETId2_EXT2;
-        }
-        Clb.id.byte=0;
-	}
-    max_pwd_Id=calculate_pwd((max_set_Id+(max_set_Id/10)), 0);
-    LCD_clear();
-    if (CSU_cfg.bit.LCD_ON) Init_WH2004(1);
-    else Init_WH2004(0);	
-    if (CSU_cfg.bit.LED_ON) {
-        DDRC = 0xFF;
-        PORTC = 0xFF;	
-	}
-}
 //-------------------------------------------------------------------------------------
 unsigned int i_power_limit(unsigned int p, unsigned int i)
 {uint32_t U, Id;
@@ -924,7 +686,7 @@ else
 void tmr0_ovf(void)
 {
 //------------------------Параметры зависящие от времени----------------
-if (pid_t) pid_t--;
+if (pid_time) pid_time--;
 if (connect_st>0) connect_st--; //Время ожидания следующего пакета (по истечении вермени связь считается разорваной)
 if (No_akb_cnt>0) No_akb_cnt--; //Время ожидания пока нарастёт выходной ток (если время истекло, а ток не вырос, значит АКБ не подключена)
 if (time_rd>0) time_rd--;		//Время в течении которого запрещено чтение датчика температуры (пауза между чтениями датчика температуры)
@@ -933,7 +695,7 @@ if (correct_off>0) correct_off--;	//Время в течении которого запрещена любая сме
 if (ADC_wait>0) ADC_wait--;	//Максимально допустимое время ожидания оцифровки для АЦП
 if (dm_loss_cnt>0) dm_loss_cnt--; //Задрежка после пуска перед проверкой обрыва РМ
 
-if ((CSU_cfg2.bit.autostart)&&(PWM_status==STOP))
+if ((Cfg.bf2.ast)&&(PWM_status==STOP))
 	{
 	if (autosrart.restart_time>0) autosrart.restart_time--;	
 	}
@@ -1011,13 +773,6 @@ if ((connect_st==0)||(CSU_cfg.bit.DEBUG_ON==1))
 
 //===================================================Прерывание 1 внешнее====================================================
 //ISR(INT1_vect)
-#pragma vector=INT1_vect
-#pragma type_attribute=__interrupt
-void int_1_ext (void)
-{
-  Stop_PWM(0);
-  Error=ERR_OVERLOAD;
-}
 //-------------------------------------------------------------
 void Init_Timer0(void)
 {
@@ -1032,16 +787,12 @@ MCUCR=(1<<ISC00)|(0<<ISC01)|(1<<ISC10)|(0<<ISC11); //CSU Rev2 //interrup1 on  an
 GICR=(1<<INT1);
 }
 //-------------------------------------------------------------
-void Init_Port(void)
-{
-DDRA = 0x07;
-
-DDRB = 0xB8;
-
+static void init_gpio (void) {
+    DDRA = 0x07;
+    DDRB = 0xB8;
 #if !JTAG_DBGU
-DDRC = 0xFF;
-PORTC = 0xFF;
+    DDRC = 0xFF;
+    PORTC = 0xFF;
 #endif
-
-DDRD = 0xF4;
+    DDRD = 0xF4;
 }

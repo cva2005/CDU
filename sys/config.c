@@ -110,6 +110,17 @@ void save_alg (uint8_t num, void *p) {
     eData.MtdStg[num].crc = calc_crc((uint8_t *)p, sizeof(mtd_t));
 }
 
+void eeclr_alg (void) {
+    uint8_t n = 0, i = MS_N;
+    while (--i) {
+        if (eData.MtdStg[i].crc != CLR_ID
+            && eData.MtdStg[i].data.fld.data_type != CLR_ID) {
+            if (n++ % 2) eData.MtdStg[i].data.fld.data_type = CLR_ID;
+            else eData.MtdStg[i].crc = CLR_ID;
+        }
+    }
+}
+
 /* Вычисление контрольной суммы CRC8 */
 uint8_t calc_crc(uint8_t *buf, uint8_t len) {
     uint8_t crc = 0, i, b, n, d;

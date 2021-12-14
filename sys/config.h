@@ -90,10 +90,12 @@ bool eeread_stg (uint8_t num, stg_t *ps);
 void save_alg (uint8_t num, void *p);
 void save_cfg (void);
 void save_clb (void);
+void eeclr_alg (void);
 uint8_t calc_crc (uint8_t *buf, uint8_t len);
 
 #define MTD_ID     0xAA
 #define STG_ID     0x55
+#define CLR_ID     0xFF
 
 #ifdef __cplusplus
 }

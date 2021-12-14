@@ -90,6 +90,7 @@ extern stg_t Stg;
 extern mtd_t Mtd;
 extern fin_t Fin;
 extern bool SaveMtd;
+extern uint8_t Hour, Min, Sec, Hour_Stg, Min_Stg, Sec_Stg;
 
 #ifdef __cplusplus
 }

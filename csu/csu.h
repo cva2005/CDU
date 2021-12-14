@@ -12,28 +12,10 @@ extern "C" {
 #define SW_MODE         00
 
 //---------------------НАСТРОЙКИ ПО УМОЛЧАНИЮ---------------------------
-//#define DEBUG_ALG
-//#define POWER_24 //конфигурация - источник 24В
-//#define CHARGER_24 //конфигурация - зарядник 24В
-//-------------------настройка автозапуска-----------
-#ifdef POWER_24
-	#define AUTOSTART 1
-	#define AUTOSTART_CNT 100
-	#define AUTOSTART_TIME 100
-	#define AUTOSTART_U	U_24V
-#else
-	#ifdef CHARGER_24
-		#define AUTOSTART 1
-		#define AUTOSTART_CNT 2
-		#define AUTOSTART_TIME 100
-		#define AUTOSTART_U	2460
-	#else
-		#define AUTOSTART 0
-		#define AUTOSTART_CNT 100
-		#define AUTOSTART_TIME 100
-		#define AUTOSTART_U	0
-	#endif		
-#endif
+#define AUTOSTART 0
+#define AUTOSTART_CNT 100
+#define AUTOSTART_TIME 100
+#define AUTOSTART_U	0
 //-------------------адрес блока---------------------
 #define addr_const 1
 //-------------------биты настроек-------------------
@@ -181,8 +163,8 @@ typedef	struct {
 } bf1_t;
 
 typedef	struct {
-    unsigned autostart      :1;
-    unsigned cdu_dsch_dsb   :1;
+    unsigned astart     :1;
+    unsigned dsch_dsb   :1;
 } bf2_t;
 
 typedef struct  {
@@ -198,7 +180,13 @@ typedef struct {
 	unsigned char time_set;
 	unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
 	unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
-} autosrart_t;
+} ast_t;
+
+typedef enum {
+  RESET_ST,
+  CHARGE_ST,
+  DISCHARGE_ST
+} state_t;
 
 #define ADC_MU 0  //канал АЦП для измерения напряжения
 #define ADC_MI 1  //канал АПЦ для измерения тока
@@ -234,6 +222,12 @@ typedef struct {
 #define SETId2_EXT2     300000000 / Cfg.K_Id
 #define PWM2_Id_EXT2    1364//*/
 
+//#define NO_BATT_TIME 70
+#define INF_TAU     50.0f
+//#define CURR_DT     100.0f
+//#define ST_TIME     100U
+//#define DOWN_LIM    100.0f
+
 unsigned char U_align_st(void);
 unsigned int i_power_limit(unsigned int p, unsigned int i);
 void Err_check(void);
@@ -242,16 +236,16 @@ void Stop_CSU(unsigned char mode);
 void Read_temp(void);
 void update_LED(void);
 void Correct_UI(void);
-void Init_Timer0(void);
 void Init_ExtInt(void);
 void calc_cfg(void);
-void Init_Port(void);
 
-extern unsigned int set_I, set_U, set_Id;
-extern unsigned char change_UI;
-extern unsigned int max_set_I, max_set_Id, max_set_U;
-extern unsigned char PWM_status, CSU_Enable, Error;
-extern unsigned char self_ctrl; //упр. методом заряда: самостоятельно/удалённо
+extern uint16_t set_I, set_U, set_Id;
+extern uint8_t change_UI;
+extern uint16_t max_set_I, max_set_Id, max_set_U;
+extern uint8_t PWM_status, CSU_Enable, Error;
+extern uint8_t self_ctrl; //упр. методом заряда: самостоятельно/удалённо
+extern ast_t ast;
+extern uint16_t id_dw_Clb, id_up_Clb;
 
 #ifdef __cplusplus
 }

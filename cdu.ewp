@@ -253,7 +253,6 @@
                 </option>
                 <option>
                     <name>CCDefines</name>
-                    <state>SYS_TMR_DBGU</state>
                     <state>SYS_UART</state>
                     <state>SYS_TRM0</state>
                     <state>JTAG_DBGU</state>
@@ -2127,6 +2126,9 @@
                 <name>$PROJ_DIR$\ee\eeprom.h</name>
             </file>
         </group>
+        <file>
+            <name>$PROJ_DIR$\csu\csu.c</name>
+        </file>
         <file>
             <name>$PROJ_DIR$\csu\csu.h</name>
         </file>

@@ -2167,6 +2167,9 @@
             </file>
         </group>
         <file>
+            <name>$PROJ_DIR$\csu\csu.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\csu\csu.h</name>
         </file>
         <file>

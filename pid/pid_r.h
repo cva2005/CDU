@@ -19,11 +19,11 @@ typedef struct {
 	float d;			/* old derivative state */
 	float Xd;			/* dead zone */
 	float Xi;			/* integral zone */
-} pid_r_instance;
+} pid_t;
 
 
-void pid_r_init (pid_r_instance *S);
-float pid_r (pid_r_instance *S, float in);
+void pid_init (pid_t *S);
+float pid_r (pid_t *S, float in);
 
 #ifdef	__cplusplus
 }

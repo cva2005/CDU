@@ -3,11 +3,11 @@
 #include <math.h>
 #include "pid_r.h"
 
-void pid_r_init (pid_r_instance *S) {
+void pid_r_init (pid_t *S) {
 	memset(S->i, 0, (ST_SIZE + 2) * sizeof(float));
 }
 
-float pid_r (pid_r_instance *S, float in) {
+float pid_r (pid_t *S, float in) {
   float e[ST_SIZE + 1], D, Df, P, I, out;
   if (fabs(in) < S->Xd) {
     in = 0;
