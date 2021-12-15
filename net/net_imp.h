@@ -108,6 +108,7 @@ extern "C" {
 #define	RX_TMR_ON()\
 {\
     if (RtuIdleCount >= FRAME_RTU_ERROR) RtuBusState = BUS_IDLE;\
+    RsActiveCount = 0;\
     RtuIdleCount = 0; /* очистить счетчик интервалов MODBUS RTU */\
     AsciiIdleCount = 0; /* очистить счетчик интервалов ASCII */\
     RX_TRM(TCNT,) = 0; /* очистить счетный регистр таймера */\
@@ -122,7 +123,7 @@ extern "C" {
  * MODBUS ASCII/KRON - время следования символов в кадре < 1 сек,
  */
 #define FRAME_ASCII_ERROR   0xFF
-
+#define NOT_ACTIVE          2000
 /* Установка скорости UART и регистра сравнения таймера тайм-аута */
 #define SET_BAUD(baud) {BRG_SET(baud); RX_TRM(OCR,) = T_VAL_RTU;}
 

@@ -26,8 +26,8 @@ extern autosrart_t autosrart;
 extern CSU_type CSU_cfg;
 extern CSU2_type CSU_cfg2;
 extern unsigned char dmSlave;
-extern unsigned char PWM_status, CSU_Enable, Error;
-extern unsigned char self_ctrl; //управление методом заряда производится самостоятельно или удалённо
+extern unsigned char PWM_status, CsuState, Error;
+extern unsigned char SelfCtrl; //управление методом заряда производится самостоятельно или удалённо
 extern Temp_type Temp1, Temp2;
 extern ADC_Type  ADC_ADS1118[4];
 extern unsigned int ADC_O[4]; //данные АЦП без изменений (бе вычета коэфициента В)
@@ -127,9 +127,9 @@ if (type==1) //Если необходимо отправить пакет с данными
 	tx_pack.fld.data.tx_data.t1=Temp1.word;
 	tx_pack.fld.data.tx_data.t2=Temp2.word;
 	tx_lenght_calc=sizeof(tx_data_type);
-	if (CSU_cfg.bit.IN_DATA==0) tx_lenght_calc--;
+	if (Cfg.bf1.IN_DATA==0) tx_lenght_calc--;
 	else tx_pack.fld.data.tx_data.In_st=(KEY_MASK^0xF8)>>3;
-	if (CSU_cfg.bit.OUT_DATA==0) tx_lenght_calc--;
+	if (Cfg.bf1.OUT_DATA==0) tx_lenght_calc--;
 	else
 		{
 		tx_pack.fld.data.tx_data.Out_st=FAN_ST;
@@ -226,7 +226,7 @@ if (rx_point>4) //если принято больше 4-х байт
 		{
 		rx_point=0;
 		time_wait=5;
-		if (!CSU_cfg.bit.PCC_ON) //Если не установлен флаг управления с ПК
+		if (!Cfg.bf1.PCC_ON) //Если не установлен флаг управления с ПК
 			{
 			if (rx_pack.fld.header.type==1) return; //если это пакет даных, то не обрабатывает его если не установлен флаг управления с ПК
 			if ((rx_pack.fld.header.dest_adr!=SYS_ADR)&&(rx_pack.fld.header.type==2)) return; //если это запрос пользовательской конфигурации не с системного адреса
@@ -291,7 +291,7 @@ if (rx_point>4) //если принято больше 4-х байт
 						}//if (rx_pack.fld.length>5)
 					if (rx_pack.fld.header.length>3) //если в пакете есть контрольные биты
 						{
-						if (CSU_cfg.bit.FAN_CONTROL) //Если разрешён контроль выходных реле и вентиляторов
+						if (Cfg.bf1.FAN_CONTROL) //Если разрешён контроль выходных реле и вентиляторов
 							{
 							if (rx_pack.fld.data.rx_data.control.bit.FAN1_ON) FAN(1);
 							else FAN(0);
@@ -313,9 +313,9 @@ if (rx_point>4) //если принято больше 4-х байт
 									set_I=preset_I; //установить зарядный ток
 									set_Id=preset_Id; //установить разрядный ток
 									set_U=preset_U; //установить напряжение
-									if (CSU_Enable!=rx_pack.fld.data.rx_data.cmd) 
+									if (CsuState!=rx_pack.fld.data.rx_data.cmd) 
 										{
-										self_ctrl=0;
+										SelfCtrl=0;
 										Start_CSU(rx_pack.fld.data.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
 										}
 									}
@@ -323,7 +323,7 @@ if (rx_point>4) //если принято больше 4-х байт
 							}
 						else
 							{
-							if (((CSU_Enable|RELAY_EN)!=rx_pack.fld.data.rx_data.cmd)||(Error!=0)) Stop_CSU(rx_pack.fld.data.rx_data.cmd);
+							if (((CsuState|RELAY_EN)!=rx_pack.fld.data.rx_data.cmd)||(Error!=0)) Stop_CSU(rx_pack.fld.data.rx_data.cmd);
 							}	
 						}//	if (rx_pack.pack.header.length>2) //если в пакете данных есть команда					
 					}//if (rx_pack.fld.type==0x01)
@@ -362,7 +362,7 @@ if (rx_point>4) //если принято больше 4-х байт
 						rx_pack.fld.data.rx_sys.cmd.bit.TE_DATA=0;	
 						CSU_cfg.byte[0]=rx_pack.fld.data.rx_sys.cmd.byte;
 						CSU_cfg.byte[1]=rx_pack.fld.data.rx_sys.mode.byte;
-						if (CSU_cfg.bit.LCD_ON) CSU_cfg.bit.LED_ON=0; //Защита от одновременного включения LCD и LED (у LCD Приоритет)
+						if (Cfg.bf1.LCD_ON) Cfg.bf1.LED_ON=0; //Защита от одновременного включения LCD и LED (у LCD Приоритет)
 						maxU=rx_pack.fld.data.rx_sys.maxU;
 						maxI=rx_pack.fld.data.rx_sys.maxI;
 						maxId=rx_pack.fld.data.rx_sys.maxId;
@@ -392,13 +392,13 @@ if (rx_point>4) //если принято больше 4-х байт
 						{	
 						if (rx_pack.fld.data.rx_ver.cmd.bit.EEPROM!=0)
 							save_num(&rx_pack.fld.data.rx_ver.number[0]);
-						if (CSU_cfg.bit.LCD_ON) LCD_wr_connect(1);
+						if (Cfg.bf1.LCD_ON) LCD_wr_connect(1);
 						}						
 					}
 
 				if (rx_pack.fld.header.type==0x05) //Если принят пакет с алгоритмом программы
 					{
-					if (CSU_Enable!=0) Stop_CSU(0);
+					if (CsuState!=0) Stop_CSU(0);
 					if (rx_pack.fld.data.rx_alg.cmd==0x01) 
 						{	
 						Mtd_cnt=0; Stg_cnt=0; cycle_cnt=0;//номера метода, этапа и цикла

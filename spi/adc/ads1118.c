@@ -9,7 +9,7 @@ ADC_Type  ADC_ADS1118[4];
 unsigned int ADC_O[4];
 unsigned char ADS1118_St[4];
 unsigned char ADS1118_chanal=0, ADC_Fin=0;
-unsigned char ADC_wait=200, Err_ADC_cnt=0, OUT_err_cnt=0;
+unsigned char ADC_wait=200, Err_ADC_cnt=0;
 
 void SPI_MasterInit(void)
 {
@@ -58,7 +58,7 @@ if (DRDY) return(0);
 
 if (*channel==ADC_MU)
 	{
-	if (CSU_Enable==DISCHARGE) ADC_cfg_wr.bit.MUX=ADC_DI;
+	if (CsuState==DISCHARGE) ADC_cfg_wr.bit.MUX=ADC_DI;
 	else ADC_cfg_wr.bit.MUX=ADC_MI;
 	}
 else

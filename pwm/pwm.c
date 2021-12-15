@@ -6,20 +6,10 @@
 #include "pwm.h"
 
 unsigned int max_pwd_I = MAX_CK, max_pwd_U = MAX_CK, max_pwd_Id = 0;
-unsigned char PWM_status = 0;
+csu_st PWM_status = STOP;
 unsigned char PWM_set = 0;
 
-extern int TEST1, TEST2, TEST3, TEST4;
-extern ADC_Type  ADC_ADS1118[4];
-extern unsigned char ADS1118_St[4]; //состояние обработаны данные или нет
-extern unsigned char ADC_Fin;
-extern unsigned int set_I, set_U, set_Id;
-extern unsigned int K_U, K_I, K_Id;
-extern unsigned int P_maxW;
-
-extern unsigned int fast_correct;
-extern unsigned char correct_off, change_UI;
-extern unsigned int dm_loss_cnt;
+static void Start_PWM_T1(csu_st mode);
 
 #pragma vector=INT1_vect
 #pragma type_attribute=__interrupt
@@ -60,7 +50,7 @@ ICR1=0;
 TCNT1=0;
 
 delay_ms(10);
-PWM_status=0; //установить признак что PWM не работает
+PWM_status = STOP; //установить признак что PWM не работает
 PWM_set=0;    //Установить признак что значения тока и напряжение не застабилизированы
 //устанвоить признак что значения АЦП не актуальны
 ADS1118_St[ADC_MU]=0;
@@ -70,16 +60,16 @@ ADS1118_St[ADC_MUp]=0;
 return;
 }
 
-void Start_PWM_T1(unsigned char mode) {
-  if (PWM_status!=0) Stop_PWM(0);
-  ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
-  P_wdU = P_WDU_start; //Задать ширину импульса для канала А
-  P_wdI = P_WDI_start; //Задать ширину импульса для канала Б
-  TCCR1A = (1 << COM1B1) | (1 << WGM11); // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
-  if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
-  TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10); //0x11; //CK=CLK ,режим FAST PWM:ICR1	
-  //delay_us(10);
-  PWM_status = mode; //установить признак что PWM работает в режиме заряда
+static void Start_PWM_T1(csu_st mode) {
+    if (PWM_status != STOP) Stop_PWM(0);
+    ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
+    P_wdU = P_WDU_start; //Задать ширину импульса для канала А
+    P_wdI = P_WDI_start; //Задать ширину импульса для канала Б
+    TCCR1A = (1 << COM1B1) | (1 << WGM11); // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
+    if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
+    TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10); //0x11; //CK=CLK ,режим FAST PWM:ICR1	
+    //delay_us(10);
+    PWM_status = mode; //установить признак что PWM работает в режиме заряда
 }
 
 void soft_start(unsigned char control_out)

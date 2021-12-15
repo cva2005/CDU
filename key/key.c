@@ -7,8 +7,8 @@
 #include "pwm/pwm.h"
 #include "key.h"
 
-unsigned char key_n=0, Key_delay=0, Step=1;
-unsigned int  KeyPress;
+unsigned char Key_delay=0, Step=1;
+unsigned char KeyPress;
 
 unsigned char scan_key(unsigned char *key)
 {unsigned char cnt=0, mask;
@@ -30,9 +30,9 @@ else return(0);
 
 void key_power(void)
 {
-	if ((CSU_Enable==0)&&(LCD[0][2]!='E')) //если блок не запущен и нет ошибок
+	if ((CsuState==0)&&(LCD[0][2]!='E')) //если блок не запущен и нет ошибок
 		{
-		self_ctrl=1;
+		SelfCtrl=1;
 		LCD_refresh=0;		
 		start_mtd(1);	
 		Key_delay=50;
@@ -48,7 +48,7 @@ void key_power(void)
 
 void key_set(void)
 {
-if (CSU_Enable==0)  //если блок не запущен
+if (CsuState==0)  //если блок не запущен
 	{
 	Cursor_point++;
 	if (Cursor_point == PR_NUM) Cursor_point=0;
@@ -64,7 +64,7 @@ Key_delay=20;
 
 void key_up(void)
 {
-	if (CSU_Enable==0)  //если блок не запущен
+	if (CsuState==0)  //если блок не запущен
 		{
 		switch (Cursor_pos[Cursor_point])
 			{
@@ -127,7 +127,7 @@ void key_up(void)
 				}
 			}
 		update_LCD_set();
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	else
 		{
 		if (ZR_mode==DISCHARGE)
@@ -155,7 +155,7 @@ void key_up(void)
 
 void key_dw(void)
 {
-	if (CSU_Enable==0)  //если блок не запущен
+	if (CsuState==0)  //если блок не запущен
 		{
 		switch (Cursor_pos[Cursor_point])
 			{
@@ -215,7 +215,7 @@ void key_dw(void)
 				}				
 			}
 		update_LCD_set();
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	else
 		{
 		if (ZR_mode==DISCHARGE)
@@ -245,7 +245,7 @@ void key_dw(void)
 
 void key_power_LED(void)
 {
-	if (CSU_Enable!=0)  //если блок уже запущен
+	if (CsuState!=0)  //если блок уже запущен
 		{
 		Stop_CSU(0);
 		}
@@ -258,43 +258,43 @@ void key_power_LED(void)
 
 void key_U_up(void)
 {
-	if (CSU_Enable==1)  //если блок запущен
+	if (CsuState==1)  //если блок запущен
 		{
 		if (P_wdU<(max_pwd_U-Step)) P_wdU+=Step;
 		else P_wdU=max_pwd_U;
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	Key_delay=1;
 }
 
 
 void key_U_dw(void)
 {
-	if (CSU_Enable==1)  //если блок запущен
+	if (CsuState==1)  //если блок запущен
 		{
 		if (P_wdU>Step) P_wdU-=Step;
 		else P_wdU=0;
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	Key_delay=1;
 }
 
 void key_I_up(void)
 {
-	if (CSU_Enable==1)  //если блок запущен
+	if (CsuState==1)  //если блок запущен
 		{
 		if (P_wdI<(max_pwd_I-Step)) P_wdI+=Step;
 		else P_wdI=max_pwd_I;
 		//if (P_wdI<MAX_CK) P_wdI++;
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	Key_delay=1;
 }
 
 void key_I_dw(void)
 {
-	if (CSU_Enable==1)  //если блок запущен
+	if (CsuState==1)  //если блок запущен
 		{
 		if (P_wdI>Step) P_wdI-=Step;
 		else P_wdI=0;
 		//if (P_wdI>0) P_wdI--;
-		}//if (CSU_Enable==0)
+		}//if (CsuState==0)
 	Key_delay=1;
 }//*/

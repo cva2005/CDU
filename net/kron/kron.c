@@ -120,15 +120,15 @@ static void frame_parse (void) {
 									set_I = preset_I; //установить зарядный ток
 									set_Id = preset_Id; //установить разрядный ток
 									set_U = preset_U; //установить напряжение
-									if (CSU_Enable != rd.rx_data.cmd) {
-										self_ctrl = 0;
-										Start_CSU(rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
+									if (CsuState != rd.rx_data.cmd) {
+										SelfCtrl = 0;
+										Start_CSU((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
 									}
 								}
 							}
 						} else {
-							if (((CSU_Enable|RELAY_EN) != rd.rx_data.cmd) || (Error != 0))
-                                Stop_CSU(rd.rx_data.cmd);
+							if (((CsuState | RELAY_EN) != rd.rx_data.cmd) || Error)
+                                Stop_CSU((csu_st)rd.rx_data.cmd);
 						}	
 					}
                     break;
@@ -185,7 +185,7 @@ static void frame_parse (void) {
 					}						
                     break;
                 case ALG_PKT:
-					if (CSU_Enable != 0) Stop_CSU(0);
+					if (CsuState != 0) Stop_CSU(0);
                     switch (rd.rx_alg.cmd) {
                     case FIND_CMD:
 						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
@@ -310,4 +310,5 @@ static void tx_reply (void) {
     len = buf[0]; /* сохранить первый байт кадра */
     TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
     start_tx(len, buf); /* стартовать передачу кадра */
+    RsActive = true;
 }

@@ -27,9 +27,9 @@ extern "C" {
 #define F_CPU_HZ    F_OSC_HZ
 
 /* Период системного таймера, мс */
-#define SYS_PRD_MS  10UL
+#define SYS_PRD_MS  10
 /* Частота следования прерываний системного таймера, Hz */
-#define F_SYS_HZ    100UL
+#define F_SYS_HZ    100
 
 #define SYS_TMR_PRE 1024
 
@@ -82,6 +82,9 @@ uint32_t get_interval(uint32_t run);
 /* Период системного таймера, CPU Cycles */
 #define SYS_PRD (((F_CPU_HZ / SYS_TMR_PRE) / F_SYS_HZ) - 1)
 
+#define MS(x)   x > SYS_PRD_MS ? ((x + (SYS_PRD_MS / 2)) / SYS_PRD_MS) : 1
+#define SEC(x)  x * (1000 / SYS_PRD_MS)
+
 /* настройка и запуск системного таймера */
 #define SYS_TMR_ON()\
 {\
@@ -113,7 +116,7 @@ extern uint32_t stime; /* системное время, 100 HZ */
     SET_BIT(TIMSK, SYSTRM(OCIE,));\
 }
 
-#define STIME_MAX   0xFFFFU
+#define STIME_MAX   UINT32_MAX
 
 #define stime_diff(t_old, t_new) (uint32_t)((t_new < t_old) ?\
     (((uint32_t)STIME_MAX - t_old) + t_new) : (t_new - t_old))

@@ -399,7 +399,7 @@ WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor o
 //========================================================================================================
 void update_LCD_set(void)
 {unsigned char cnt;
-if (CSU_cfg.bit.LCD_ON==0) return;	
+if (Cfg.bf1.LCD_ON==0) return;	
 	
 if (LCD_mode!=0) LCD_change_mode(&LCD_mode);
 //-------------------отображение названия метода-----------------------
@@ -437,7 +437,7 @@ Temp2_last.word=0xFFFF;
 //========================================================================================================
 void update_LCD_work(void)
 {unsigned char i;
-if (CSU_cfg.bit.LCD_ON==0) return;
+if (Cfg.bf1.LCD_ON==0) return;
 
 WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
 //----------------------------------------------ОТОБРАЖЕНИЕ задаваемых параметров------------------
@@ -485,7 +485,7 @@ else
 		WH2004_string_wr(&LCD[2][I_pos],line2+I_pos, 5); //отобразить
 		}*/
 //----------------------------------------------ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА-----------------		
-if (CSU_Enable!=STOP)
+if (CsuState!=STOP)
 	{
 	if (Stg_cnt_last!=Stg_cnt) //на последнем методе проверяется 
 		{
@@ -788,7 +788,7 @@ else
 		}
 	else
 		{
-		if (p_limit)
+		if (pLim)
 			{
 			if (LCD[2][19]!='P')
 				{
@@ -835,5 +835,5 @@ WH2004_string_wr(&LCD[3][15], line3+15, 5);
 //==================================================================================================
 
 WH2004_inst_wr(Cursor_pos[Cursor_point]);  //вернуть курсор на место
-if (CSU_Enable==0) WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
+if (CsuState==0) WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
 }

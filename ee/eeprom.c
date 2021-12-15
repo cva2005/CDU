@@ -134,22 +134,22 @@ void EEPROM_read_cfg(void)
 		dmSlave=DM_ext;
 		
 		CSU_cfg.word=0;
-		//CSU_cfg.bit.EEPROM=1;
-		//CSU_cfg.bit.ADR_SET=1;
-		CSU_cfg.bit.IN_DATA=IN_DATA_bit;
-		CSU_cfg.bit.OUT_DATA=OUT_DATA_bit;
-		//CSU_cfg.bit.TE_DATA=TE_DATA_bit;
-		//CSU_cfg.bit.FAN_CONTROL=1;
-		CSU_cfg.bit.DIAG_WIDE=DIAG_WIDE_bit; 
-		CSU_cfg.bit.I0_SENSE=I0_SENSE_bit;
-		CSU_cfg.bit.LCD_ON=LCD_ON_bit;
-		CSU_cfg.bit.LED_ON=LED_ON_bit;
-		CSU_cfg.bit.PCC_ON=PCC_ON_bit;
-		CSU_cfg.bit.DEBUG_ON=DEBUG_ON_bit;
-		CSU_cfg.bit.GroupM=GroupM_bit;
-		CSU_cfg.bit.EXT_Id=EXT_Id_bit;
-		//CSU_cfg.bit.EXTt_pol=1;
-		CSU_cfg.bit.RELAY_MODE=RELAY_MODE_bit;
+		//Cfg.bf1.EEPROM=1;
+		//Cfg.bf1.ADR_SET=1;
+		Cfg.bf1.IN_DATA=IN_DATA_bit;
+		Cfg.bf1.OUT_DATA=OUT_DATA_bit;
+		//Cfg.bf1.TE_DATA=TE_DATA_bit;
+		//Cfg.bf1.FAN_CONTROL=1;
+		Cfg.bf1.DIAG_WIDE=DIAG_WIDE_bit; 
+		Cfg.bf1.I0_SENSE=I0_SENSE_bit;
+		Cfg.bf1.LCD_ON=LCD_ON_bit;
+		Cfg.bf1.LED_ON=LED_ON_bit;
+		Cfg.bf1.PCC_ON=PCC_ON_bit;
+		Cfg.bf1.DEBUG_ON=DEBUG_ON_bit;
+		Cfg.bf1.GroupM=GroupM_bit;
+		Cfg.bf1.EXT_Id=EXT_Id_bit;
+		//Cfg.bf1.EXTt_pol=1;
+		Cfg.bf1.RELAY_MODE=RELAY_MODE_bit;
 		}
 	calc_cfg();
 	}

@@ -90,12 +90,12 @@ extern "C" {
 #define ERR_CONNECTION1		13 //неверное подключение АКБ
 #define ERR_DM_LOSS			14 //обрыв разярдного модуля
 //----------------------------------------------------------------------
-#define MAX_T1 86
-#define MAX_T2ch 95
-#define MAX_T2dch 95
-#define FAN_OFF_T 34
-#define FAN_ON_T 37
-#define FAN_CND_T 4
+#define MAX_T1              86
+#define MAX_T2ch            95
+#define MAX_T2dch           95
+#define FAN_OFF_T           34
+#define FAN_ON_T            37
+#define FAN_CND_T           4
 //----------------------------------------------------------------------
 //#define Good_Con (PINB&0x08)
 #define Overload (PIND&0x08)
@@ -121,12 +121,14 @@ extern "C" {
 #define SD(x) ((x)?(PORTD|=(1<<6)):(PORTD&=~(1<<6)))
 #define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
 
-//Состояние для переменной PWM_Status (текущий режим ШИМ), ZR_mode (заданный режим), CSU_Enable (Режи в котором запущен блок)
-#define STOP        0//const for PWM_Status
-#define CHARGE      1 //const for PWM_Status
-#define DISCHARGE   2//const for PWM_Status
-#define PULSE       3 //const for ZR_mode
-#define PAUSE       4 //const for ZR_mode
+//Состояние для переменной PWM_Status (текущий режим ШИМ), ZR_mode (заданный режим), CsuState (Режи в котором запущен блок)
+typedef enum {
+    STOP        = 0, //const for PWM_Status
+    CHARGE      = 1, //const for PWM_Status
+    DISCHARGE   = 2, //const for PWM_Status
+    PULSE       = 3, //const for ZR_mode
+    PAUSE       = 4  //const for ZR_mode
+} csu_st;
 
 enum{
 	S_STOP,				//0 - преобразователь остановлен
@@ -231,8 +233,8 @@ typedef enum {
 unsigned char U_align_st(void);
 unsigned int i_power_limit(unsigned int p, unsigned int i);
 void Err_check(void);
-void Start_CSU(unsigned char mode);
-void Stop_CSU(unsigned char mode);
+void Start_CSU(csu_st mode);
+void Stop_CSU(csu_st mode);
 void Read_temp(void);
 void update_LED(void);
 void Correct_UI(void);
@@ -242,10 +244,12 @@ void calc_cfg(void);
 extern uint16_t set_I, set_U, set_Id;
 extern uint8_t change_UI;
 extern uint16_t max_set_I, max_set_Id, max_set_U;
-extern uint8_t PWM_status, CSU_Enable, Error;
-extern uint8_t self_ctrl; //упр. методом заряда: самостоятельно/удалённо
+extern uint8_t Error;
+extern bool SelfCtrl, pLim;
 extern ast_t ast;
 extern uint16_t id_dw_Clb, id_up_Clb;
+extern csu_st CsuState;
+extern stime_t AlarmDel;
 
 #ifdef __cplusplus
 }

@@ -257,6 +257,7 @@
                     <state>SYS_TRM0</state>
                     <state>JTAG_DBGU</state>
                     <state>UART_DS_MODE</state>
+                    <state>PID_CONTROL</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>

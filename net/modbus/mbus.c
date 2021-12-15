@@ -174,6 +174,7 @@ static void frame_parse(BUS_MODE mode)
         TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
     }
     start_tx(i, rs_buff); /* стартовать передачу кадра */
+    RsActive = true;
     return;
 }
 

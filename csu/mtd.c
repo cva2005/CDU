@@ -4,6 +4,7 @@
 #include "lcd/lcd.h"
 #include "spi/adc/ads1118.h"
 #include "net/net.h"
+#include "pwm/pwm.h"
 #include "csu.h"
 #include "mtd.h"
 
@@ -17,10 +18,6 @@ unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
 unsigned int max_set_U, max_set_I, max_set_Id;
 uint8_t Hour = 0, Min = 0, Sec = 0, mSec = 0, Hour_Stg, Min_Stg, Sec_Stg;
 
-extern unsigned int pulse_step; //время импульса заряд/разря при импульсном режиме
-extern unsigned int dU_time;
-extern unsigned int TEST1, TEST2, TEST3, TEST4;
-extern unsigned char PWM_status, CSU_Enable, ZR_mode, Error;
 //-------------------------------проверка условий окончания этапа--------------------
 unsigned char fin_cond(void)
 {
@@ -32,7 +29,7 @@ if (Stg.fld.stop_flag.I) //если есть признак окончания по току
 		}
 	else
 		{
-		if (CSU_Enable==CHARGE)
+		if (CsuState==CHARGE)
 			{if (ADC_ADS1118[ADC_MI].word<=Fin.I) return(1);} //при заряде проверить что ток стал меньше минимально допустимого
 		}	
 	//если условия выполняются то не сбрасывать счётчик антидребезга
@@ -45,7 +42,7 @@ if (Stg.fld.stop_flag.U) //если есть признак окончания по напряженияю
 		}
 	else
 		{
-		if (CSU_Enable==CHARGE)
+		if (CsuState==CHARGE)
 			{if (ADC_ADS1118[ADC_MU].word>=Fin.U) return(1);} //при заряде проверить что напряжение больше допустимого
 		}
 	//если условия выполняются то не сбрасывать счётчик антидребезга
@@ -84,7 +81,7 @@ if (Stg.fld.type==PULSE) //если задан импульсный режим
 	{
 	if (pulse_step==0)		//истекло время импульса?
 		{
-		if (CSU_Enable==DISCHARGE) //если был разряд, то сменить его на заряд
+		if (CsuState==DISCHARGE) //если был разряд, то сменить его на заряд
 			{
 			set_U=set_UmemC;		//установить напряжение заряда
 			Start_CSU(CHARGE);
@@ -118,7 +115,7 @@ if (fCnt==0) //условия окончания выполняются и вышло время антидребезга?
 			}
 		if (Stg.fld.type==PAUSE) 
 			{
-			if (CSU_Enable!=PAUSE) Start_CSU(PAUSE);//Start_CSU(charge);
+			if (CsuState!=PAUSE) Start_CSU(PAUSE);//Start_CSU(charge);
 			}
 		}
 	else //если следующего этапа нет
@@ -246,7 +243,7 @@ void stop_mtd (void) {
     update_LCD_work();
     Stop_CSU(0);
     if (Cfg.bf1.LCD_ON) {
-        CSU_Enable = 1;	
+        CsuState = 1;	
         LCD[0][2] = Z_rus;
         LCD[0][3] = 'a';
         LCD[0][4] = v_rus;

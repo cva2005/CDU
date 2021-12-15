@@ -26,6 +26,10 @@ void key_I_dw(void);
 #define K1 0xF0
 #define KEY_MASK (PINA&0xF8)
 
+
+extern unsigned char KeyPress;
+unsigned char Key_delay, Step;
+
 #ifdef __cplusplus
 }
 #endif

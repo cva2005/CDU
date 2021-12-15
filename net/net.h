@@ -61,6 +61,7 @@ typedef enum {
 /* размер кольцевого буфера приема */
 #define RX_BUFF_LEN        32
 
+extern bool RsActive;
 extern unsigned char *BuffPtr; /* указатель на буфер приема/передачи */
 extern unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 extern unsigned char BuffLen; /* размер буфера при передаче кадра */

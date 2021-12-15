@@ -9,6 +9,7 @@
 #include "net.h"
 #include "net_imp.h"
 
+bool RsActive = false;
 unsigned char *BuffPtr; /* указатель на буфер передачи */
 unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 unsigned char BuffLen; /* размер буфера при передаче кадра */
@@ -19,6 +20,7 @@ static bool RxError; /* признак сетевой ошибки */
 unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 signed char RxIpNew; /* указатель хвоста буфера приема */
 signed char RxIpOld; /* указатель головы буфера приема */
+uint16_t RsActiveCount;
 static NET_FUNC *net_func[] = { /* сетевые функции */
     rtu_drv,
     ascii_drv,
@@ -129,7 +131,7 @@ void usart_rx_byte(void)
 /*
  * Прерывание по событию:
  * Срабатывание таймера тайм-аута
- * при преме кадра MODBUS RTU.
+ * при преме кадра
  */
 #pragma vector=RX_OCR_IRQ
 #pragma type_attribute=__interrupt
@@ -149,5 +151,10 @@ void rx_tick_irq(void)
         if (AsciiIdleCount == FRAME_ASCII_ERROR) { /* межсимв. интервал превышен */
             AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
         } else AsciiIdleCount++; /* скорректировать интервал "молчания" */
+    }
+    if (RsActive) {
+        if (RsActiveCount == NOT_ACTIVE) {
+            RsActive = false;
+        } else RsActiveCount++;
     }
 }
