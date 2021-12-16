@@ -16,7 +16,7 @@ uint16_t msNum = 0;
 bool SaveMtd = false;
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
 unsigned int max_set_U, max_set_I, max_set_Id;
-uint8_t Hour = 0, Min = 0, Sec = 0, mSec = 0, Hour_Stg, Min_Stg, Sec_Stg;
+uint8_t Hour = 0, Min = 0, Sec = 0, Hour_Stg, Min_Stg, Sec_Stg;
 
 //-------------------------------проверка условий окончания этапа--------------------
 unsigned char fin_cond(void)
@@ -107,11 +107,11 @@ if (fCnt==0) //условия окончания выполняются и вышло время антидребезга?
 		change_UI=1;
 		if (Stg.fld.type==DISCHARGE) 
 			{
-			if (PWM_status!=DISCHARGE) Start_CSU(DISCHARGE);
+			if (PwmStatus!=DISCHARGE) Start_CSU(DISCHARGE);
 			}
 		if ((Stg.fld.type==CHARGE)||(Stg.fld.type==PULSE))
 			{
-			if (PWM_status!=CHARGE) Start_CSU(CHARGE);
+			if (PwmStatus!=CHARGE) Start_CSU(CHARGE);
 			}
 		if (Stg.fld.type==PAUSE) 
 			{

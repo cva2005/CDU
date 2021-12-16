@@ -131,7 +131,7 @@ typedef enum {
 
 #define SYS_INIT_CODE   0x00
 #define MCP_ERROR_CODE  12
-
+#define ERR_WCODE       UINT16_MAX
 
 #ifdef DEBUG
 #define	DBGU_INIT(baud) {\

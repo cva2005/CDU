@@ -11,14 +11,17 @@
 #include "tsens/ds1820.h"
 
 stime_t AlarmDel;
+stime_t BreakTime;
+stime_t TickSec;
+stime_t LedPwrTime;
 ast_t ast;
 uint16_t id_dw_Clb, id_up_Clb;
 state_t State;
 float Uerr, Ierr, Usrt;
-unsigned int  No_akb_cnt = 0, dm_loss_cnt = 0;
+unsigned int  dm_loss_cnt = 0;
 unsigned char ERR_Ext = 0, OUT_err_cnt = 0;
 bool InitF, SatU, Stable, DownMode, PulseMode;
-bool pLim = false;
+bool pLim = false, LedPwr;
 unsigned int StbCnt;
 csu_st CsuState = STOP;
 unsigned char ZR_mode = 1, Error = 0;
@@ -88,12 +91,12 @@ void Correct_UI (void) {
             err_i = i_power_limit(Cfg.P_maxW, set_Id);
             err_i -= ADC_ADS1118[ADC_DI].word;
         }
-        if (PWM_status == CHARGE) {
+        if (PwmStatus == CHARGE) {
             if (State == DISCHARGE_ST) {
                 State = CHARGE_ST;
                 goto pulse_mode;
             }
-        } else if (PWM_status == DISCHARGE) {
+        } else if (PwmStatus == DISCHARGE) {
             if (State == CHARGE_ST) {
                 State = DISCHARGE_ST;
                 pulse_mode:
@@ -110,7 +113,7 @@ void Correct_UI (void) {
             Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
             Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
         }
-        if (PWM_status == CHARGE) {
+        if (PwmStatus == CHARGE) {
             /*if (!Stable) {
                 if (StbCnt < ST_TIME) {
                 StbCnt++;
@@ -142,7 +145,7 @@ void Correct_UI (void) {
                 P_wdI = PwmDuty(pid_r(&Pid_Id, Ierr));
             }
         }      
-        No_akb_cnt = NO_BATT_TIME;
+        BreakTime = get_fin_time(SEC(1));
     }
 }
 
@@ -219,12 +222,13 @@ void calc_cfg (void) {
     if (Cfg.bf1.LED_ON) {
         DDRC = 0xFF;
         PORTC = 0xFF;	
+        LedPwrTime = get_fin_time(PWR_TIME);
 	}
 }
 
-void Start_CSU(csu_st mode) {
+void Start_CSU (csu_st mode) {
     unsigned char control_setU = 0;
-    Err_check();
+    err_check();
     if (Error) return;
 #if PID_CONTROL
     if (!CsuState) {
@@ -234,8 +238,8 @@ void Start_CSU(csu_st mode) {
 #endif
     if (CsuState == STOP && set_U) control_setU = 1;
     else control_setU = 0;
-    if (PWM_status!=0) {
-        Stop_PWM(1);
+    if (PwmStatus!=0) {
+        Stop_PWM(SOFT);
         pLim = false;
     }
     CsuState = (csu_st)(mode & 0x0F);
@@ -263,13 +267,13 @@ void Start_CSU(csu_st mode) {
         soft_start_disch();	
         ADC_ADS1118[ADC_DI].word=0;
     }
-    No_akb_cnt = 70;
+    BreakTime = get_fin_time(SEC(1));
 }
 
 void Stop_CSU(csu_st mode) {
     if (!Error) ast.restart_cnt = AUTOSTART_CNT;
     Error = 0;
-    Stop_PWM(1);
+    Stop_PWM(SOFT);
     pLim = false;
     CsuState = STOP;
     delay_ms(10);
@@ -277,132 +281,148 @@ void Stop_CSU(csu_st mode) {
     else RELAY_ON;
 }
 
-void Err_check (void) {
-//---------Проверка ошибки по внешнему входу----------
-	if ((Cfg.bf1.LED_ON==0)&&(Cfg.bf1.EXT_Id==1)) //если индикация не светодиодная и включено управление вншним разрядным модулем
-		{
-		if ((OverTempExt&&1)!=(Cfg.bf1.EXTt_pol&&1)) ERR_Ext++;//проверка срабатывания внешнего термореле
-		else ERR_Ext=0;
-		
-		if (ERR_Ext>100) Error=ERR_OVERTEMP3;
-		
-		/*if (Cfg.bf1.DIAG_WIDE) //Если включена расширеная диагностика
-			{
-			//if (ADC_O[ADC_MI]<(B_I_const+(B_I_extId>>2))) Error=ERR_DM_LOSS; //Если ток, потребляемый разрядным модулем стал в 4 раза меньше расчётного, то обрыв РМ
-			if (ADC_O[ADC_MI]<(B[ADC_MI]>>1)) Error=ERR_DM_LOSS; //Если ток, потребляемый разрядным модулем стал в 4 раза меньше расчётного, то обрыв РМ
-			else if (Error==ERR_DM_LOSS) Error=0;
-			}*/
-		}
-//---------Проверка на обрыв РМ-----------------------
-	if (Cfg.dmSlave>0)
-		{
-		if ((Cfg.bf1.DIAG_WIDE)&&(PWM_status==DISCHARGE)) //Если включена расширеная диагностика
-			{
-			if ((dm_loss_cnt>0)&&(dm_loss_cnt<10))	
-				{
-			//	if ((set_Id<<1)<ADC_ADS1118[ADC_DI].word) //если реальный ток в 2 раза больше заданного
-			//		{
-			//		Error=ERR_DISCH_PWR;
-			//		}	
-				if (ADC_ADS1118[ADC_DI].word>Id_A(0,1))
-					{
-					if ((set_U<ADC_ADS1118[ADC_MU].word)&&(pLim==0)&&(set_Id>(ADC_ADS1118[ADC_DI].word<<1)))
-						Error=ERR_DM_LOSS;
-					if ((set_Id>(ADC_ADS1118[ADC_DI].word+Id_A(0,2)))&&(P_wdI==max_pwd_Id))//если реальный ток в 2 раза меньше заданного
-						Error=ERR_DM_LOSS;
-					}
-				}
-			}
-		}
-//---------Проверка на обрыв нагрузки-----------------
-	if ((Cfg.bf1.I0_SENSE)&&(Cfg.bf1.GroupM==0)) //Если установлена диагностика обрыва нагрузки и блок работает не в группе
-		{
-		if ((PWM_status==CHARGE)&&(set_I!=0))
-			{
-			if (ADC_ADS1118[ADC_MI].word>=Id_A(0,1)) No_akb_cnt=70; //проверка отсутвия АКБ
-			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
-			}
-		if ((PWM_status==DISCHARGE)&&(set_Id!=0))
-			{
-			if (ADC_ADS1118[ADC_DI].word>=Id_A(0,1)) No_akb_cnt=70; //проверка отсутвия АКБ
-			if ((No_akb_cnt==0)&&(P_wdI>0))	Error=ERR_NO_AKB;
-			}
-		}
+void err_check (void) {
+    /* Проверка ошибки по внешнему входу */
+    if ((Cfg.bf1.LED_ON==0)&&(Cfg.bf1.EXT_Id==1)) {
+    /* индикация не светодиодная и включено управление вншним разрядным модулем */
+        if ((OverTempExt && 1) != (Cfg.bf1.EXTt_pol && 1)) ERR_Ext++;
+        /* проверка срабатывания внешнего термореле */
+        else ERR_Ext = 0;
+        if (ERR_Ext > EXT_ERR_VAL) Error = ERR_OVERTEMP3;
+    }
+    /* Проверка на обрыв РМ */
+	if (Cfg.dmSlave) {
+		if (Cfg.bf1.DIAG_WIDE && (PwmStatus == DISCHARGE)) {
+        /* включена расширеная диагностика */
+            if ((dm_loss_cnt > 0) && (dm_loss_cnt < 10)) {
+                if (ADC_ADS1118[ADC_DI].word > Id_A(0,1)) {
+                    if ((set_U < ADC_ADS1118[ADC_MU].word) && !pLim
+                        && (set_Id > (ADC_ADS1118[ADC_DI].word << 1))) {
+                        Error = ERR_DM_LOSS;
+                    }
+                    if ((set_Id > (ADC_ADS1118[ADC_DI].word + Id_A(0,2))) &&
+                        (P_wdI == max_pwd_Id)) {
+                        /* реальный ток в 2 раза меньше заданного */
+                        Error = ERR_DM_LOSS;
+                    }
+                }
+            }
+        }
+    }
+    /* Проверка на обрыв нагрузки */
+    if (Cfg.bf1.I0_SENSE && !Cfg.bf1.GroupM) {
+         /* диагностика обрыва нагрузки и блок не в группе */
+        if ((PwmStatus == CHARGE) && set_I) {
+            if (ADC_ADS1118[ADC_MI].word >= I_A(0,1)) goto set_break_time;
+            if (get_time_left(BreakTime) && (P_wdI > 0)) Error = ERR_NO_AKB;
+        }
+        if ((PwmStatus == DISCHARGE) && set_Id) {
+            if (ADC_ADS1118[ADC_DI].word >= Id_A(0,1)) {
+            set_break_time:
+                BreakTime = get_fin_time(SEC(1));
+            }
+            if (get_time_left(BreakTime) && (P_wdI > 0)) Error = ERR_NO_AKB;
+        }
+    }
+    /* Проверка перегрева */
+    if (PwmStatus == DISCHARGE) {
+        goto check_over_t2;
+    } else if (PwmStatus == CHARGE) {
+        if ((Temp1.fld.V > MAX_T1) && (Temp1.word != ERR_WCODE))
+            /* проверка перегрева транзисторов */
+            Error=ERR_OVERTEMP1;
+        check_over_t2:
+        if ((Temp2.fld.V > MAX_T2ch) && (Temp2.word != ERR_WCODE))
+            /* проверка перегрева выпрямительных диодов */
+        Error = ERR_OVERTEMP2;
+    }
+    /* Проверка полярности подключения АКБ (переполюсовка) */
+    if (!Cfg.bf1.GroupM) {
+        if (ADC_O[ADC_MU] < Cfg.B[ADC_MU]) {
+            if ((Cfg.B[ADC_MU] - ADC_O[ADC_MU]) > 300) Error = ERR_CONNECTION;
+            else if (Error == ERR_CONNECTION) Error = 0;
+        } else if (Error == ERR_CONNECTION) Error = 0;
+    }
+    /*Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя */
+    if (Cfg.bf1.DIAG_WIDE) {
+        if ((PwmStatus==STOP)&&(Cfg.bf1.GroupM==0)) {
+        /* Если преобразователь выключен и блок работает не в группе */
+            if ((ADS1118_St[ADC_MUp]!=0)&&(ADS1118_St[ADC_MU]!=0)) {
+            /* есть данные о напряжении */
+                if ((ADC_ADS1118[ADC_MU].word > U_V(0,8)) &&
+                    (ADC_ADS1118[ADC_MUp].word < U_V(0,2))) {
+                    if (OUT_err_cnt < 250) OUT_err_cnt++;
+                } else OUT_err_cnt = 0;
+                /* если на выходе после реле напряжение есть,
+                   а до реле напряжения нет, значит КЗ выхода */
+                if (OUT_err_cnt > 2) Error = ERR_OUT;
+                if (!OUT_err_cnt && (Error == ERR_OUT)) Error = 0;
+                ADS1118_St[ADC_MU] = 0;
+                ADS1118_St[ADC_MUp] = 0;
+            }
+            /* Если данные конфигурации АЦП неверные значит АЦП неисправен */
+            if (!ADC_cfg_rd.word || (ADC_cfg_rd.word == ERR_WCODE)) Error = ERR_ADC;
+        }
+        if (!ADC_wait) Error = ERR_ADC; /* не удаётся прочитать значение АЦП */
+    }
+    if (Overload) Error = ERR_OVERLOAD; /* проверка защиты от перегрузки */
+    if (Error) {
+        /* если преобразователь не выключен: выключить преобразователь */
+        if (PwmStatus != STOP) Stop_PWM(HARD);
+        if (RELAY_EN) out_off();
+    }
+}
 
-//---------Проверка перегрева----------------------------
-	if (PWM_status==DISCHARGE)
-		{
-		if ((Temp2.fld.V>MAX_T2dch)&&(Temp2.word!=0xFFFF)) Error=ERR_OVERTEMP2; //проверка перегрева разрядных транзисторов
-		}
-	if (PWM_status==CHARGE)
-		{
-		if ((Temp1.fld.V>MAX_T1)&&(Temp1.word!=0xFFFF)) Error=ERR_OVERTEMP1; //проверка перегрева транзисторов
-		if ((Temp2.fld.V>MAX_T2ch)&&(Temp2.word!=0xFFFF)) Error=ERR_OVERTEMP2; //проверка перегрева выпрямительных диодов
-		}
-
-//---------Проверка полярности подключения АКБ (переполюсовка)-
-	if (Cfg.bf1.GroupM==0)
-		{
-	/*	if (!Good_Con) //проверка неверного подключения АКБ
-			{
-			Error=ERR_CONNECTION1;
-			}
-		else {if (Error==ERR_CONNECTION1) Error=0;}*/
-
-		if (ADC_O[ADC_MU] < Cfg.B[ADC_MU])
-			{
-			if ((Cfg.B[ADC_MU]-ADC_O[ADC_MU])>300) Error=ERR_CONNECTION;
-			else {if (Error==ERR_CONNECTION) Error=0;}
-			}
-		else {if (Error==ERR_CONNECTION) Error=0;}
-		}
-
-//---------Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя-----
-if (Cfg.bf1.DIAG_WIDE)
-	{
-	if ((PWM_status==STOP)&&(Cfg.bf1.GroupM==0)) //Если преобразователь выключен и блок работает не в группе
-		{
-		if ((ADS1118_St[ADC_MUp]!=0)&&(ADS1118_St[ADC_MU]!=0)) //Если есть данные о напряжении
-			{
-			if ((ADC_ADS1118[ADC_MU].word>U_V(0,8))&&(ADC_ADS1118[ADC_MUp].word<U_V(0,2))) {if (OUT_err_cnt<250) OUT_err_cnt++;}
-			else OUT_err_cnt=0;
-			
-			if (OUT_err_cnt>2) Error=ERR_OUT; //если на выходе после реле напряжение есть, а до реле напряжения нет, значит КЗ выхода
-			if ((OUT_err_cnt==0)&&(Error==ERR_OUT)) Error=0;
-//			else {if (Error==ERR_OUT) Error=0;}
-			ADS1118_St[ADC_MU]=0;
-			ADS1118_St[ADC_MUp]=0;
-			}
-			
-		/*if ((ADS1118_St[ADC_MI]!=0)&&(Cfg.bf1.GroupM==0)) //Если оцифрованы данные тока
-			{
-			if (ADC_ADS1118[ADC_MI].word>I_1A) {if (Err_ADC_cnt<10) Err_ADC_cnt++;} //Если преобразователь выключен, но при этом есть показания тока
-			else Err_ADC_cnt=0;	
-			ADS1118_St[ADC_MI]=0;
-			}
-		if (Err_ADC_cnt>2) Error=ERR_ADC; //Если несколько раз подряд присутствовали данные тока при выключеном ШИМ*/
-		if ((ADC_cfg_rd.word==0)||(ADC_cfg_rd.word==0xFFFF)) Error=ERR_ADC; //Если данные конфигурации АЦП неверные значит АЦП неисправен
-		}
-	
-	if (ADC_wait==0) Error=ERR_ADC; //Если долгое вермя не удаётся прочитать значение АЦП
-	}
-//---------Проверка перегрузки
-	if (Overload) Error=ERR_OVERLOAD; //проверка защиты от перегрузки
-	if (Error) //Если есть ошибка 
-		{
-			if (PWM_status!=STOP) Stop_PWM(0); //если преобразователь не выключен: выключить преобразователь
-			if (RELAY_EN) out_off();
-		}//*/
+void csu_time_drv (void) {
+    /*if (get_time_left(BreakTime)) {
+        BreakTime = get_fin_time(SEC(1));
+    }*/
+    if (PwmStatus != STOP && !get_time_left(TickSec)) {
+        TickSec = get_fin_time(SEC(1));
+        Sec++; // секунды метода
+        Sec_Stg++; // секунды этапа
+        if (Sec > 59) {
+            Min++; // минуты метода
+            Sec = 0;
+        }
+        if (Min > 59) {
+            if (Hour < 255) Hour++;	//Часы метода
+            Min = 0;
+        }
+        if (Sec_Stg > 59) {
+            Min_Stg++; // Минты этапа
+            Sec_Stg = 0;
+        }
+        if (Min_Stg > 59) {
+            Hour_Stg++;	//Часы этапа
+            Min_Stg = 0;
+        }
+    }
+    /* Индикация ошибок для LED */
+    if (Cfg.bf1.LED_ON && CsuState == STOP && !get_time_left(LedPwrTime)) {
+        LedPwrTime = get_fin_time(PWR_TIME);
+        LED_PWR(LedPwr);
+        LedPwr = !LedPwr;
+    }
 }
 
 static inline void pid_init_all (void) {
     pid_init(&Pid_U);
     pid_init(&Pid_Ic);
     pid_init(&Pid_Id);
+    TickSec = get_fin_time(SEC(1));
+    LedPwrTime = get_fin_time(PWR_TIME);
 }
 
 static void out_off (void) {
     RELAY_OFF;
     ALARM_OUT(1);
     AlarmDel = get_fin_time(SEC(5));
+}
+
+#pragma vector=INT1_vect
+#pragma type_attribute=__interrupt
+void int_1_ext (void) {
+    Stop_PWM(0);
+    Error = ERR_OVERLOAD;
 }

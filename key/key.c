@@ -39,7 +39,7 @@ void key_power(void)
 		}
 	else					
 		{
-		Stop_CSU(0);
+		Stop_CSU(STOP);
 		read_mtd();
 		update_LCD_set();
 		Key_delay=50;

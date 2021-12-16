@@ -424,14 +424,14 @@ WH2004_string_wr(&LCD[3][0], line3, 20);
 WH2004_inst_wr(Cursor_pos[Cursor_point]);
 WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
 
-ADC_last[ADC_MU].word=0xFFFF;
-ADC_last[ADC_MI].word=0xFFFF;
-ADC_last[ADC_DI].word=0xFFFF;
-Sec_last=0xFF;
-cycle_cnt_last=0xFF;
-Stg_cnt_last=0xFF;
-Temp1_last.word=0xFFFF;
-Temp2_last.word=0xFFFF;
+ADC_last[ADC_MU].word=ERR_WCODE;
+ADC_last[ADC_MI].word=ERR_WCODE;
+ADC_last[ADC_DI].word=ERR_WCODE;
+Sec_last=UINT8_MAX;
+cycle_cnt_last=UINT8_MAX;
+Stg_cnt_last=UINT8_MAX;
+Temp1_last.word=ERR_WCODE;
+Temp2_last.word=ERR_WCODE;
 }
 #endif
 //========================================================================================================
@@ -448,7 +448,7 @@ WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 5); //отобразить*/
 
 
 //----------------------------------------------ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА------------------
-if (PWM_status==DISCHARGE) //если мы в режиме разряда, значит ток надо расчитывать по другому
+if (PwmStatus==DISCHARGE) //если мы в режиме разряда, значит ток надо расчитывать по другому
 	{
 	if (ADC_ADS1118[ADC_DI].word!=ADC_last[ADC_MI].word)
 		{
@@ -470,7 +470,7 @@ else
 		calculate_param(ADC_ADS1118[ADC_MI].word, K_I, &LCD[1][I_pos+1]);
 		WH2004_string_wr(&LCD[1][I_pos],line1+I_pos, 5); //отобразить
 		
-		if (PWM_status!=STOP) //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
+		if (PwmStatus!=STOP) //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
 			{
 			calculate_param(set_I , K_I , &LCD[1][Is_pos]);
 			WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 4); //отобразить	
@@ -495,11 +495,11 @@ if (CsuState!=STOP)
 		}
 	}
 //----------------------------------------------ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ-----------------
-if (PWM_status!=STOP)
+if (PwmStatus!=STOP)
 	{
 	if (Sec_last!=Sec) 
 		{		
-		if (PWM_status==DISCHARGE)
+		if (PwmStatus==DISCHARGE)
 			calculate_C(-1, ADC_ADS1118[ADC_DI].word, K_Id, &LCD[3][C_pos]);
 		else
 			calculate_C(1, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
@@ -778,7 +778,7 @@ else
 		}		
 //----------------------------------ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ----------------------------------
 #ifndef DEBUG_ALG
-	if (PWM_status==STOP)
+	if (PwmStatus==STOP)
 		{
 		if (LCD[2][19]!=' ')
 			{
@@ -798,8 +798,8 @@ else
 			}
 		else
 			{
-			if (((I_St)&&(PWM_status==CHARGE))||
-				((PWM_status==DISCHARGE)&&(ADC_ADS1118[ADC_MU].word>(set_U+5))))
+			if (((I_St)&&(PwmStatus==CHARGE))||
+				((PwmStatus==DISCHARGE)&&(ADC_ADS1118[ADC_MU].word>(set_U+5))))
 				{
 				if (LCD[2][19]!='I') 
 					{

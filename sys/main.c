@@ -14,7 +14,6 @@
 
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо
-unsigned int  pid_time = 0;
 unsigned int pulse_step; //время импульса заряд/разряд при импульсном режиме
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
@@ -55,11 +54,10 @@ void main (void) {
     __enable_interrupt();
     while (1) {	  	
         net_drv(); // проверка драйвера сети
-        Err_check(); //Проверить нет ли ошибок
-        Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
-        if (ADC_Fin == 1) { //Если есть оцифрованные каналы
+        csu_time_drv();
+        err_check(); //Проверить нет ли ошибок
+        if (Read_ADS1118(&ADS1118_chanal)) { //Если есть оцифрованные каналы
             if (!Cfg.bf1.LED_ON || RsActive) Correct_UI();
-            ADC_Fin = 0; //Устанвить флаг ожидания окончания следующей оцифровки
         }
         if (Clb.id.bit.save == 1) {
             if (!Clb.id.bit.error && (Clb.id.bit.dw_Fin || Clb.id.bit.up_Fin)) {
@@ -134,7 +132,7 @@ Err_Thermometr=Read_Current_Temperature(&Temp1_v, &Temp2_v);
 if (Err_Thermometr&Tmask1)
 	{
 	if (Err1_cnt<READ_ERR_CNT) Err1_cnt++;
-	else Temp1.word=0xFFFF;
+	else Temp1.word=ERR_WCODE;
 	}
 else
 	{
@@ -145,7 +143,7 @@ else
 if (Err_Thermometr&Tmask2)
 	{
 	if (Err2_cnt<READ_ERR_CNT) Err2_cnt++;
-	else Temp2.word=0xFFFF;
+	else Temp2.word=ERR_WCODE;
 	}
 else
 	{
@@ -169,7 +167,7 @@ else LED_POL(0);//LED|=0x08;
 	
 if (CsuState!=0) LED_PWR(1);//LED&=0xBF;
 
-if (PWM_status==CHARGE)
+if (PwmStatus==CHARGE)
 	{
 	if (I_St) {LED_STI(1);LED_STU(0);}//LED=LED&0xDF|0x10;
 	else	  {LED_STI(0);LED_STU(1);}//LED=LED&0xEF|0x20;
@@ -177,111 +175,10 @@ if (PWM_status==CHARGE)
 else
 	{LED_STI(0);LED_STU(0);}//LED|=0x30;
 }
-//===============================================Прерывание таймера/счетчика Т0==============================================
-#if 0
-#pragma vector=TIMER0_OVF_vect
-#pragma type_attribute=__interrupt
-void tmr0_ovf(void)
-{
-//------------------------Параметры зависящие от времени----------------
-if (pid_time) pid_time--;
-if (connect_st>0) connect_st--; //Время ожидания следующего пакета (по истечении вермени связь считается разорваной)
-if (No_akb_cnt>0) No_akb_cnt--; //Время ожидания пока нарастёт выходной ток (если время истекло, а ток не вырос, значит АКБ не подключена)
-if (time_rd>0) time_rd--;		//Время в течении которого запрещено чтение датчика температуры (пауза между чтениями датчика температуры)
-if (fast_correct>0) fast_correct--; //Время в течении которого запрещена быстрая смена ШИМ
-if (correct_off>0) correct_off--;	//Время в течении которого запрещена любая смена ШИМ
-if (ADC_wait>0) ADC_wait--;	//Максимально допустимое время ожидания оцифровки для АЦП
-if (dm_loss_cnt>0) dm_loss_cnt--; //Задрежка после пуска перед проверкой обрыва РМ
-
-if ((Cfg.bf2.ast)&&(PWM_status==STOP))
-	{
-	if (autosrart.restart_time>0) autosrart.restart_time--;	
-	}
-	
-if ((connect_st==0)||(Cfg.bf1.DEBUG_ON==1))
-	{
-	if (Key_delay>0) Key_delay--;   //Время в течении которого запрещено сканирование клавиш (пауза после нажатия клавиши)
-	if (KeyPress>0) KeyPress--;		//Время удержания клавиши непрерывно нажатой
-	
-//------------------------Параметры с LCD--------------------------------
-	if ((Cfg.bf1.LCD_ON)||(Cfg.bf1.DEBUG_ON))
-		{
-		if (LCD_refresh>0) LCD_refresh--;//Время в течении которго запрещено обновление LCD (пауза между обновлениями LCD)
-		if (fCnt>0) fCnt--; //время до перехода на следующий этап
-		if (pulse_step>0) pulse_step--; //время смены импульса заряд/разряд в импульсном режиме
-		if ((Stg.fld.stop_flag.dU)&&(dU_time>0)) dU_time--; //Время когда не увеличивается U при заряде щелочного АКБ
-	
-	
-		if (PWM_status!=0) 
-			{ 
-			if (mSec>59) 
-	 			{
-				Sec++;			//секунды метода
-				Sec_Stg++;	//секунды этапа
-				mSec=0;
-				}
-			else mSec++;	
-			if (Sec>59)	
-	 			{
-				Min++; //минуты метода
-				Sec=0;
-				}
-			if (Min>59)	
-	 			{
-				if (Hour<255) Hour++;	//Часы метода
-				Min=0;
-				}
-			if (Sec_Stg>59)
-				{
-				Min_Stg++;	//Минты этапа
-				Sec_Stg=0;
-				}
-			if (Min_Stg>59)
-				{
-				Hour_Stg++;	//Часы этапа
-				Min_Stg=0;
-				}
-			}
-		}
-
-//------------------------Индикация ошибок для LED-------------------------	
-	if (Cfg.bf1.LED_ON)
-		{
-		if (mSec>59) mSec=0;
-		else mSec++;
-		
-		/*if (Error==ERR_NO_AKB)
-			{
-			if (mSec<10) LED_ERR(0);//PORTC=PINC|0x80;
-			else LED_ERR(1);//PORTC=PINC&0x7F;
-			}*/
-		/*if ((Error==ERR_OVERTEMP1)||(Error==ERR_OVERTEMP2)||(Err_Thermometr!=0))
-			{
-			if (mSec==29) LED_ERRinv;//PORTC=PINC^0x80;
-			}*/
-		if (CsuState==0)
-			{
-			if ((mSec<10)||((mSec>20)&&(mSec<30))) LED_PWR(1);//PORTC=PINC&0xBF;
-			else LED_PWR(0);//PORTC=PINC|0x40;
-			}	
-		}//if (Cfg.bf1.LED_ON)	
-	}//if (connect_st==0)
- //TIFR=0;
-}
-//===================================================Прерывание 1 внешнее====================================================
-//ISR(INT1_vect)
-//-------------------------------------------------------------
-void Init_Timer0(void)
-{
-TCCR0 =(1<<CS00)|(1<<CS02); // clk=CK/1024
-//TCNT0 = Timer0_value;
-TIMSK=(1<<TOIE0);// enable overflow interrupt
-}
-#endif
 
 static inline void check_auto_start (void) {
     if (Cfg.bf2.astart) { //если включён автостарт
-        if (PWM_status==STOP) { //если преобразователь выключен
+        if (PwmStatus==STOP) { //если преобразователь выключен
             if (ast.restart_cnt) { //если количество перезапусков неисчерпано
                 if (ast.restart_time==0) { //если истекло время паузы между запусками
                     if (ast.u_pwm>ADC_ADS1118[ADC_MU].word) { //если текущее напряжение на выходе меньше чем напряжение запуска
@@ -361,3 +258,107 @@ static inline void init_all (void) {
     MCUCR = (1 << ISC00) | (1 << ISC10);
     GICR = 1 << INT1; // ext int
 }
+
+static inline void init_time_task (void) {
+}
+//===============================================Прерывание таймера/счетчика Т0==============================================
+#if 0
+#pragma vector=TIMER0_OVF_vect
+#pragma type_attribute=__interrupt
+void tmr0_ovf(void)
+{
+//------------------------Параметры зависящие от времени----------------
+if (pid_time) pid_time--;
+if (connect_st>0) connect_st--; //Время ожидания следующего пакета (по истечении вермени связь считается разорваной)
+if (BreakTime>0) BreakTime--; //Время ожидания пока нарастёт выходной ток (если время истекло, а ток не вырос, значит АКБ не подключена)
+if (time_rd>0) time_rd--;		//Время в течении которого запрещено чтение датчика температуры (пауза между чтениями датчика температуры)
+if (fast_correct>0) fast_correct--; //Время в течении которого запрещена быстрая смена ШИМ
+if (correct_off>0) correct_off--;	//Время в течении которого запрещена любая смена ШИМ
+if (ADC_wait>0) ADC_wait--;	//Максимально допустимое время ожидания оцифровки для АЦП
+if (dm_loss_cnt>0) dm_loss_cnt--; //Задрежка после пуска перед проверкой обрыва РМ
+
+if ((Cfg.bf2.ast)&&(PwmStatus==STOP))
+	{
+	if (autosrart.restart_time>0) autosrart.restart_time--;	
+	}
+	
+if ((connect_st==0)||(Cfg.bf1.DEBUG_ON==1))
+	{
+	if (Key_delay>0) Key_delay--;   //Время в течении которого запрещено сканирование клавиш (пауза после нажатия клавиши)
+	if (KeyPress>0) KeyPress--;		//Время удержания клавиши непрерывно нажатой
+	
+//------------------------Параметры с LCD--------------------------------
+	if ((Cfg.bf1.LCD_ON)||(Cfg.bf1.DEBUG_ON))
+		{
+		if (LCD_refresh>0) LCD_refresh--;//Время в течении которго запрещено обновление LCD (пауза между обновлениями LCD)
+		if (fCnt>0) fCnt--; //время до перехода на следующий этап
+		if (pulse_step>0) pulse_step--; //время смены импульса заряд/разряд в импульсном режиме
+		if ((Stg.fld.stop_flag.dU)&&(dU_time>0)) dU_time--; //Время когда не увеличивается U при заряде щелочного АКБ
+	
+	
+		if (PwmStatus != STOP) 
+			{ 
+			if (mSec>59) 
+	 			{
+				Sec++;			//секунды метода
+				Sec_Stg++;	//секунды этапа
+				mSec=0;
+				}
+			else mSec++;	
+			if (Sec>59)	
+	 			{
+				Min++; //минуты метода
+				Sec=0;
+				}
+			if (Min>59)	
+	 			{
+				if (Hour<255) Hour++;	//Часы метода
+				Min=0;
+				}
+			if (Sec_Stg>59)
+				{
+				Min_Stg++;	//Минты этапа
+				Sec_Stg=0;
+				}
+			if (Min_Stg>59)
+				{
+				Hour_Stg++;	//Часы этапа
+				Min_Stg=0;
+				}
+			}
+		}
+
+//------------------------Индикация ошибок для LED-------------------------	
+	if (Cfg.bf1.LED_ON)
+		{
+		if (mSec>59) mSec=0;
+		else mSec++;
+		
+		/*if (Error==ERR_NO_AKB)
+			{
+			if (mSec<10) LED_ERR(0);//PORTC=PINC|0x80;
+			else LED_ERR(1);//PORTC=PINC&0x7F;
+			}*/
+		/*if ((Error==ERR_OVERTEMP1)||(Error==ERR_OVERTEMP2)||(Err_Thermometr!=0))
+			{
+			if (mSec==29) LED_ERRinv;//PORTC=PINC^0x80;
+			}*/
+		if (CsuState==0)
+			{
+			if ((mSec<10)||((mSec>20)&&(mSec<30))) LED_PWR(1);//PORTC=PINC&0xBF;
+			else LED_PWR(0);//PORTC=PINC|0x40;
+			}	
+		}//if (Cfg.bf1.LED_ON)	
+	}//if (connect_st==0)
+ //TIFR=0;
+}
+//===================================================Прерывание 1 внешнее====================================================
+//ISR(INT1_vect)
+//-------------------------------------------------------------
+void Init_Timer0(void)
+{
+TCCR0 =(1<<CS00)|(1<<CS02); // clk=CK/1024
+//TCNT0 = Timer0_value;
+TIMSK=(1<<TOIE0);// enable overflow interrupt
+}
+#endif

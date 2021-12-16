@@ -121,11 +121,11 @@ extern "C" {
 #define SD(x) ((x)?(PORTD|=(1<<6)):(PORTD&=~(1<<6)))
 #define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
 
-//Состояние для переменной PWM_Status (текущий режим ШИМ), ZR_mode (заданный режим), CsuState (Режи в котором запущен блок)
+//Состояние для переменной PwmStatus (текущий режим ШИМ), ZR_mode (заданный режим), CsuState (Режи в котором запущен блок)
 typedef enum {
-    STOP        = 0, //const for PWM_Status
-    CHARGE      = 1, //const for PWM_Status
-    DISCHARGE   = 2, //const for PWM_Status
+    STOP        = 0, //const for PwmStatus
+    CHARGE      = 1, //const for PwmStatus
+    DISCHARGE   = 2, //const for PwmStatus
     PULSE       = 3, //const for ZR_mode
     PAUSE       = 4  //const for ZR_mode
 } csu_st;
@@ -224,22 +224,22 @@ typedef enum {
 #define SETId2_EXT2     300000000 / Cfg.K_Id
 #define PWM2_Id_EXT2    1364//*/
 
-//#define NO_BATT_TIME 70
-#define INF_TAU     50.0f
-//#define CURR_DT     100.0f
-//#define ST_TIME     100U
+#define EXT_ERR_VAL     100
+#define INF_TAU         50.0f
+#define PWR_TIME        MS(160) // led power time
 //#define DOWN_LIM    100.0f
 
-unsigned char U_align_st(void);
-unsigned int i_power_limit(unsigned int p, unsigned int i);
-void Err_check(void);
-void Start_CSU(csu_st mode);
-void Stop_CSU(csu_st mode);
-void Read_temp(void);
-void update_LED(void);
-void Correct_UI(void);
-void Init_ExtInt(void);
-void calc_cfg(void);
+unsigned char U_align_st (void);
+unsigned int i_power_limit (unsigned int p, unsigned int i);
+void err_check (void);
+void Start_CSU (csu_st mode);
+void Stop_CSU (csu_st mode);
+void Read_temp (void);
+void update_LED (void);
+void Correct_UI (void);
+void Init_ExtInt (void);
+void calc_cfg (void);
+void csu_time_drv (void);
 
 extern uint16_t set_I, set_U, set_Id;
 extern uint8_t change_UI;

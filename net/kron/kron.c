@@ -9,6 +9,7 @@
 #include "csu/mtd.h"
 #include "key/key.h"
 #include "lcd/lcd.h"
+#include "pwm/pwm.h"
 #include "tsens/ds1820.h"
 #include "spi/adc/ads1118.h"
 #include "kron.h"
@@ -185,7 +186,7 @@ static void frame_parse (void) {
 					}						
                     break;
                 case ALG_PKT:
-					if (CsuState != 0) Stop_CSU(0);
+					if (CsuState != 0) Stop_CSU(STOP);
                     switch (rd.rx_alg.cmd) {
                     case FIND_CMD:
 						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
@@ -231,10 +232,11 @@ static void tx_reply (void) {
     tx.src_adr = Cfg.addr;
     switch (tx.type) {
     case DATA_PKT:
-        if (PWM_status==0) td.tx_data.operation = PWM_status | RELAY_EN; //Если ШИМ остановлен, то добавить сосотяние реле
-        else td.tx_data.operation = PWM_status;
+        if (PwmStatus == STOP) td.tx_data.operation = PwmStatus | RELAY_EN;
+        /* Если ШИМ остановлен, то добавить сосотяние реле */
+        else td.tx_data.operation = PwmStatus;
         td.tx_data.error = Error;
-        if (PWM_status == DISCHARGE) td.tx_data.I = ADC_O[ADC_DI];
+        if (PwmStatus == DISCHARGE) td.tx_data.I = ADC_O[ADC_DI];
         else td.tx_data.I = ADC_O[ADC_MI];
         td.tx_data.U = ADC_O[ADC_MU];
         td.tx_data.Ip = ADC_O[ADC_MUp];
@@ -276,7 +278,7 @@ static void tx_reply (void) {
         td.tx_sys.dm_cnt = Cfg.dmSlave;
         td.tx_sys.slave_cnt_u=0;
         td.tx_sys.slave_cnt_i=0;
-        td.tx_sys.cfg = Cfg.bf2.autostart;
+        td.tx_sys.cfg = Cfg.bf2.astart;
         td.tx_sys.autostart_try = Cfg.cnt_set;//AUTOSTART_CNT;
         td.tx_sys.restart_timout = Cfg.time_set * 16;
         td.tx_sys.autostart_u = Cfg.u_set;

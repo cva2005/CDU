@@ -6,17 +6,10 @@
 #include "pwm.h"
 
 unsigned int max_pwd_I = MAX_CK, max_pwd_U = MAX_CK, max_pwd_Id = 0;
-csu_st PWM_status = STOP;
+csu_st PwmStatus = STOP;
 unsigned char PWM_set = 0;
 
 static void Start_PWM_T1(csu_st mode);
-
-#pragma vector=INT1_vect
-#pragma type_attribute=__interrupt
-void int_1_ext (void) {
-    Stop_PWM(0);
-    Error = ERR_OVERLOAD;
-}
 
 unsigned short PwmDuty (float out) {
     if (out >= 1.0f) return MAX_CK;
@@ -25,43 +18,28 @@ unsigned short PwmDuty (float out) {
     return (unsigned short)out;
 }
 
-void Stop_PWM(unsigned char soft)
-{
-if (soft!=0)
-	{
-	while ((P_wdI>0)&&(P_wdU>0))
-		{
-		if (P_wdI>0) P_wdI--;
-		if (P_wdU>0) P_wdU--;
-		 delay_us(10);
-		}
-	P_wdU=0;
-	P_wdI=0;	
-	delay_ms(10);
-	}
-
-PWM_ALL_STOP;
-
-TCCR1A = 0x00; 
-TCCR1B = 0x00; //stop
-P_wdU=0;
-P_wdI=0;
-ICR1=0;
-TCNT1=0;
-
-delay_ms(10);
-PWM_status = STOP; //установить признак что PWM не работает
-PWM_set=0;    //Установить признак что значения тока и напряжение не застабилизированы
-//устанвоить признак что значения АЦП не актуальны
-ADS1118_St[ADC_MU]=0;
-ADS1118_St[ADC_MI]=0;
-ADS1118_St[ADC_DI]=0;
-ADS1118_St[ADC_MUp]=0;
-return;
+void Stop_PWM(bool soft) {
+    if (soft) {
+        while (P_wdI && P_wdU) {
+            if (P_wdI) P_wdI--;
+            if (P_wdU) P_wdU--;
+            delay_us(10);
+        }
+        P_wdU = P_wdI = 0;	
+        delay_ms(10);
+    }
+    PWM_ALL_STOP;
+    TCCR1A = TCCR1B = 0x00; //stop
+    P_wdU = P_wdI = 0;
+    ICR1 = TCNT1 = 0;
+    delay_ms(10);
+    PwmStatus = STOP; //установить признак что PWM не работает
+    PWM_set = 0; //Установить признак что значения тока и напряжение не застабилизированы
+    clr_adc_res(); /* значения АЦП не актуальны */
 }
 
 static void Start_PWM_T1(csu_st mode) {
-    if (PWM_status != STOP) Stop_PWM(0);
+    if (PwmStatus != STOP) Stop_PWM(HARD);
     ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
     P_wdU = P_WDU_start; //Задать ширину импульса для канала А
     P_wdI = P_WDI_start; //Задать ширину импульса для канала Б
@@ -69,73 +47,54 @@ static void Start_PWM_T1(csu_st mode) {
     if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
     TCCR1B = (1 << WGM12) | (1 << WGM13) | (1 << CS10); //0x11; //CK=CLK ,режим FAST PWM:ICR1	
     //delay_us(10);
-    PWM_status = mode; //установить признак что PWM работает в режиме заряда
+    PwmStatus = mode; //установить признак что PWM работает в режиме заряда
 }
 
-void soft_start(unsigned char control_out)
-{
-
-Start_PWM_T1(CHARGE);			//запустить преобразователь
-
-if (control_out)
-	{
-	if (ADC_ADS1118[ADC_MU].word>set_U) Error=ERR_SET;
-	}
-
-if (!Error)
-	{
+void soft_start (unsigned char control_out) {
+    Start_PWM_T1(CHARGE); /* запустить преобразователь */
+    if (control_out &&
+        (ADC_ADS1118[ADC_MU].word > set_U)) Error = ERR_SET;
+    if (!Error) {
 #if !PID_CONTROL
-  uint32_t S=(uint32_t)set_I*100UL/K_PWD_I;
-	P_wdI=((unsigned int)S) + B_PWD_I;
-	if (P_wdI>max_pwd_I) P_wdI=max_pwd_I;
-	
-	S=(uint32_t)set_U*100UL/K_PWD_U;
-	P_wdU=((unsigned int) S) + B_PWD_U;
-	if (P_wdU>max_pwd_U) P_wdU=max_pwd_U;
+        uint32_t S=(uint32_t)set_I*100UL/K_PWD_I;
+        P_wdI=((unsigned int)S) + B_PWD_I;
+        if (P_wdI>max_pwd_I) P_wdI=max_pwd_I;
+        S=(uint32_t)set_U*100UL/K_PWD_U;
+        P_wdU=((unsigned int) S) + B_PWD_U;
+        if (P_wdU>max_pwd_U) P_wdU=max_pwd_U;
 #endif
-	SD(1);
-	}
-ADS1118_St[ADC_MU]=0;
-ADS1118_St[ADC_MI]=0;
-ADC_Fin=0;
-correct_off=22; //запретить корректировку ШИМ, пока не стабилизируется напряжение
-change_UI=0;
+        SD(1);
+    }
+    ADS1118_St[ADC_MU] = ADS1118_St[ADC_MI] = 0;
+    //correct_off=22; //запретить корректировку ШИМ, пока не стабилизируется напряжение
+    change_UI = 0;
 }
 
-unsigned int calculate_pwd(unsigned int val, unsigned char limit)
-{int32_t P=0L, K, B;
-
-	K=(1000L*(Clb.setI2-Clb.setI1))/(Clb.pwm2-Clb.pwm1); //рассчитать зхначения K
-	B=Clb.pwm1-((int32_t)Clb.setI1*1000L/K); //рассчитать зхначения B
-	P=(int32_t)val*1000L/K+B;
-	if (P<0) P=0;
-	if (P>MAX_CK) P=MAX_CK;
-	if (limit)
-		{
-		if ((unsigned int)P>max_pwd_Id) P=max_pwd_Id;
-		}
-	
-	return((unsigned int) P);	
+unsigned int calculate_pwd(unsigned int val, unsigned char limit) {
+    int32_t P=0L, K, B;
+    K=(1000L*(Clb.setI2-Clb.setI1))/(Clb.pwm2-Clb.pwm1); //рассчитать зхначения K
+    B=Clb.pwm1-((int32_t)Clb.setI1*1000L/K); //рассчитать зхначения B
+    P=(int32_t)val*1000L/K+B;
+    if (P<0) P=0;
+    if (P>MAX_CK) P=MAX_CK;
+    if (limit) if ((unsigned int)P>max_pwd_Id) P=max_pwd_Id;
+    return (unsigned int)P;	
 }
 
-void soft_start_disch(void)
-{unsigned int I;
-
-	
-Start_PWM_T1(DISCHARGE);
-
+void soft_start_disch(void) {
+    unsigned int I;
+    Start_PWM_T1(DISCHARGE);
 //#if !PID_CONTROL
-I=i_power_limit(P_maxW, set_Id); //Проверка превышения общей мощности
-P_wdI=calculate_pwd(I, 1);
-P_wdU=0;
+    /* Проверка превышения общей мощности */
+    I = i_power_limit(Cfg.P_maxW, set_Id);
+    P_wdI = calculate_pwd(I, 1);
+    P_wdU = 0;
 //#endif
-ADS1118_St[ADC_MU]=0;
-ADS1118_St[ADC_DI]=0;
-ADC_Fin=0;
-correct_off=20; //запретить корректировку ШИМ, пока не стабилизируется напряжение
-change_UI=0;
-Clb.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибровку
-dm_loss_cnt=100;
+    ADS1118_St[ADC_MU] = ADS1118_St[ADC_DI] = 0;
+     //correct_off=20; //запретить корректировку ШИМ, пока не стабилизируется напряжение
+    change_UI=0;
+    Clb.id.bit.control=1; //установить флаг для калибровки: проконтролировать калибровку
+    //dm_loss_cnt=100;
 }
 
 #if !PID_CONTROL
@@ -145,7 +104,7 @@ void Correct_PWM(unsigned char pr)
  
 if (fast_correct) return;
 
-if (PWM_status==CHARGE)
+if (PwmStatus==CHARGE)
 	{
 	if (pr&0x01)
 		{
@@ -182,7 +141,7 @@ if (PWM_status==CHARGE)
 		}
 	}
 	
-if (PWM_status==DISCHARGE)
+if (PwmStatus==DISCHARGE)
 	{
 	limit_id=i_power_limit(P_maxW, set_Id); //Проверка превышения общей мощности
 	if ((P_wdI>limit_id)&&((pr&0x40)!=0x40)) limit_id+=Id_A(0,1); //Если снижаем ток свеху вниз, при этом разрешено поставить немного завышеный ток

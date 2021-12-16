@@ -8,7 +8,8 @@
 //#define DD_SCK PORTB7
 
 #define ADC_Sel(x) ((x)?(PORTA|=(1<<2)):(PORTA&=~(1<<2)))
-#define DRDY (PINB&(1<<6))
+#define DRDY (PINB&(1 << 6))
+#define ADC_CH  4
 
 typedef
   	struct{
@@ -34,12 +35,14 @@ typedef union{
 void SPI_MasterInit(void);
 unsigned char SPI_MasterTransmit(unsigned char cData);
 void Init_ADS1118(void);
-unsigned char Read_ADS1118(unsigned char *channel);
+bool Read_ADS1118(unsigned char *channel);
+void clr_adc_res (void);
+
 extern ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
-extern ADC_Type ADC_ADS1118[4];
-extern unsigned int ADC_O[4];
-extern unsigned char ADS1118_St[4];
-extern unsigned char ADS1118_chanal, ADC_Fin, ADC_wait;
-extern unsigned char ADS1118_St[4];
+extern ADC_Type ADC_ADS1118[ADC_CH];
+extern unsigned int ADC_O[ADC_CH];
+extern unsigned char ADS1118_St[ADC_CH];
+extern unsigned char ADS1118_chanal, ADC_wait;
+extern unsigned char ADS1118_St[ADC_CH];
 
 #endif /* ADS1118_H_ */

@@ -26,7 +26,7 @@ extern autosrart_t autosrart;
 extern CSU_type CSU_cfg;
 extern CSU2_type CSU_cfg2;
 extern unsigned char dmSlave;
-extern unsigned char PWM_status, CsuState, Error;
+extern unsigned char PwmStatus, CsuState, Error;
 extern unsigned char SelfCtrl; //управление методом заряда производится самостоятельно или удалённо
 extern Temp_type Temp1, Temp2;
 extern ADC_Type  ADC_ADS1118[4];
@@ -117,10 +117,10 @@ tx_pack.fld.header.number=rx_pack.fld.header.number;
 tx_pack.fld.header.type=type;
 if (type==1) //Если необходимо отправить пакет с данными
 	{
-	if (PWM_status==0) tx_pack.fld.data.tx_data.operation=PWM_status|RELAY_EN; //Если ШИМ остановлен, то добавить сосотяние реле
-	else			   tx_pack.fld.data.tx_data.operation=PWM_status;
+	if (PwmStatus==0) tx_pack.fld.data.tx_data.operation=PwmStatus|RELAY_EN; //Если ШИМ остановлен, то добавить сосотяние реле
+	else			   tx_pack.fld.data.tx_data.operation=PwmStatus;
 	tx_pack.fld.data.tx_data.error=Error;
-	if (PWM_status==discharge)	tx_pack.fld.data.tx_data.I=ADC_O[ADC_DI];//tx_pack.fld.data.tx_data.I=ADC_ADS1118[ADC_DI].word;
+	if (PwmStatus==discharge)	tx_pack.fld.data.tx_data.I=ADC_O[ADC_DI];//tx_pack.fld.data.tx_data.I=ADC_ADS1118[ADC_DI].word;
 	else						tx_pack.fld.data.tx_data.I=ADC_O[ADC_MI];//tx_pack.fld.data.tx_data.I=ADC_ADS1118[ADC_MI].word;
 	tx_pack.fld.data.tx_data.U=ADC_O[ADC_MU];//ADC_ADS1118[ADC_MU].word;
 	tx_pack.fld.data.tx_data.Ip=ADC_O[ADC_MUp];//ADC_ADS1118[ADC_MUp].word;
