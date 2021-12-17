@@ -29,10 +29,10 @@ typedef enum {
 typedef enum {
     CS_OFF = 0,
     CS_ON  = 1
-} SPI_CS;
+} cs_t;
 
 /* тип функции выбора ведомого */
-typedef void (*cs_func_t)(SPI_CS cs);
+typedef void (*cs_func_t)(cs_t cs);
 
 /*
  * Драйверы более высокого уровня (часов, ЕЕПРОМ, ADC и т.п.)
@@ -42,7 +42,7 @@ typedef struct {
     unsigned char spcr_val; /* образ регистра SPCR */
     unsigned char spsr_val; /* образ регистра SPSR */
     cs_func_t cs_func; /* функция выбора ведомого */
-} SPI_CNTR;
+} cntr_t;
 
 #define SCL_FREQ_SEL(freq) \
     (\
@@ -60,9 +60,9 @@ typedef struct {
     sck_polar, /* полярность тактового сигнала */\
     sck_phase, /* фаза тактового сигнала */\
     func_cs) /* функция выбора ведомого */\
-static FLASH_MEM_ATTR SPI_CNTR name = {\
+static const cntr_t name = {\
     (SHL(SPIE) | SHL(SPE) | SHL(MSTR) |\
-    (SCL_FREQ_SEL(sck_freq) << SPR0)| (data_order << DORD) |\
+    (SCL_FREQ_SEL(sck_freq) << SPR0) | (data_order << DORD) |\
     (sck_polar << CPOL) | (sck_phase << CPHA)),\
     ((F_CPU_HZ / 2) < sck_freq) ? SHL(SPI2X) : 0,\
     func_cs\
@@ -72,7 +72,7 @@ void spi_init(void);
 bool spi_busy(void);
 void spi_get_data(char *msg, unsigned char len);
 void spi_start_io(char *msg, unsigned char wlen,
-                  unsigned char rlen, SPI_CNTR const *cntr);
+                  unsigned char rlen, cntr_t const *cntr);
 
 #ifdef __cplusplus
 }

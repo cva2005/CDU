@@ -50,12 +50,12 @@ void main (void) {
     if (Cfg.bf1.LCD_ON) LCD_wr_set();
     init_rs();
     SYS_TMR_ON();
-    START_RX(); /* начать прием */
+    START_RX();
     __enable_interrupt();
-    while (1) {	  	
-        net_drv(); // проверка драйвера сети
+    while (true) {	  	
+        net_drv();
         csu_time_drv();
-        err_check(); //Проверить нет ли ошибок
+        err_check();
         if (Read_ADS1118(&ADS1118_chanal)) { //Если есть оцифрованные каналы
             if (!Cfg.bf1.LED_ON || RsActive) Correct_UI();
         }
@@ -259,8 +259,6 @@ static inline void init_all (void) {
     GICR = 1 << INT1; // ext int
 }
 
-static inline void init_time_task (void) {
-}
 //===============================================Прерывание таймера/счетчика Т0==============================================
 #if 0
 #pragma vector=TIMER0_OVF_vect

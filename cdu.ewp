@@ -2238,12 +2238,12 @@
             <file>
                 <name>$PROJ_DIR$\spi\adc\ads1118.h</name>
             </file>
+            <file>
+                <name>$PROJ_DIR$\spi\adc\ads1118_imp.h</name>
+            </file>
         </group>
         <file>
             <name>$PROJ_DIR$\spi\spi.c</name>
-            <excluded>
-                <configuration>Debug</configuration>
-            </excluded>
         </file>
         <file>
             <name>$PROJ_DIR$\spi\spi.h</name>

@@ -1,5 +1,4 @@
 #pragma message	("@(#)csu.c")
-
 #include <system.h>
 #include "csu/csu.h"
 #include "csu/mtd.h"

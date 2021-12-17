@@ -9,7 +9,6 @@
 static unsigned char spi_buf[SPI_BUFFER_SIZE];
 static unsigned char wr_ptr, rd_ptr;
 static unsigned char wr_len, rd_len;
-static unsigned char wr_len, rd_len;
 static cs_func_t cs_func; /* функция выбора ведомого */
 
 void spi_init(void)
@@ -26,7 +25,7 @@ bool spi_busy(void)
 }
 
 void spi_start_io(char *msg, unsigned char wlen,
-                  unsigned char rlen, SPI_CNTR const *cntr)
+                  unsigned char rlen, cntr_t const *cntr)
 {
     while (spi_busy());
     rd_len = rlen;
@@ -64,7 +63,7 @@ void spi_get_data(char *msg, unsigned char len)
 #pragma vector=SPI_STC_vect
 __interrupt void spi_irq(void)
 {
-    __enable_interrupt();
+    //__enable_interrupt(); // ToDo: ???
     if (wr_ptr < wr_len) { /* write operation */
         SPDR = spi_buf[wr_ptr++];
     } else if (wr_ptr == wr_len) { /* end of write operation */

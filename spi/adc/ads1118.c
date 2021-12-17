@@ -1,10 +1,127 @@
 #pragma message	("@(#)ads1118.c")
-#include "sys/system.h"
-#include "net/net.h"
-#include "csu/csu.h"
-#include "pwm/pwm.h"
+#include <system.h>
+#include "spi/spi.h"
 #include "ads1118.h"
+#include "ads1118_imp.h"
 
+static void adc_cs(cs_t cs);
+
+/*
+ * Создание структуры - описателя SPI ADC ADS1118.
+ * Configure microcontroller SPI interface to SPI
+ * mode 1 (CPOL = 0, CPHA = 1).
+ */
+MAKE_SPI_CNTR(
+    adc_cntr, /* имя управляющей структуры */
+    MSB_FIRST, /* порядок следования битов */
+    SCK_FREQ, /* частота шины SPI, Hz */
+    IDLE_LOW, /* полярность тактовых импульсов SPI */
+    SECOND_EDGE, /* фаза тактовых импульсов SPI */
+    adc_cs); /* функция выбора ведомого */
+
+void adc_init(void)
+{
+    CS_OFF();
+    SET_AS_OUT(CS_PORT, CS_PIN);
+}
+
+static void adc_cs(cs_t cs)
+{
+    ADC_SEL(cs);
+}
+
+/*
+ * Восстановление связи при нарушении обмена.
+ * In situations where the interface sequence is lost, a write operation
+ * of at least 32 serial clock cycles with DIN high returns the ADC to
+ * this default state by resetting the entire part.
+ * This ensures that the interface can be reset to a known state if
+ * the interface gets lost due to a software error or some glitch in
+ * the system. Reset returns the interface to the state in which it is
+ * expecting a write to the communications register. This operation
+ * resets the contents of all registers to their power-on values.
+ * Following a reset, the user should allow a period of 500 µs
+ * before addressing the serial interface.
+ */
+void adc_reset(void)
+{
+    char data[] = {0xff, 0xff, 0xff, 0xff};
+
+    spi_start_io(data, sizeof(data), 0, &adc_cntr);
+}
+
+/* Расчет Ку усилителя ADC */
+unsigned char adc_amp_gain(unsigned short inp, unsigned short ref)
+{
+    inp += inp / 4; /* +25% for efficient digital filtering */
+    if (inp > ref / 2) return 1;
+    if (inp > ref / 4) return 2;
+    if (inp > ref / 8) return 4;
+    if (inp > ref / 16) return 8;
+    if (inp > ref / 32) return 16;
+    if (inp > ref / 64) return 32;
+    if (inp > ref / 128) return 64;
+    return 128;
+}
+
+/* Чтение данных регистра ADC */
+void get_adc_reg(reg_t reg)
+{
+    COM_REG_T com;
+
+    *((char *)&com) = 0;
+    com.rd_wr = READ_REG;
+    com.reg_addr = reg;
+    spi_start_io((char *)&com, sizeof(COM_REG_T),
+                 (reg == STATUS_REG) || (reg == IO_REG) ?
+                  sizeof(char) : sizeof(short), &adc_cntr);
+}
+
+/* Запись регистра ADC */
+void set_adc_reg(REG_TYPE reg, unsigned short val)
+{
+    WR_BUFFER msg;
+    unsigned char len;
+
+    *((char *)&msg.com) = 0;
+    msg.com.reg_addr = reg;
+    if (reg == IO_REG) {
+        len = sizeof(msg) - 1;
+        msg.data[0] = (char)val;
+    } else {
+        len = sizeof(msg);
+        msg.data[0] = val >> 8;
+        msg.data[1] = (char)val;
+    }
+    spi_start_io((char *)&msg, len, 0, &adc_cntr);
+}
+
+/* Проверка записанного значения регистра ADC */
+bool vrf_adc_reg(REG_TYPE reg, char *val)
+{
+    char buf[2];
+
+    spi_get_data(buf, sizeof(short));
+    if (buf[0] == val[0]) {
+        if ((reg == IO_REG) ||
+            (buf[1] == val[1]))
+            return true;
+    }
+    return false;
+}
+
+bool adc_compl(void)
+{
+    bool compl;
+
+    if (spi_busy()) return false;
+    ADC_CS_ON();
+    compl = IS_PIN_CLR(ADC_RDY_PORT, ADC_RDY_PIN);
+    ADC_CS_OFF();
+    return compl;
+}
+
+#if 0
 ADS1118_type ADC_cfg_wr, ADC_cfg_rd;
 ADC_Type  ADC_ADS1118[ADC_CH];
 unsigned int ADC_O[ADC_CH];
@@ -39,7 +156,7 @@ void Init_ADS1118(void) {
     ADC_cfg_wr.bit.PULL_UP_EN=0; //0 : Pull-up resistor disabled on DOUT pin
     ADC_cfg_wr.bit.NOP=1; //00 : Invalid data, do not update the contents of the Config Register.  01 : Valid data, update the Config Register
     ADC_cfg_wr.bit.CNV_RDY_FL=1; //0 : Data ready, no conversion in progress  1 : Data not ready, conversion in progress
-    ADC_Sel(0);
+    ADC_SEL(true);
     delay_ms(30); //Ожидание для сброса предыдущих тактов SPI
     SPI_MasterTransmit(ADC_cfg_wr.byte[1]); 
     SPI_MasterTransmit(ADC_cfg_wr.byte[0]);
@@ -73,3 +190,4 @@ void clr_adc_res (void) {
     for (uint8_t i = 0; i < ADC_MI; i++)
         ADS1118_St[i] = 0;
 }
+#endif

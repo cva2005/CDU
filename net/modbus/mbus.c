@@ -188,7 +188,7 @@ static bool read_reg(unsigned char *buf, unsigned short first,
         signed short int_val;
         float flo_val;
         unsigned char i;
-        unsigned char idx = first / REG_IDX_NUM; /* индекс группы */
+        //unsigned char idx = first / REG_IDX_NUM; /* индекс группы */
         switch ((char)(first % REG_IDX_NUM)) { /* номер параметра в группе */
         case DPOINT_POS:
             *buf++ = 0;

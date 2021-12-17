@@ -19,9 +19,6 @@ extern "C" {
 #include <ioavr.h>
 #include "config.h"
 #include "stime.h"
-#include "net/net.h"
-
-//#include <util/delay.h>
 
 /*
  * Системные константы и определения

@@ -247,7 +247,7 @@ void key_power_LED(void)
 {
 	if (CsuState!=0)  //если блок уже запущен
 		{
-		Stop_CSU(0);
+		Stop_CSU(STOP);
 		}
 	else
 		{
