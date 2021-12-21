@@ -10,7 +10,7 @@
 #include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "key/key.h"
-#include "spi/adc/ads1118.h"
+#include "meas/meas.h"
 
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо

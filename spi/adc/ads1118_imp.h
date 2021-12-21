@@ -29,6 +29,10 @@
 #define ADS1118_CONST_0_256V_LSB_mV  (0.0078125)
 
 #define SAMPLECOUNTER		9
+#define LEN                 2
+#define CH_0                0
+#define CH_1                1
+#define BIT_RESV            0
 
 typedef union {
     struct {
@@ -46,10 +50,23 @@ typedef union {
     volatile uint8_t byte[2];
 } adc_t;
 
+typedef struct {
+    unsigned resv      :1; //low
+    unsigned nop       :2;
+    unsigned pull      :1;
+    unsigned ts_m      :1;
+    unsigned dr        :3;
+    unsigned mode      :1;
+    unsigned pga       :3;
+    unsigned mux       :2;
+    unsigned pol       :1;
+    unsigned ss        :1; //high
+} cfg_reg_t;
+
 typedef enum {
-    CONVERING = 0x1,          //for read
-    SINGLE_CONVER_START = 0x1 //for write
-} os_t;
+    CONVERING   = 0x1, //for read
+    SINGLE_CONV = 0x1  //for write
+} ss_t;
 
 typedef enum {
     AINPN_0_1 	= 	0x0,
@@ -91,6 +108,11 @@ typedef enum {
     ADC_MODE         = 0x0,
     TEMPERATURE_MODE = 0x1
 } ts_t;
+
+typedef enum {
+    BIPOLAR         = 0x0,
+    UNIPOLAR        = 0x1
+} pol_t;
 
 typedef enum {
     PULL_UP_DIS = 0x0,

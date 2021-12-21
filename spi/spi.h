@@ -39,8 +39,8 @@ typedef void (*cs_func_t)(cs_t cs);
  * имеют в ПЗУ заполненную структуру типа
  */
 typedef struct {
-    unsigned char spcr_val; /* образ регистра SPCR */
-    unsigned char spsr_val; /* образ регистра SPSR */
+    uint8_t spcr_val; /* образ регистра SPCR */
+    uint8_t spsr_val; /* образ регистра SPSR */
     cs_func_t cs_func; /* функция выбора ведомого */
 } cntr_t;
 
@@ -68,11 +68,11 @@ static const cntr_t name = {\
     func_cs\
 }
 
-void spi_init(void);
-bool spi_busy(void);
-void spi_get_data(char *msg, unsigned char len);
-void spi_start_io(char *msg, unsigned char wlen,
-                  unsigned char rlen, cntr_t const *cntr);
+void spi_init (void);
+bool spi_busy (void);
+void spi_get_data (char *msg, uint8_t len);
+void spi_start_io (char *msg, uint8_t wlen,
+                  uint8_t rlen, cntr_t const *cntr);
 
 #ifdef __cplusplus
 }
