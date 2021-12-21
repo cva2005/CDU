@@ -10,5 +10,6 @@
 void adc_init (void);
 uint16_t get_adc_res (uint8_t ch);
 void adc_drv (void);
+bool adc_error (void);
 
 #endif /* ADS1118_H */

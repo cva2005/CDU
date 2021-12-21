@@ -4,6 +4,7 @@
 #include "ads1118.h"
 #include "ads1118_imp.h"
 
+static stime_t AdcTime;
 static void adc_cs(cs_t cs);
 static uint8_t ChCnt = CH_0;
 static uint16_t AdcRes[ADC_CH];
@@ -51,9 +52,14 @@ void adc_drv (void) {
         if (ChCnt == ADC_CH) ChCnt = CH_0;
         CfgReg.mux = ChCnt;
         spi_start_io((char *)&CfgReg, sizeof(CfgReg), sizeof(uint16_t), &adc_cntr);
+        AdcTime = get_fin_time(ADC_TIME);
     }
 }
 
 uint16_t get_adc_res (uint8_t ch) {
     return AdcRes[ch]; // ToDo: swap bytes
+}
+
+bool adc_error (void) {
+    return get_time_left(AdcTime);
 }

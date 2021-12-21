@@ -141,5 +141,6 @@ typedef enum {
 #define RDY_PIN         6
 #define IS_RDY()        IS_PIN_CLR(RDY_PORT, RDY_PIN)
 //#define DRDY            PINB & (1 << 6)
+#define ADC_TIME        MS(200)
 
 #endif /* ADS1118_IMP_H */

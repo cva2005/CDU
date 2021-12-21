@@ -10,7 +10,7 @@
 #include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "key/key.h"
-#include "meas/meas.h"
+#include "spi/adc/ads1118.h"
 
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо
@@ -26,34 +26,34 @@ unsigned char time_rd=0; //время между чтениями датчиков температуры
 #define ST_TIME         100U
 #define DOWN_LIM        100.0f*/
 
-static inline void init_all (void);
+static inline void init_gpio (void);
 static inline void fan_ctrl (void);
 static inline void check_key_press (void);
-static inline void check_auto_start (void);
 
 void main (void) {
-    init_all();
-    Init_ADS1118();
+    init_gpio();
     ALARM_OUT(0);
     Read_temp(); //Запустить на измерение датчик температуры 
     read_cfg();
-    if (Cfg.bf1.LCD_ON) LCD_wr_connect(0);
-    if (Cfg.bf1.FAN_CONTROL == 0) {
-        FAN(1);
-        Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
-        delay_ms(500);
-        Read_ADS1118(&ADS1118_chanal); //Прочитать значения АЦП
-        delay_ms(500);
-        read_mtd();
-        FAN(0);
+    if (Cfg.bf1.LCD_ON) {
+        LCD_wr_connect(0);
+        LCD_wr_set();
     }
-    if (Cfg.bf1.LCD_ON) LCD_wr_set();
     init_rs();
     SYS_TMR_ON();
     START_RX();
     __enable_interrupt();
+    adc_init();
+    if (Cfg.bf1.FAN_CONTROL == 0) {
+        FAN(1);
+        delay_ms(500);
+        delay_ms(500);
+        read_mtd();
+        FAN(0);
+    }
     while (true) {	  	
         net_drv();
+        adc_drv();
         csu_time_drv();
         err_check();
         if (Read_ADS1118(&ADS1118_chanal)) { //Если есть оцифрованные каналы
@@ -176,26 +176,6 @@ else
 	{LED_STI(0);LED_STU(0);}//LED|=0x30;
 }
 
-static inline void check_auto_start (void) {
-    if (Cfg.bf2.astart) { //если включён автостарт
-        if (PwmStatus==STOP) { //если преобразователь выключен
-            if (ast.restart_cnt) { //если количество перезапусков неисчерпано
-                if (ast.restart_time==0) { //если истекло время паузы между запусками
-                    if (ast.u_pwm>ADC_ADS1118[ADC_MU].word) { //если текущее напряжение на выходе меньше чем напряжение запуска
-                        if (CsuState==STOP) {
-                            ast.restart_time=AUTOSTART_TIME;
-                        }
-                        if (Error!=0) {
-                            if ((ast.restart_cnt>0)&&(ast.restart_cnt!=0xFF)) ast.restart_cnt--;
-                        }
-                        key_power();//если нажата кнопка Старт/Стоп
-                    }
-                }
-            }
-        }
-    }
-}
-
 static inline void check_key_press (void) {
     uint8_t key_n;
     if (scan_key(&key_n)) { //если есть нажатая кнопка
@@ -247,7 +227,7 @@ static inline void fan_ctrl (void) {
     }
 }
 
-static inline void init_all (void) {
+static inline void init_gpio (void) {
     DDRA = 0x07;
     DDRB = 0xB8;
 #if !JTAG_DBGU

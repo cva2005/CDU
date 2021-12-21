@@ -5,13 +5,12 @@
  */
 
 #include <sys/config.h>
-#include "csu/csu.h"
-#include "csu/mtd.h"
 #include "key/key.h"
 #include "lcd/lcd.h"
 #include "pwm/pwm.h"
 #include "tsens/ds1820.h"
-#include "spi/adc/ads1118.h"
+#include "csu/csu.h"
+#include "csu/mtd.h"
 #include "kron.h"
 #include "kron_imp.h"
 
@@ -172,7 +171,7 @@ static void frame_parse (void) {
 						if (rx.length >= 22) { //если есть информация об автозапуске
 							Cfg.cnt_set = rd.rx_sys.autostart_try;
 							Cfg.u_set = rd.rx_sys.autostart_u;
-							Cfg.time_set = rd.rx_sys.restart_timout/16;
+							Cfg.time_set = rd.rx_sys.restart_timout;
 						}
 						calc_cfg();
 						if (rd.rx_sys.cmd.bit.EEPROM) save_cfg();
@@ -280,7 +279,7 @@ static void tx_reply (void) {
         td.tx_sys.slave_cnt_i=0;
         td.tx_sys.cfg = Cfg.bf2.astart;
         td.tx_sys.autostart_try = Cfg.cnt_set;//AUTOSTART_CNT;
-        td.tx_sys.restart_timout = Cfg.time_set * 16;
+        td.tx_sys.restart_timout = Cfg.time_set;
         td.tx_sys.autostart_u = Cfg.u_set;
         len = sizeof(tx_sys_type);
         break;

@@ -14,7 +14,7 @@ extern "C" {
 //---------------------НАСТРОЙКИ ПО УМОЛЧАНИЮ---------------------------
 #define AUTOSTART 0
 #define AUTOSTART_CNT 100
-#define AUTOSTART_TIME 100
+#define AUTOSTART_TIME 1600
 #define AUTOSTART_U	0
 //-------------------адрес блока---------------------
 #define addr_const 1
@@ -176,10 +176,8 @@ typedef struct  {
 
 typedef struct {
 	//unsigned char en; //автостарт вкл/выкл
-	unsigned char restart_cnt; //счётчик перезапусков
-	unsigned char cnt_set;
-	unsigned char restart_time; //время паузы между перезапусками
-	unsigned char time_set;
+	unsigned char err_cnt; //счётчик перезапусков
+	stime_t rst_time; //время паузы между перезапусками
 	unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
 	unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
 } ast_t;
@@ -227,6 +225,7 @@ typedef enum {
 #define EXT_ERR_VAL     100
 #define INF_TAU         50.0f
 #define PWR_TIME        MS(160) // led power time
+#define CNTRL_T         MS(300) // control dicrete time
 //#define DOWN_LIM    100.0f
 
 unsigned char U_align_st (void);
@@ -240,16 +239,17 @@ void Correct_UI (void);
 void Init_ExtInt (void);
 void calc_cfg (void);
 void csu_time_drv (void);
+void inline check_auto_start (void);
 
 extern uint16_t set_I, set_U, set_Id;
 extern uint8_t change_UI;
 extern uint16_t max_set_I, max_set_Id, max_set_U;
 extern uint8_t Error;
 extern bool SelfCtrl, pLim;
-extern ast_t ast;
 extern uint16_t id_dw_Clb, id_up_Clb;
 extern csu_st CsuState;
 extern stime_t AlarmDel;
+extern uint16_t ADC_O[];
 
 #ifdef __cplusplus
 }

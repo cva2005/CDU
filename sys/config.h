@@ -26,7 +26,7 @@ typedef struct {
     uint8_t addr;
     uint16_t B[4];
     bf2_t bf2; 
-    uint8_t time_set;
+    uint16_t time_set;
     uint16_t u_set;
     uint8_t cnt_set;
     uint8_t rsv;

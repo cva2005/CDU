@@ -1,28 +1,26 @@
 #pragma message	("@(#)csu.c")
 #include <system.h>
-#include "csu/csu.h"
-#include "csu/mtd.h"
 #include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "pwm/pwm.h"
 #include "spi/adc/ads1118.h"
+#include "csu/mtd.h"
 #include "pid/pid_r.h"
 #include "tsens/ds1820.h"
+#include "key/key.h"
+#include "csu/csu.h"
 
 stime_t AlarmDel;
-stime_t BreakTime;
-stime_t TickSec;
-stime_t LedPwrTime;
-ast_t ast;
+static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
+ast_t AutoStr;
 uint16_t id_dw_Clb, id_up_Clb;
-state_t State;
-float Uerr, Ierr, Usrt;
+uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
+static float Uerr, Ierr;
 unsigned int  dm_loss_cnt = 0;
 unsigned char ERR_Ext = 0, OUT_err_cnt = 0;
-bool InitF, SatU, Stable, DownMode, PulseMode;
+static bool InitF, SatU;
 bool pLim = false, LedPwr;
 unsigned int StbCnt;
-csu_st CsuState = STOP;
 unsigned char ZR_mode = 1, Error = 0;
 static pid_t Pid_U = {
 	0.0012, /* Kp; gain factor */
@@ -73,65 +71,31 @@ static pid_t Pid_Id = {
 	0.0     /* Xi integral zone */
 };
 
-static inline void pid_init_all (void);
+static inline void start_cntrl (void);
 static void out_off (void);
 
 void Correct_UI (void) {
-    if (ADS1118_St[ADC_MU] &&
-        (ADS1118_St[ADC_MI] || ADS1118_St[ADC_DI])) {
-        ADS1118_St[ADC_MU] = 0;
-        int err_i;
-        int err_u = set_U - ADC_ADS1118[ADC_MU].word;
-        if (ADS1118_St[ADC_MI]) {
-            ADS1118_St[ADC_MI] = 0;
-            err_i = set_I - ADC_ADS1118[ADC_MI].word;
-        } else {
-            ADS1118_St[ADC_DI] = 0;
-            err_i = i_power_limit(Cfg.P_maxW, set_Id);
-            err_i -= ADC_ADS1118[ADC_DI].word;
-        }
+    if (PwmStatus == STOP) return;
+    if (!get_time_left(CntrlTime)) {
+        CntrlTime = get_fin_time(CNTRL_T);
+        uint16_t err_i;
+        uint16_t err_u = set_U - get_adc_res(ADC_MU);
         if (PwmStatus == CHARGE) {
-            if (State == DISCHARGE_ST) {
-                State = CHARGE_ST;
-                goto pulse_mode;
-            }
-        } else if (PwmStatus == DISCHARGE) {
-            if (State == CHARGE_ST) {
-                State = DISCHARGE_ST;
-                pulse_mode:
-                PulseMode = true;
-                pid_init(&Pid_Ic);
-                pid_init(&Pid_Id);
-            }        
-        } else return;
-        if (PulseMode || !InitF) {
+            err_i = set_I - get_adc_res(ADC_MI);
+        } else { // discharge
+            err_i = i_power_limit(Cfg.P_maxW, set_Id);
+            err_i -= get_adc_res(ADC_DI);
+        }
+        if (/*Stg.fld.type == PULSE ||*/ !InitF) {
             InitF = true;
-            Usrt = Uerr = (float)err_u;
+            Uerr = (float)err_u;
             Ierr = (float)err_i;
         } else {
             Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
             Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
         }
         if (PwmStatus == CHARGE) {
-            /*if (!Stable) {
-                if (StbCnt < ST_TIME) {
-                StbCnt++;
-            } else {
-                Stable = true;
-                if (Usrt - Uerr > DOWN_LIM) DownMode = true;
-            }
-            }*/
             float tmp;
-            /*if (SatU) {
-                tmp = Uerr;
-            } else { // !SatU
-                if (Uerr <= 0) SatU = true;
-                tmp = Ierr;
-            }
-            if (!PulseMode && DownMode) {
-                if (tmp > CURR_DT) tmp = CURR_DT;
-                else if (tmp < -CURR_DT) tmp = -CURR_DT;
-            }*/
             if (Uerr <= 0) tmp = Uerr;
             else tmp = Ierr;
             P_wdI = PwmDuty(pid_r(&Pid_Ic, tmp));
@@ -146,11 +110,6 @@ void Correct_UI (void) {
         }      
         BreakTime = get_fin_time(SEC(1));
     }
-}
-
-void init_cntrl (void) {
-    DownMode = Stable = SatU = InitF = false;
-    StbCnt = 0;
 }
 
 void calc_cfg (void) {
@@ -175,9 +134,8 @@ void calc_cfg (void) {
     else Cfg.bf1.EXT_Id = 0;
     ADC_O[ADC_MU] = Cfg.B[ADC_MU];
     ADC_O[ADC_MI] = Cfg.B[ADC_MI];
-    ast.u_pwm = ((uint32_t)ast.u_set*100000UL) / Cfg.K_U;
-    ast.restart_cnt = ast.cnt_set;
-    ast.restart_time = ast.time_set;
+    AutoStr.u_pwm = ((uint32_t)AutoStr.u_set*100000UL) / Cfg.K_U;
+    AutoStr.err_cnt = Cfg.cnt_set;
     if (Cfg.bf2.astart) Cfg.bf1.DEBUG_ON = 1;
     id_dw_Clb = Id_A(2,0);
     if (Cfg.dmSlave == 0) {
@@ -229,12 +187,9 @@ void Start_CSU (csu_st mode) {
     unsigned char control_setU = 0;
     err_check();
     if (Error) return;
-#if PID_CONTROL
-    if (!CsuState) {
-        PulseMode = true;
-        pid_init_all();
+    if (CsuState == STOP) {
+         start_cntrl();
     }
-#endif
     if (CsuState == STOP && set_U) control_setU = 1;
     else control_setU = 0;
     if (PwmStatus!=0) {
@@ -252,28 +207,19 @@ void Start_CSU (csu_st mode) {
         delay_ms(100);
     }
     if (CsuState == CHARGE) {
-#if !PID_CONTROL
-        if (Cfg.bf1.LED_ON && !RsActive) {
-            if (ADC_ADS1118[ADC_MU].word>U_V(16,0)) set_U=U_V(31,0);
-            else set_U=U_V(16,0);
-            set_I=I_A(1,0);
-        }
-#endif
         soft_start(Cfg.bf1.DIAG_WIDE&&control_setU&&(Cfg.bf1.GroupM==0));
-        ADC_ADS1118[ADC_MI].word=0;
     }
     if (CsuState == DISCHARGE) {
         soft_start_disch();	
-        ADC_ADS1118[ADC_DI].word=0;
     }
     BreakTime = get_fin_time(SEC(1));
 }
 
 void Stop_CSU(csu_st mode) {
-    if (!Error) ast.restart_cnt = AUTOSTART_CNT;
+    if (!Error) AutoStr.err_cnt = Cfg.cnt_set;
     Error = 0;
     Stop_PWM(SOFT);
-    pLim = false;
+    InitF = pLim = false;
     CsuState = STOP;
     delay_ms(10);
     if (mode == STOP) out_off();
@@ -294,12 +240,12 @@ void err_check (void) {
 		if (Cfg.bf1.DIAG_WIDE && (PwmStatus == DISCHARGE)) {
         /* включена расширеная диагностика */
             if ((dm_loss_cnt > 0) && (dm_loss_cnt < 10)) {
-                if (ADC_ADS1118[ADC_DI].word > Id_A(0,1)) {
-                    if ((set_U < ADC_ADS1118[ADC_MU].word) && !pLim
-                        && (set_Id > (ADC_ADS1118[ADC_DI].word << 1))) {
+                if (get_adc_res(ADC_DI) > Id_A(0,1)) {
+                    if ((set_U < get_adc_res(ADC_MU)) && !pLim
+                        && (set_Id > (get_adc_res(ADC_DI) << 1))) {
                         Error = ERR_DM_LOSS;
                     }
-                    if ((set_Id > (ADC_ADS1118[ADC_DI].word + Id_A(0,2))) &&
+                    if ((set_Id > (get_adc_res(ADC_DI) + Id_A(0,2))) &&
                         (P_wdI == max_pwd_Id)) {
                         /* реальный ток в 2 раза меньше заданного */
                         Error = ERR_DM_LOSS;
@@ -312,11 +258,11 @@ void err_check (void) {
     if (Cfg.bf1.I0_SENSE && !Cfg.bf1.GroupM) {
          /* диагностика обрыва нагрузки и блок не в группе */
         if ((PwmStatus == CHARGE) && set_I) {
-            if (ADC_ADS1118[ADC_MI].word >= I_A(0,1)) goto set_break_time;
+            if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
             if (get_time_left(BreakTime) && (P_wdI > 0)) Error = ERR_NO_AKB;
         }
         if ((PwmStatus == DISCHARGE) && set_Id) {
-            if (ADC_ADS1118[ADC_DI].word >= Id_A(0,1)) {
+            if ((ADC_DI) >= Id_A(0,1)) {
             set_break_time:
                 BreakTime = get_fin_time(SEC(1));
             }
@@ -346,23 +292,18 @@ void err_check (void) {
     if (Cfg.bf1.DIAG_WIDE) {
         if ((PwmStatus==STOP)&&(Cfg.bf1.GroupM==0)) {
         /* Если преобразователь выключен и блок работает не в группе */
-            if ((ADS1118_St[ADC_MUp]!=0)&&(ADS1118_St[ADC_MU]!=0)) {
-            /* есть данные о напряжении */
-                if ((ADC_ADS1118[ADC_MU].word > U_V(0,8)) &&
-                    (ADC_ADS1118[ADC_MUp].word < U_V(0,2))) {
-                    if (OUT_err_cnt < 250) OUT_err_cnt++;
-                } else OUT_err_cnt = 0;
-                /* если на выходе после реле напряжение есть,
-                   а до реле напряжения нет, значит КЗ выхода */
-                if (OUT_err_cnt > 2) Error = ERR_OUT;
-                if (!OUT_err_cnt && (Error == ERR_OUT)) Error = 0;
-                ADS1118_St[ADC_MU] = 0;
-                ADS1118_St[ADC_MUp] = 0;
-            }
+            if ((get_adc_res(ADC_MU) > U_V(0,8)) &&
+                (get_adc_res(ADC_MUp) < U_V(0,2))) {
+                if (OUT_err_cnt < 250) OUT_err_cnt++;
+            } else OUT_err_cnt = 0;
+            /* если на выходе после реле напряжение есть,
+               а до реле напряжения нет, значит КЗ выхода */
+            if (OUT_err_cnt > 2) Error = ERR_OUT;
+            if (!OUT_err_cnt && (Error == ERR_OUT)) Error = 0;
             /* Если данные конфигурации АЦП неверные значит АЦП неисправен */
-            if (!ADC_cfg_rd.word || (ADC_cfg_rd.word == ERR_WCODE)) Error = ERR_ADC;
+            //if (!ADC_cfg_rd.word || (ADC_cfg_rd.word == ERR_WCODE)) Error = ERR_ADC;
         }
-        if (!ADC_wait) Error = ERR_ADC; /* не удаётся прочитать значение АЦП */
+        if (adc_error()) Error = ERR_ADC; /* не удаётся прочитать значение АЦП */
     }
     if (Overload) Error = ERR_OVERLOAD; /* проверка защиты от перегрузки */
     if (Error) {
@@ -405,18 +346,40 @@ void csu_time_drv (void) {
     }
 }
 
-static inline void pid_init_all (void) {
+static inline void start_cntrl (void) {
     pid_init(&Pid_U);
     pid_init(&Pid_Ic);
     pid_init(&Pid_Id);
     TickSec = get_fin_time(SEC(1));
     LedPwrTime = get_fin_time(PWR_TIME);
+    CntrlTime = get_fin_time(CNTRL_T);
 }
 
 static void out_off (void) {
     RELAY_OFF;
     ALARM_OUT(1);
     AlarmDel = get_fin_time(SEC(5));
+}
+
+inline void check_auto_start (void) {
+    if (Cfg.bf2.astart) { // включён автостарт
+        if (PwmStatus == STOP) { // преобразователь выключен
+            if (AutoStr.err_cnt) {
+            //количество перезапусков не исчерпано
+                if (!get_time_left(AutoStr.rst_time)) {
+                // истекло время паузы между запусками
+                    if (AutoStr.u_pwm > get_adc_res(ADC_MU)) {
+                    // напряжение на выходе меньше чем напряжение запуска
+                        if (CsuState == STOP)
+                            AutoStr.rst_time = get_fin_time(Cfg.time_set);
+                        if (Error) AutoStr.err_cnt--;
+                        else AutoStr.err_cnt = Cfg.cnt_set;
+                        key_power();// нажата кнопка Старт/Стоп
+                    }
+                }
+            }
+        }
+    }
 }
 
 #pragma vector=INT1_vect
