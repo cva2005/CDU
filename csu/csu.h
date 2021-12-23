@@ -10,6 +10,8 @@ extern "C" {
 #define HW_MODE         40
 #define SW_VER          9
 #define SW_MODE         00
+#define SOFTW_VER       "v.9.00"
+#define HARDW_VER       "v.8.40"
 
 //---------------------НАСТРОЙКИ ПО УМОЛЧАНИЮ---------------------------
 #define AUTOSTART 0
@@ -121,13 +123,13 @@ extern "C" {
 #define SD(x) ((x)?(PORTD|=(1<<6)):(PORTD&=~(1<<6)))
 #define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
 
-//Состояние для переменной PwmStatus (текущий режим ШИМ), ZR_mode (заданный режим), CsuState (Режи в котором запущен блок)
+//Состояние для переменной PwmStatus (текущий режим ШИМ), SetMode (заданный режим), CsuState (Режи в котором запущен блок)
 typedef enum {
     STOP        = 0, //const for PwmStatus
     CHARGE      = 1, //const for PwmStatus
     DISCHARGE   = 2, //const for PwmStatus
-    PULSE       = 3, //const for ZR_mode
-    PAUSE       = 4  //const for ZR_mode
+    PULSE       = 3, //const for SetMode
+    PAUSE       = 4  //const for SetMode
 } csu_st;
 
 enum{
@@ -247,7 +249,7 @@ extern uint16_t max_set_I, max_set_Id, max_set_U;
 extern uint8_t Error;
 extern bool SelfCtrl, pLim;
 extern uint16_t id_dw_Clb, id_up_Clb;
-extern csu_st CsuState;
+extern csu_st CsuState, SetMode;
 extern stime_t AlarmDel;
 extern uint16_t ADC_O[];
 

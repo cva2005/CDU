@@ -1,9 +1,5 @@
 #pragma message	("@(#)mbus.c")
 
-/*
- * Драйвер сетевого протокола MODBUS
- */
-
 #include <sys/system.h>
 #include "mbus.h"
 #include "mbus_imp.h"
@@ -174,7 +170,7 @@ static void frame_parse(BUS_MODE mode)
         TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
     }
     start_tx(i, rs_buff); /* стартовать передачу кадра */
-    RsActive = true;
+    set_active();
     return;
 }
 

@@ -1,15 +1,10 @@
 #pragma message	("@(#)net.c")
 
-/*
- * Драйвер RS485
- */
-
-//#include <sys/config.h>
 #include <sys/system.h>
 #include "net.h"
 #include "net_imp.h"
 
-bool RsActive = false;
+static bool RsActive = false;
 stime_t TimeIdle;
 unsigned char *BuffPtr; /* указатель на буфер передачи */
 unsigned char TxIpBuff; /* указатель данных в буфере передачи */
@@ -43,6 +38,7 @@ void init_rs(void)
 /* Сетевой драйвер верхнего уровня */
 void net_drv(void)
 {
+    if (!get_time_left(TimeIdle)) RsActive = false;
     unsigned char new_ip = RxIpNew;
     unsigned char old_ip = RxIpOld;
     unsigned char len;
@@ -152,4 +148,13 @@ void rx_tick_irq(void)
             AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
         } else AsciiIdleCount++; /* скорректировать интервал "молчания" */
     }
+}
+
+bool rs_active (void) {
+    return RsActive;
+}
+
+void set_active (void) {
+    TimeIdle = get_fin_time(SEC(2));
+    RsActive = true;
 }

@@ -1,6 +1,5 @@
 #pragma message	("@(#)mtd.c")
 #include <sys/config.h>
-#include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "spi/adc/ads1118.h"
 #include "net/net.h"
@@ -17,133 +16,108 @@ bool SaveMtd = false;
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
 unsigned int max_set_U, max_set_I, max_set_Id;
 uint8_t Hour = 0, Min = 0, Sec = 0, Hour_Stg, Min_Stg, Sec_Stg;
+stime_t PulseStep; //время импульса заряд/разряд при импульсном режиме
+stime_t dUtime; // Время когда не увеличивается U при заряде щелочного АКБ
 
-//-------------------------------проверка условий окончания этапа--------------------
-unsigned char fin_cond(void)
-{
-if (Stg.fld.stop_flag.I) //если есть признак окончания по току
-	{
-	if (Stg.fld.type==DISCHARGE)
-		{
-		if (ADC_ADS1118[ADC_DI].word<=Fin.I) return(1); //при разряде проверить что ток стал меньше минимального допустимого
-		}
-	else
-		{
-		if (CsuState==CHARGE)
-			{if (ADC_ADS1118[ADC_MI].word<=Fin.I) return(1);} //при заряде проверить что ток стал меньше минимально допустимого
-		}	
-	//если условия выполняются то не сбрасывать счётчик антидребезга
-	}
-if (Stg.fld.stop_flag.U) //если есть признак окончания по напряженияю
-	{
-	if ((Stg.fld.type==DISCHARGE)||(Stg.fld.type==PAUSE))
-		{
-		if (ADC_ADS1118[ADC_MU].word<=Fin.U) return(1); //при разряде проверить что напряжение меньше допустимого
-		}
-	else
-		{
-		if (CsuState==CHARGE)
-			{if (ADC_ADS1118[ADC_MU].word>=Fin.U) return(1);} //при заряде проверить что напряжение больше допустимого
-		}
-	//если условия выполняются то не сбрасывать счётчик антидребезга
-	}
-if (Stg.fld.stop_flag.T)		//если установлен флаг окончания по времени
-	{
-	if ((Hour_Stg>=Stg.fld.end_H)&&(Min_Stg>=Stg.fld.end_M)&&(Sec_Stg>=Stg.fld.end_S)) //если время этапа вышло
-		{
-		fCnt=0;	//установить флаг окончания метода (сбросить счётчик антидребезка в 0)
-		return(1);	
-		}
-	}
-//if (Stg.fld.stop_flag.t)
-//if (Stg.fld.stop_flag.C)
-if (Stg.fld.stop_flag.dU) //проверить условия падения напряжения
-	{
-	if (Fin.max_U<ADC_ADS1118[ADC_MU].word) //если максимальное зафиксированое напряжение меньше текущего
-		{
-		Fin.max_U=ADC_ADS1118[ADC_MU].word; //запомнить текущее напряжение как максимальное
-		dU_time=25000;
-		}
-	else
-		{
-		if ((Fin.max_U-ADC_ADS1118[ADC_MU].word)>=Fin.dU) return(1);  //проверить разница между текущим и максимальным больше дельты?
-		}
-	if (dU_time==0) return(1);
-	}
-fCnt=30;
-return(0);
+static bool end_time (hms_t *tm);
+
+/* проверка условий окончания этапа */
+bool fin_cond(void) {
+    uint16_t adc_mu = get_adc_res(ADC_MU);
+    if (Stg.fld.stop_flag.I) { // признак окончания по току
+        if (Stg.fld.type == DISCHARGE) {
+            if (get_adc_res(ADC_DI) <= Fin.I) return true; //при разряде проверить что ток стал меньше минимального допустимого
+        } else {
+            if (CsuState == CHARGE) {
+                if (get_adc_res(ADC_MI) <= Fin.I) return true;
+            } //при заряде проверить что ток стал меньше минимально допустимого
+        }	
+        //если условия выполняются то не сбрасывать счётчик антидребезга
+    }
+    if (Stg.fld.stop_flag.U) { //если есть признак окончания по напряженияю
+        if ((Stg.fld.type==DISCHARGE)||(Stg.fld.type==PAUSE)) {
+            if (adc_mu <= Fin.U) return true; //при разряде проверить что напряжение меньше допустимого
+        } else {
+            if (CsuState == CHARGE) {
+                if (adc_mu >= Fin.U) return true;
+            } //при заряде проверить что напряжение больше допустимого
+        }
+        //если условия выполняются то не сбрасывать счётчик антидребезга
+    }
+    if (Stg.fld.stop_flag.T) { //если установлен флаг окончания по времени
+        if (end_time(&Stg.fld.end)) { // время этапа вышло
+            fCnt = 0;	// уст. флаг окончания метода (сбросить счётчик антидребезка в 0)
+            return true;	
+        }
+    }
+    if (Stg.fld.stop_flag.dU) { //проверить условия падения напряжения
+        if (Fin.max_U < adc_mu) { //если максимальное зафиксированое напряжение меньше текущего
+            Fin.max_U = adc_mu; //запомнить текущее напряжение как максимальное
+            dUtime = get_fin_time(DU_TIME);
+         } else {
+            if ((Fin.max_U - adc_mu) >= Fin.dU) return true;  //проверить разница между текущим и максимальным больше дельты?
+        }
+        if (!get_time_left(dUtime)) return true;
+    }
+    fCnt = 30;
+    return false;
 }
 
-//проверка текущего сосотяния этапа
-void stg_status(void)
-{
-if (Stg.fld.type==PULSE) //если задан импульсный режим
-	{
-	if (pulse_step==0)		//истекло время импульса?
-		{
-		if (CsuState==DISCHARGE) //если был разряд, то сменить его на заряд
-			{
-			set_U=set_UmemC;		//установить напряжение заряда
-			Start_CSU(CHARGE);
-			pulse_step=Stg.fld.T_ch*60; //расчитать длительность импульса
-			}	
-		else
-			{
-			set_U=set_UmemD;
-			Start_CSU(DISCHARGE);
-			pulse_step=Stg.fld.T_dch*60;
-			}
-		}	
-	}//*/
-	
-fin_cond(); //проверить выполняется хоть одно условие окончания этапа (если да то fCnt не будет перезагружен)
-if (fCnt==0) //условия окончания выполняются и вышло время антидребезга?
-	{
-	if ((sCnt+1) < Mtd.fld.NStg) //в методе есть информация о следующем этапе?
-		{
-		sCnt++; //переключиться на следующий этап
-		read_stg(sCnt); //прочитать следующий этап
-		calc_stg();
-		change_UI=1;
-		if (Stg.fld.type==DISCHARGE) 
-			{
-			if (PwmStatus!=DISCHARGE) Start_CSU(DISCHARGE);
-			}
-		if ((Stg.fld.type==CHARGE)||(Stg.fld.type==PULSE))
-			{
-			if (PwmStatus!=CHARGE) Start_CSU(CHARGE);
-			}
-		if (Stg.fld.type==PAUSE) 
-			{
-			if (CsuState!=PAUSE) Start_CSU(PAUSE);//Start_CSU(charge);
-			}
-		}
-	else //если следующего этапа нет
-		{
-		if ((cCnt<Mtd.fld.Cnt)||(cCnt>9)) //есть повотрные циклы?
-			{
-			if (cCnt<10) cCnt++;
-			start_mtd(0);   //если есть, то запустить метод заново
-			}
-		else //если нет не выполненых циклов
-			{
-			stop_mtd(); //остановить метод
-			}
-		}
-	}
-
-if (Mtd.fld.Hm<100)		//Если не бесконечный метод (в методе есть ограниченеи времени)
-	{
-	if ((Hour>=Mtd.fld.Hm)&&(Min>=Mtd.fld.Mm)&&(Sec>=Mtd.fld.Sm)) //проверить вышло время метода?
-		{
-		stop_mtd(); //если да, то отсановить метод
-		}	
-	}
+/* проверка текущего сосотяния этапа */
+void stg_status (void) {
+    if (Stg.fld.type == PULSE) { // импульсный режим
+        if (!get_time_left(PulseStep)) { // истекло время импульса
+            if (CsuState == DISCHARGE) { // сменить на заряд
+                set_U = set_UmemC; // напряжение заряда
+                Start_CSU(CHARGE);
+                PulseStep = get_fin_time(SEC(Stg.fld.T_ch));
+            } else {
+                set_U=set_UmemD;
+                Start_CSU(DISCHARGE);
+                PulseStep = get_fin_time(SEC(Stg.fld.T_dch));
+            }
+        }	
+    }
+    fin_cond(); //проверить условие окончания этапа (если да то fCnt не будет перезагружен)
+    if (fCnt == 0) { //условия окончания выполняются и вышло время антидребезга?
+        if ((sCnt+1) < Mtd.fld.NStg) { //в методе есть информация о следующем этапе?
+            sCnt++; // переключиться на следующий этап
+            read_stg(sCnt); // прочитать следующий этап
+            calc_stg();
+            change_UI = 1;
+            switch (Stg.fld.type) {
+            case DISCHARGE:
+                if (PwmStatus != DISCHARGE)
+                    Start_CSU(DISCHARGE);
+                break;
+            case CHARGE:
+            case PULSE:
+                if (PwmStatus != CHARGE)
+                    Start_CSU(CHARGE);
+                 break;
+            case PAUSE:
+                if (CsuState != PAUSE)
+                    Start_CSU(PAUSE);
+           }
+        } else { // следующего этапа нет
+            if ((cCnt<Mtd.fld.Cnt)||(cCnt>9)) { //есть повотрные циклы?
+                if (cCnt<10) cCnt++;
+                start_mtd(0);   //если есть, то запустить метод заново
+            } else { //если нет не выполненых циклов
+                stop_mtd(); //остановить метод
+            }
+        }
+    }
+    if (Mtd.fld.end.h < INF_TIME) { // не бесконечный метод
+        if (end_time(&Mtd.fld.end)) {
+            stop_mtd(); //отсановить метод
+        }	
+    }
 }
 
 /* расчёт параметров метода */
 void calc_mtd (void) {
-    ZR_mode=Stg.fld.type;
+    SetMode = Stg.fld.type;
     set_U = (uint16_t)U_adc(Mtd.fld.Um);
     set_Id = (uint16_t)Id_adc(Mtd.fld.Im);
     set_I = (uint16_t)I_adc(Mtd.fld.Im);
@@ -175,9 +149,9 @@ void calc_stg(void) {
 	}
     if (Stg.fld.type==STOP) Stg.fld.type = PAUSE;
     Fin.max_U=0;
-    pulse_step = Stg.fld.T_ch * 60; // время импульса заряда в имп. режиме
+    PulseStep = get_fin_time(SEC(Stg.fld.T_ch)); // время импульса заряда в имп. режиме
     Sec_Stg = Min_Stg = Hour_Stg = 0;
-    fCnt = 100; //установить паузу в определении условий окончания
+    fCnt = INF_TIME; //установить паузу в определении условий окончания
 }
 
 void read_mtd (void) {
@@ -241,9 +215,9 @@ void start_mtd (unsigned char num) {
 
 void stop_mtd (void) {
     update_LCD_work();
-    Stop_CSU(0);
+    Stop_CSU(STOP);
     if (Cfg.bf1.LCD_ON) {
-        CsuState = 1;	
+        CsuState = CHARGE;	
         LCD[0][2] = Z_rus;
         LCD[0][3] = 'a';
         LCD[0][4] = v_rus;
@@ -257,7 +231,7 @@ void stop_mtd (void) {
         LCD[0][12] = ' ';
         LCD[0][13] = ' ';
         LCD[0][14] = ' ';
-        WH2004_string_wr(&LCD[0][2], line0 + 2, 13); // refrash
+        WH2004_string_wr(&LCD[0][2], LA_0 + 2, 13); // refrash
 	}
 }
 
@@ -265,12 +239,12 @@ void create_mtd (uint8_t num) {
     if (num < 2) {
         memset(Mtd.fld.name, ' ', sizeof(Mtd.fld.name));
         Mtd.fld.data_type = MTD_ID;
-        Mtd.fld.Hm = 10;
+        Mtd.fld.end.h = 10;
         Mtd.fld.Cnt =
         Mtd.fld.NStg = 1;
         Stg.fld.data_type = STG_ID;
-        Mtd.fld.Mm =
-        Mtd.fld.Sm =
+        Mtd.fld.end.m =
+        Mtd.fld.end.s =
         Stg.fld.stop_flag.T =
         Stg.fld.stop_flag.I =
         Stg.fld.stop_flag.U =
@@ -282,10 +256,10 @@ void create_mtd (uint8_t num) {
         Stg.fld.end_dU =
         Stg.fld.end_Temp =
         Stg.fld.end_C =
-        Stg.fld.end_M =
-        Stg.fld.end_S = 0;
+        Stg.fld.end.m =
+        Stg.fld.end.s = 0;
         Mtd.fld.Im =
-        Stg.fld.end_H = 100;
+        Stg.fld.end.h = INF_TIME;
     } else return;
     if (num == 0) {
         Mtd.fld.name[0] = Z_rus;
@@ -341,4 +315,15 @@ void delete_all_mtd (void) {
         StgNum[i] = 0;
     }
     mCnt = sCnt = cCnt = 0;
+}
+
+static bool end_time (hms_t *tm) {
+    if (Hour_Stg > tm->h) return true;
+    if (Hour_Stg == tm->h) {
+        if (Min_Stg > tm->m) return true;
+        if (Min_Stg == tm->m) {
+            if (Sec_Stg >= tm->s) return true;
+        }
+    }
+    return false;
 }

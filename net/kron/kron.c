@@ -181,7 +181,7 @@ static void frame_parse (void) {
 					if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
 						if (rd.rx_ver.cmd.bit.EEPROM!=0)
 							save_num(&rd.rx_ver.number[0]);
-						if (Cfg.bf1.LCD_ON) LCD_wr_connect(1);
+						if (Cfg.bf1.LCD_ON) LCD_wr_connect(true);
 					}						
                     break;
                 case ALG_PKT:
@@ -311,5 +311,5 @@ static void tx_reply (void) {
     len = buf[0]; /* сохранить первый байт кадра */
     TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
     start_tx(len, buf); /* стартовать передачу кадра */
-    RsActive = true;
+    set_active();
 }

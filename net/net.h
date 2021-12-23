@@ -61,7 +61,6 @@ typedef enum {
 /* размер кольцевого буфера приема */
 #define RX_BUFF_LEN        32
 
-extern bool RsActive;
 extern unsigned char *BuffPtr; /* указатель на буфер приема/передачи */
 extern unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 extern unsigned char BuffLen; /* размер буфера при передаче кадра */
@@ -71,9 +70,11 @@ extern signed char RxIpNew; /* указатель хвоста буфера приема */
 extern signed char RxIpOld; /* указатель головы буфера приема */
 
 
-void init_rs(void);
-void net_drv(void);
-void start_tx(char first, unsigned char *buff);
+void init_rs (void);
+void net_drv (void);
+void start_tx (char first, unsigned char *buff);
+bool rs_active (void);
+void set_active (void);
 
 #include <net/modbus/mbus.h>
 #include <net/kron/kron.h>

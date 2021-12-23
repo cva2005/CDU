@@ -7,14 +7,12 @@
 #include "csu/csu.h"
 #include "csu/mtd.h"
 #include "tsens/ds1820.h"
-#include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "key/key.h"
 #include "spi/adc/ads1118.h"
 
 int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо
-unsigned int pulse_step; //время импульса заряд/разряд при импульсном режиме
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
@@ -36,7 +34,7 @@ void main (void) {
     Read_temp(); //Запустить на измерение датчик температуры 
     read_cfg();
     if (Cfg.bf1.LCD_ON) {
-        LCD_wr_connect(0);
+        LCD_wr_connect(false);
         LCD_wr_set();
     }
     init_rs();
@@ -67,8 +65,8 @@ void main (void) {
         }
         fan_ctrl();
         if (Cfg.bf1.LCD_ON) {
-            if (!RsActive) { //если подключение прервалось, а значения дисплея не обновлены
-                if (LCD[0][0]!='P') {
+            if (!rs_active()) { //если подключение прервалось, а значения дисплея не обновлены
+                if (conn_msg()) {
                     if (Cfg.bf1.DIAG_WIDE) {
                         Stop_CSU(STOP);
                         read_mtd();
@@ -76,12 +74,10 @@ void main (void) {
                     LCD_wr_set();
 				}				
 			} else	{ //если подключение появилось, а значения дисплея не обновлены
-                if (!Cfg.bf1.DEBUG_ON) {
-                    if (LCD[1][0] != P_rus) LCD_wr_connect(1);
-                }
+                if (!Cfg.bf1.DEBUG_ON && !conn_msg()) LCD_wr_connect(true);
             }			
         }
-        if (!RsActive || Cfg.bf1.DEBUG_ON) {
+        if (!rs_active() || Cfg.bf1.DEBUG_ON) {
             if (Cfg.bf1.LED_ON)	update_LED();
             if (Cfg.bf1.LCD_ON) {
                 if (!LCD_refresh) {

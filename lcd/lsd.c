@@ -1,21 +1,50 @@
 #pragma message	("@(#)ldc.c")
 #include <system.h>
-#include "wh2004.h"
-#include "lcd.h"
+#include "spi/adc/ads1118.h"
 #include "tsens/ds1820.h"
+#include "pwm/pwm.h"
 #include "csu/csu.h"
 #include "csu/mtd.h"
+#include "lcd.h"
 
-char LCD[4][20];
+static bool ConMsg;
+char LCD[LN][SL];
+const uint8_t LADDR[LN] = {LA_0, LA_1, LA_2, LA_3};
 ADC_Type ADC_last[4];
 Temp_type Temp1_last, Temp2_last;
 unsigned char Sec_last=0xFF, cycle_cnt_last, Stg_cnt_last;
 unsigned char  Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point=0;
-unsigned char LCD_refresh=0;
 unsigned char LCD_mode=0;
 cap_t Cap; // Capacity of Battery
+const char RuCh[64] = {
+    0x41,0xA0,0x42,0xA1,0xE0,0x45,0xA3,0xA4,0xA5,0xA6,0x4B,0xA7,0x4D,0x48,0x4F,0xA8,
+    0x50,0x43,0x54,0xA9,0xAA,0x58,0xE1,0xAB,0xAC,0xE2,0xAD,0xAE,0x62,0xAF,0xB0,0xB1,
+    0x61,0xB2,0xB3,0xB4,0xE3,0x65,0xB6,0xB7,0xB8,0xB9,0xBA,0xBB,0xBC,0xBD,0x6F,0xBE,
+    0x70,0x63,0xBF,0x79,0xE4,0x78,0xE5,0xC0,0xC1,0xE6,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7
+};
 
-char hex_to_ASCII(unsigned char n) {
+#define TBL_NUM 0xC0
+void decd_cpy (char *dst, const char *src, uint8_t n) {
+    char ch;
+    while (n--) {
+        ch = *src++;
+        if (ch >= TBL_NUM) *dst = RuCh[ch - TBL_NUM];
+        *dst++ = ch;
+    }
+}
+
+void uint_to_str (uint16_t n, char *p, uint8_t dig) {
+    while (dig--) {
+        p[dig] = n % 10;
+        n /= 10;
+    }
+}
+
+bool conn_msg (void) {
+    return ConMsg;
+}
+
+/*char hex_to_ASCII(unsigned char n) {
     if (n > 9) return ('x');
     else return (n + 0x30);
 }
@@ -27,44 +56,32 @@ point[1]=hex_to_ASCII((val%10000)/1000);
 point[2]=hex_to_ASCII((val%1000)/100);
 point[3]=hex_to_ASCII((val%100)/10);
 point[4]=hex_to_ASCII(val%10);
-}
-
-void calculate_C(int Z, unsigned int val,unsigned int k, char *point)
-{uint32_t cur_val=0UL;
- int display_val=0;
-
-if (Z!=0)
-	{
-	cur_val=((uint32_t)val*(uint32_t)k)/10000*2778UL;//+(uint32_t)b;
-	cur_val=cur_val/100000UL;
-	Cap.dC+=((int)cur_val)*Z;
-	if (Cap.dC > 10000)
-		{
-		Cap.C++;
-		Cap.dC -= 10000;
-		}		
-	if (Cap.dC < -10000)
-		{
-		Cap.C--;
-		Cap.dC += 10000;
-		}		
-	}
-	
-if (Cap.C < 0)
-	{
-	point[0]='-';
-	display_val = (-1) * Cap.C;	
-	}
-else
-	{
-	point[0]='+';
-	display_val = Cap.C;
-	}
-    point[1]=hex_to_ASCII((display_val%10000)/1000);
-    point[2]=hex_to_ASCII((display_val%1000)/100);
-    point[3]=hex_to_ASCII((display_val%100)/10);
-    point[4]=',';
-    point[5]=hex_to_ASCII(display_val%10);
+}*/
+// ToDo: check time interval!
+static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
+    uint32_t cur = 0UL;
+    if (sign != 0) {
+        cur = ((uint32_t)val * (uint32_t)k) / 10000 * 2778UL; //+(uint32_t)b;
+        cur = cur / 100000UL;
+        Cap.dC += (int)cur * sign;
+        if (Cap.dC > 10000) {
+            Cap.C++;
+            Cap.dC -= 10000;
+        } else if (Cap.dC < -10000) {
+            Cap.C--;
+            Cap.dC += 10000;
+        }		
+    }
+    if (Cap.C < 0) {
+        p[0] = '-';
+        val = (-1) * Cap.C;	
+    } else {
+        p[0] = '+';
+        val = Cap.C;
+    }
+    uint_to_str(val, &p[1], 4);
+    p[5] = p[4];
+    p[4] = ',';
 }
 
 void calculate_param(unsigned int val, unsigned int k, char *point)
@@ -110,50 +127,30 @@ if (((unsigned char)temp[0]!=0xFF)||((unsigned char)temp[1]!=0xFF))
 	}
 else
 	{
-	point[0]='E';
+    memcpy(point, "Error", 5);
+	/*point[0]='E';
 	point[1]='r';
 	point[2]='r';
 	point[3]='o';
-	point[4]='r';
+	point[4]='r';*/
 	}
 }
 
-void calculate_time(unsigned char P1, unsigned char P2, unsigned char P3, char *point)
+void calc_time (uint8_t h, uint8_t m, uint8_t s, char *p)
 {
-if ((P1<100)&&(P2<60)&&(P3<60))
-	{
-	point[0]=hex_to_ASCII(P1/10);
-	point[1]=hex_to_ASCII(P1%10);
-
-	point[3]=hex_to_ASCII(P2/10);
-	point[4]=hex_to_ASCII(P2%10);	
-	
-	point[6]=hex_to_ASCII(P3/10);
-	point[7]=hex_to_ASCII(P3%10);
-	}
-else
-	{
-	point[0]='-';
-	point[1]='-';
-
-	point[3]='-';
-	point[4]='-';
-		
-	point[6]='-';
-	point[7]='-';
-	}
-
-point[2]=':';
-point[5]=':';
+    if (h < 100 && m < 60 && s < 60) {
+        uint_to_str (h, &p[0], 2);
+        uint_to_str (m, &p[3], 2);
+        uint_to_str (s, &p[6], 2);
+        p[2] = p[5] = ':';
+    } else {
+        memcpy(p, "--:--:--", 8);
+    }
 }
 
 #if !JTAG_DBGU
-void LCD_clear(void)
-{
-unsigned char i, j;	
-for (i=0; i<4; i++)
-	for (j=0; j<20; j++)
-		LCD[i][j]=' ';	
+void LCD_clear (void) {
+    memset(LCD, ' ', sizeof(LCD));
 }
 #endif
 void LCD_change_mode(unsigned char *mode)
@@ -183,16 +180,15 @@ else
 	LCD[3][11]=' ';
 	LCD[3][12]='C';
 	LCD[3][13]='=';
-	calculate_time(Hour, Min, Sec, &LCD[3][T_pos]);
-	calculate_C(0, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
+	calculate_time(Hour, Min, Sec, &LCD[3][T_P]);
+	calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
 	*mode=0;
 	}
-LCD_refresh=0;
-WH2004_string_wr(&LCD[3][0], line3, 20);
+    WH2004_string_wr(&LCD[3][0], LA_3, 20);
 };
 
-void LCD_wr_set(void)
-{
+void LCD_wr_set(void) {
+    ConMsg = false;
 LCD_clear();
 LCD[0][0]='P';
 LCD[0][1]=':';
@@ -292,533 +288,228 @@ update_LCD_set();
 }
 
 #if !JTAG_DBGU
-void LCD_wr_connect(unsigned char text)
-{
-LCD_clear();
-//LCD[0][0]='I';
-//LCD[0][1]='=';
-//LCD[0][2]='-';
-//LCD[0][3]='-';
-//LCD[0][4]=' ';
-LCD[0][5]='K';
-LCD[0][6]='R';
-LCD[0][7]='O';
-LCD[0][8]='N';
-//LCD[0][9]='"';
-LCD[0][10]='G';
-LCD[0][11]='R';
-LCD[0][12]='O';
-LCD[0][13]='U';
-LCD[0][14]='P';
-//LCD[0][15]='|';
-//LCD[0][16]='V';
-//LCD[0][17]='V';
-//LCD[0][18]='V';
-//LCD[0][19]='V';
-
-if (text)
-	{
-	LCD[1][0]=P_rus;
-	LCD[1][1]='K';
-	//LCD[1][2]='-';
-	LCD[1][3]=p_rus;
-	LCD[1][4]='o';
-	LCD[1][5]=d_rus;
-	LCD[1][6]=k_rus;
-	LCD[1][7]=l_rus;
-	LCD[1][8]=u_rus;
-	LCD[1][9]=ch_rus;
-	LCD[1][10]='e';
-	LCD[1][11]=n_rus;
-	LCD[1][12]='.';
-	LCD[1][13]='.';
-	LCD[1][14]='.';
-	}
-else
-	{
-	LCD[1][0]=I_rus;
-	LCD[1][1]=n_rus;
-	LCD[1][2]=i_rus;
-	LCD[1][3]=c_rus;
-	LCD[1][4]=i_rus;
-	LCD[1][5]='a';
-	LCD[1][6]=l_rus;
-	LCD[1][7]=i_rus;
-	LCD[1][8]=z_rus;
-	LCD[1][9]='a';
-	LCD[1][10]=c_rus;
-	LCD[1][11]=i_rus;
-	LCD[1][12]=ya_rus;
-	LCD[1][13]='.';
-	LCD[1][14]='.';
-	LCD[1][15]='.';
-	}
-
-//LCD[2][0]='i';
-//LCD[2][1]='=';
-//LCD[2][2]='-';
-//LCD[2][3]='-';
-//LCD[2][4]=',';
-//LCD[2][5]='-';
-//LCD[2][6]='-';
-//LCD[2][7]=Z_rus;
-//LCD[2][8]='a';
-//LCD[2][9]=v_rus;
-//LCD[2][10]='N';
-//LCD[2][11]='a';
-//LCD[2][12]='1';
-//LCD[2][13]='b';
-//LCD[2][14]='0';
-//LCD[2][15]='0';
-//LCD[2][16]='0';
-//LCD[2][17]='0';
-//LCD[2][18]='0';
-//LCD[2][19]='1';
-
-
-
-LCD[3][0]=Z_rus;
-LCD[3][1]='a';
-LCD[3][2]=v_rus;
-LCD[3][3]='N';
-read_num(&LCD[3][4]);
-
-LCD[3][14]='v';
-LCD[3][15]='.';
-LCD[3][16]=hex_to_ASCII(Soft_ver);
-LCD[3][17]='.';
-LCD[3][18]=hex_to_ASCII(Soft_mod/10);
-LCD[3][19]=hex_to_ASCII(Soft_mod%10);
-//update_LCD_set();
-WH2004_string_wr(&LCD[0][0], line0, 20);
-WH2004_string_wr(&LCD[1][0], line1, 20);
-WH2004_string_wr(&LCD[2][0], line2, 20);
-WH2004_string_wr(&LCD[3][0], line3, 20);
-WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)//*/
+void LCD_wr_connect (bool pc) {
+    LCD_clear();
+    memcpy(&LCD[0][5], "KRON GROUP", 10);
+    ConMsg = pc;
+    if (pc) decd_cpy(LCD[1], "ПК подключен...", 15);
+    else decd_cpy(LCD[1], "Инициализация...", 16);
+    decd_cpy(LCD[3], "ЗавN", 4);
+    read_num(&LCD[3][4]);
+    memcpy(&LCD[3][14], SOFTW_VER, 2);
+    for (uint8_t i = 0; i < LN; i++)
+        WH2004_string_wr(LCD[i], LADDR[i], SL);
+    WH2004_inst_wr(0x0C); // cursor off
 }
-//========================================================================================================
-void update_LCD_set(void)
-{unsigned char cnt;
-if (Cfg.bf1.LCD_ON==0) return;	
-	
-if (LCD_mode!=0) LCD_change_mode(&LCD_mode);
-//-------------------отображение названия метода-----------------------
-for (cnt=0; cnt<13; cnt++) LCD[0][2+cnt]=Mtd.fld.name[cnt];
-//-------------------отображение номера цикла--------------
-LCD[0][19]=hex_to_ASCII(Mtd.fld.Cnt);
-LCD[1][19]=hex_to_ASCII(Mtd.fld.NStg);
-//-------------------отображение времени-------------------
-calculate_time(Mtd.fld.Hm, Mtd.fld.Mm, Mtd.fld.Sm, &LCD[3][T_pos]);
-//------------------отображение ёмкости--------------------
-C.C=0; C.dC=0;
-calculate_C(0, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
-//-------------------отображение тока и напряжения----------------
-if (ZR_mode==2) calculate_param(set_Id, K_Id, &LCD[1][Is_pos]);
-else  			calculate_param(set_I , K_I , &LCD[1][Is_pos]);
-calculate_param(set_U, K_U, &LCD[2][Us_pos]);
 
-WH2004_string_wr(&LCD[0][0], line0, 20);
-WH2004_string_wr(&LCD[1][0], line1, 20);
-WH2004_string_wr(&LCD[2][0], line2, 20);
-WH2004_string_wr(&LCD[3][0], line3, 20);
-WH2004_inst_wr(Cursor_pos[Cursor_point]);
-WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
-
-ADC_last[ADC_MU].word=ERR_WCODE;
-ADC_last[ADC_MI].word=ERR_WCODE;
-ADC_last[ADC_DI].word=ERR_WCODE;
-Sec_last=UINT8_MAX;
-cycle_cnt_last=UINT8_MAX;
-Stg_cnt_last=UINT8_MAX;
-Temp1_last.word=ERR_WCODE;
-Temp2_last.word=ERR_WCODE;
+#define mt Mtd.fld.end // metod time fields
+void update_LCD_set (void) {
+    uint8_t i;
+    if (Cfg.bf1.LCD_ON==0) return;	
+    if (LCD_mode!=0) LCD_change_mode(&LCD_mode);
+    /* отображение названия метода */
+    for (i = 0; i < 13; i++) LCD[0][2 + i] = Mtd.fld.name[i];
+    /* отображение номера цикла */
+    LCD[0][19]=hex_to_ASCII(Mtd.fld.Cnt);
+    LCD[1][19]=hex_to_ASCII(Mtd.fld.NStg);
+    /* отображение времени */
+    calculate_time(mt.h, mt.m, mt.s, &LCD[3][T_P]);
+    /* отображение ёмкости */
+    Cap.C = Cap.dC = 0;
+    calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
+    /* отображение тока и напряжения */
+    if (SetMode==2) calculate_param(set_Id, Cfg.K_Id, &LCD[1][Is_P]);
+    else calculate_param(set_I , Cfg.K_I , &LCD[1][Is_P]);
+    calculate_param(set_U, Cfg.K_U, &LCD[2][Us_P]);
+    for (i = 0; i < LN; i++) WH2004_string_wr(LCD[i], LADDR[i], SL);
+    WH2004_inst_wr(Cursor_pos[Cursor_point]);
+    WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
+    ADC_last[ADC_MU].word=ERR_WCODE;
+    ADC_last[ADC_MI].word=ERR_WCODE;
+    ADC_last[ADC_DI].word=ERR_WCODE;
+    Sec_last=UINT8_MAX;
+    cycle_cnt_last=UINT8_MAX;
+    Stg_cnt_last=UINT8_MAX;
+    Temp1_last.word=ERR_WCODE;
+    Temp2_last.word=ERR_WCODE;
 }
 #endif
-//========================================================================================================
-void update_LCD_work(void)
-{unsigned char i;
-if (Cfg.bf1.LCD_ON==0) return;
 
-WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
-//----------------------------------------------ОТОБРАЖЕНИЕ задаваемых параметров------------------
-/*calculate_param(set_U, K_U, &LCD[2][Us_pos]);
-WH2004_string_wr(&LCD[2][Us_pos],line2+Us_pos, 5); //отобразить
-calculate_param(set_I, K_I, &LCD[1][Is_pos]);
-WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 5); //отобразить*/
-
-
-//----------------------------------------------ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА------------------
-if (PwmStatus==DISCHARGE) //если мы в режиме разряда, значит ток надо расчитывать по другому
-	{
-	if (ADC_ADS1118[ADC_DI].word!=ADC_last[ADC_MI].word)
-		{
-		LCD[1][I_pos]='-';
-		ADC_last[ADC_MI].word=ADC_ADS1118[ADC_DI].word;
-		calculate_param(ADC_ADS1118[ADC_DI].word, K_Id, &LCD[1][I_pos+1]);
-		WH2004_string_wr(&LCD[1][I_pos],line1+I_pos, 5); //отобразить
-
-		calculate_param(set_Id , K_Id , &LCD[1][Is_pos]);
-		WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 4); //отобразить
-		}		
-	}
-else
-	{
-	if (ADC_ADS1118[ADC_MI].word!=ADC_last[ADC_MI].word) //если значение тока изменилось
-		{
-		LCD[1][I_pos]='+';
-		ADC_last[ADC_MI].word=ADC_ADS1118[ADC_MI].word;
-		calculate_param(ADC_ADS1118[ADC_MI].word, K_I, &LCD[1][I_pos+1]);
-		WH2004_string_wr(&LCD[1][I_pos],line1+I_pos, 5); //отобразить
-		
-		if (PwmStatus!=STOP) //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
-			{
-			calculate_param(set_I , K_I , &LCD[1][Is_pos]);
-			WH2004_string_wr(&LCD[1][Is_pos],line1+Is_pos, 4); //отобразить	
-			}
-		}
-	}
-//----------------------------------------------ОТОБРАЖЕНИЕ ВХОДНОГО ТОКА------------------
-/*if (ADC_ADS1118[ADC_PI].word!=ADC_last[ADC_PI].word) //если значение тока первичной цепи изменилось
-		{
-		ADC_last[ADC_PI].word=ADC_ADS1118[ADC_PI].word;
-		calculate_param(ADC_last[ADC_PI].word, K_Ip, &LCD[2][I_pos]);
-		WH2004_string_wr(&LCD[2][I_pos],line2+I_pos, 5); //отобразить
-		}*/
-//----------------------------------------------ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА-----------------		
-if (CsuState!=STOP)
-	{
-	if (Stg_cnt_last!=Stg_cnt) //на последнем методе проверяется 
-		{
-		LCD[1][19]=hex_to_ASCII(Stg_cnt+1); //отображать значения на 1 больше, т.к. нумерация этапов начинается с 0
-		WH2004_string_wr(&LCD[1][19],line1+19, 1); //отобразить
-		Stg_cnt_last=Stg_cnt;
-		}
-	}
-//----------------------------------------------ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ-----------------
-if (PwmStatus!=STOP)
-	{
-	if (Sec_last!=Sec) 
-		{		
-		if (PwmStatus==DISCHARGE)
-			calculate_C(-1, ADC_ADS1118[ADC_DI].word, K_Id, &LCD[3][C_pos]);
-		else
-			calculate_C(1, ADC_ADS1118[ADC_MI].word, K_I, &LCD[3][C_pos]);
-	
-		if (LCD_mode==0)
-			{
-			WH2004_string_wr(&LCD[3][C_pos],line3+C_pos, 6);	 
-			
-			calculate_time(Hour, Min, Sec, &LCD[3][T_pos]);
-			WH2004_string_wr(&LCD[3][T_pos],line3+T_pos, 8);
-			}
-		Sec_last=Sec;
-		}
-	}	
-//------------------------------------ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ----------------------------------
-	if (LCD_mode!=0)
-		{
-		if (Temp1_last.word!=Temp1.word) //если значение изменилось, то отобразить его на дисплее
-			{
-			calculate_temp(&Temp1.fld.V, &LCD[3][T1_pos]); //преобразовать значение в цифры дисплея
-			WH2004_string_wr(&LCD[3][T1_pos],line3+T1_pos, 5); //отобразить
-			Temp1_last.word=Temp1.word;
-			}
-		if (Temp2_last.word!=Temp2.word) //если значение изменилось, то отобразить его на дисплее
-			{
-			calculate_temp(&Temp2.fld.V, &LCD[3][T2_pos]); //преобразовать значение в цифры дисплея
-			WH2004_string_wr(&LCD[3][T2_pos],line3+T2_pos, 5); //отобразить
-			Temp2_last.word=Temp2.word;
-			}
-		}
-//-----------------------------------ОТОБРАЖЕНИЕ НАПРЯЖЕНИЯ-----------------------------------
-if (ADC_ADS1118[ADC_MU].word!=ADC_last[ADC_MU].word) //если значение напряжения изменилось
-	{	
-	calculate_param(ADC_ADS1118[ADC_MU].word, K_U, &LCD[2][U_pos]);
-	WH2004_string_wr(&LCD[2][U_pos],line2+U_pos, 5); //отобразить
-	ADC_last[ADC_MU].word=ADC_ADS1118[ADC_MU].word;
-	
-	calculate_param(set_U , K_U , &LCD[2][Us_pos]);
-	WH2004_string_wr(&LCD[2][Us_pos],line2+Us_pos, 4); //отобразить
-	}
-//------------------------------------ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК---------------------------------
+void update_LCD_work (void) {
+    if (Cfg.bf1.LCD_ON == 0) return;
+    WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
+    /* ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА */
+    if (PwmStatus == DISCHARGE) { //если мы в режиме разряда, значит ток надо расчитывать по другому
+        if (get_adc_res(ADC_DI) != ADC_last[ADC_MI].word) {
+            LCD[1][I_P]='-';
+            ADC_last[ADC_MI].word=get_adc_res(ADC_DI);
+            calculate_param(get_adc_res(ADC_DI), Cfg.K_Id, &LCD[1][I_P+1]);
+            WH2004_string_wr(&LCD[1][I_P],LA_1+I_P, 5); //отобразить
+            calculate_param(set_Id , Cfg.K_Id , &LCD[1][Is_P]);
+            WH2004_string_wr(&LCD[1][Is_P],LA_1+Is_P, 4); //отобразить
+        }		
+    } else {
+        if (get_adc_res(ADC_MI) !=ADC_last[ADC_MI].word) { //если значение тока изменилось
+            LCD[1][I_P]='+';
+            ADC_last[ADC_MI].word=get_adc_res(ADC_MI);
+            calculate_param(get_adc_res(ADC_MI), Cfg.K_I, &LCD[1][I_P+1]);
+            WH2004_string_wr(&LCD[1][I_P],LA_1+I_P, 5); //отобразить
+            if (PwmStatus!=STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
+                calculate_param(set_I , Cfg.K_I , &LCD[1][Is_P]);
+                WH2004_string_wr(&LCD[1][Is_P],LA_1+Is_P, 4); //отобразить	
+            }
+        }
+    }
+    /* ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА */
+    if (CsuState != STOP) {
+        if (Stg_cnt_last != sCnt) { //на последнем методе проверяется 
+            LCD[1][19]=hex_to_ASCII(sCnt+1); //отображать значения на 1 больше, т.к. нумерация этапов начинается с 0
+            WH2004_string_wr(&LCD[1][19],LA_1+19, 1); //отобразить
+            Stg_cnt_last=sCnt;
+        }
+    }
+    /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ */
+    if (PwmStatus != STOP) {
+        if (Sec_last!=Sec) {		
+            if (PwmStatus == DISCHARGE)
+                calc_cap(-1, get_adc_res(ADC_DI), Cfg.K_Id, &LCD[3][C_P]);
+            else calc_cap(1, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
+            if (LCD_mode == 0) {
+                WH2004_string_wr(&LCD[3][C_P],LA_3+C_P, 6);	 
+                calculate_time(Hour, Min, Sec, &LCD[3][T_P]);
+                WH2004_string_wr(&LCD[3][T_P],LA_3+T_P, 8);
+            }
+            Sec_last = Sec;
+        }
+    }	
+    /* ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ */
+    if (LCD_mode != 0) {
+        if (Temp1_last.word != Temp1.word) { //если значение изменилось, то отобразить его на дисплее
+            calculate_temp(&Temp1.fld.V, &LCD[3][T1_P]); //преобразовать значение в цифры дисплея
+            WH2004_string_wr(&LCD[3][T1_P],LA_3+T1_P, 5); //отобразить
+            Temp1_last.word=Temp1.word;
+        }
+        if (Temp2_last.word != Temp2.word) { //если значение изменилось, то отобразить его на дисплее
+            calculate_temp(&Temp2.fld.V, &LCD[3][T2_P]); //преобразовать значение в цифры дисплея
+            WH2004_string_wr(&LCD[3][T2_P],LA_3+T2_P, 5); //отобразить
+            Temp2_last.word=Temp2.word;
+        }
+    }
+    /* ОТОБРАЖЕНИЕ НАПРЯЖЕНИЯ */
+    if (get_adc_res(ADC_MU) != ADC_last[ADC_MU].word) { //если значение напряжения изменилось
+        calculate_param(get_adc_res(ADC_MU), Cfg.K_U, &LCD[2][U_P]);
+        WH2004_string_wr(&LCD[2][U_P],LA_2+U_P, 5); //отобразить
+        ADC_last[ADC_MU].word=get_adc_res(ADC_MU);
+        calculate_param(set_U , Cfg.K_U , &LCD[2][Us_P]);
+        WH2004_string_wr(&LCD[2][Us_P],LA_2+Us_P, 4); //отобразить
+    }
+    /* ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК */
 #ifndef DEBUG_ALG
-if (connect_st!=0)
-	{
-	if (LCD[2][16]!=P_rus)
-		{
-		LCD[2][16]=P_rus;
-		LCD[2][17]='K';
-		WH2004_string_wr(&LCD[2][16],line2+16, 2); //отобразить
-		}
-	}
-else
-	{
-	if (LCD[2][16]!=' ')
-		{
-		LCD[2][16]=' ';
-		LCD[2][17]=' ';
-		WH2004_string_wr(&LCD[2][16],line2+16, 2); //отобразить
-		}
-	}
+    if (rs_active()) {
+        if (LCD[2][16] != P_rus) {
+            decd_cpy(&LCD[3][16], "ПК", 2);
+            goto refr_pc_msg;
+        }
+    } else {
+        if (LCD[2][16]!=' ') {
+            memset(&LCD[2][16], ' ', 2);
+        refr_pc_msg:
+            WH2004_string_wr(&LCD[2][16], LA_2 + 16, 2);
+        }
+    }
 #endif
-//------------------------------------ОТОБРАЖЕНИЕ НОМЕРА ЦИКЛА---------------------------------
-if (cycle_cnt_last!=cycle_cnt)
-	{
-	LCD[0][17]=hex_to_ASCII(cycle_cnt);
-	WH2004_string_wr(&LCD[0][S_pos],line0+S_pos, 1); //отобразить
-	cycle_cnt_last=cycle_cnt;
-	}
-//------------------------------------ОТОБРАЖЕНИЕ ОШИБОК---------------------------------------	
-if (Error)
-	{
-	LCD[0][2]='E';
-	LCD[0][3]='r';
-	LCD[0][4]='r';
-	LCD[0][5]='o';
-	LCD[0][6]='r';
-	LCD[0][7]=hex_to_ASCII(Error/10);
-	LCD[0][8]=hex_to_ASCII(Error%10);
-	for (i=9; i<15; i++) LCD[0][i]=' ';
-	WH2004_string_wr(&LCD[0][2], line0+2, 13);
-	for (i=0; i<20; i++) LCD[3][i]=' ';
-	if ((Error==ERR_OVERLOAD)||(Error==ERR_DISCH_PWR))
-		{
-		LCD[3][0]=P_rus;
-		LCD[3][1]='e';
-		LCD[3][2]='p';
-		LCD[3][3]='e';
-		LCD[3][4]=g_rus;
-		LCD[3][5]='p';
-		LCD[3][6]='y';
-		LCD[3][7]=z_rus;
-		LCD[3][8]=k_rus;
-		LCD[3][9]='a';
-		if (Error==ERR_OVERLOAD)
-			{
-			LCD[3][11]=z_rus;
-			LCD[3][12]='a';
-			LCD[3][13]='p';
-			LCD[3][14]=ya_rus;
-			LCD[3][15]=d_rus;
-			LCD[3][16]='a';
-			//LCD[3][17]=':';
-			//LCD[3][18]='I';
-			//LCD[3][19]='U';
-			}
-		if (Error==ERR_DISCH_PWR)
-			{
-			LCD[3][11]='p';
-			LCD[3][12]='a';
-			LCD[3][13]=z_rus;
-			LCD[3][14]='p';
-			LCD[3][15]=ya_rus;
-			LCD[3][16]=d_rus;
-			LCD[3][17]='a';
-			//LCD[3][18]=':';
-			//LCD[3][19]='P';
-			}	
-		}	
-	if ((Error==ERR_CONNECTION)||(Error==ERR_CONNECTION1))
-		{
-		LCD[3][0]=P_rus;
-		LCD[3][1]='e';
-		LCD[3][2]='p';
-		LCD[3][3]='e';
-		LCD[3][4]=p_rus;
-		LCD[3][5]='o';
-		LCD[3][6]=l_rus;
-		LCD[3][7]=u_rus;
-		LCD[3][8]='c';
-		LCD[3][9]='o';
-		LCD[3][10]=v_rus;
-		LCD[3][11]=k_rus;
-		LCD[3][12]='a';
-		}
-	if (Error==ERR_NO_AKB)
-		{
-		LCD[3][0]='H';
-		LCD[3][1]='e';
-		LCD[3][2]=t_rus;
-		LCD[3][3]=' ';
-		LCD[3][4]='A';
-		LCD[3][5]='K';
-		LCD[3][6]=B_rus;
-		LCD[3][7]='!';
-		LCD[3][8]='!';
-		LCD[3][9]='!';
-		}
-	if ((Error==ERR_OVERTEMP1)||(Error==ERR_OVERTEMP2)||(Error==ERR_OVERTEMP3))
-		{
-		LCD[3][0]=P_rus;
-		LCD[3][1]='e';
-		LCD[3][2]='p';
-		LCD[3][3]='e';
-		LCD[3][4]=g_rus;
-		LCD[3][5]='p';
-		LCD[3][6]='e';
-		LCD[3][7]=v_rus;
-		LCD[3][9]=d_rus;
-		LCD[3][10]='a';
-		LCD[3][11]=t_rus;
-		LCD[3][12]=ch_rus;
-		LCD[3][13]=i_rus;
-		LCD[3][14]=k_rus;
-		if (Error==ERR_OVERTEMP1)
-			{
-			LCD[3][16]='1';
-			}
-		if (Error==ERR_OVERTEMP2)
-			{
-			LCD[3][16]='2';
-			}
-		if (Error==ERR_OVERTEMP3)
-			{
-			LCD[3][16]=v_rus;
-			LCD[3][17]=n_rus;
-			LCD[3][18]='e';
-			LCD[3][19]=sh_rus;
-			}
-		}
-	if (Error==ERR_SET)
-		{
-		LCD[3][0]=Z_rus;
-		LCD[3][1]='a';
-		LCD[3][2]=d_rus;
-		LCD[3][3]='a';
-		LCD[3][4]=n_rus;
-		LCD[3][5]='o';
-		LCD[3][7]=n_rus;
-		LCD[3][8]='e';
-		LCD[3][9]=v_rus;
-		LCD[3][10]='e';
-		LCD[3][11]='p';
-		LCD[3][12]=n_rus;
-		LCD[3][13]='o';
-		LCD[3][14]='e';
-		LCD[3][16]='U';
-		}
-	if (Error==ERR_Stg)
-		{
-		LCD[3][0]=E_rus;
-		LCD[3][1]=t_rus;
-		LCD[3][2]='a';
-		LCD[3][3]=p_rus;
-		
-		LCD[3][5]=p_rus;
-		LCD[3][6]='o';
-		LCD[3][7]=v_rus;
-		LCD[3][8]='p';
-		LCD[3][9]='e';
-		LCD[3][10]=j_rus;
-		LCD[3][11]=d_rus;
-		LCD[3][12]=io_rus;
-		LCD[3][13]=n_rus;
-		}
-	if (Error==ERR_OUT)
-		{
-		LCD[3][0]='K';
-		LCD[3][1]=Z_rus;
-		
-		LCD[3][3]=v_rus;
-		LCD[3][4]=ii_rus;
-		LCD[3][5]=p_rus;
-		LCD[3][6]='p';
-		LCD[3][7]=ya_rus;
-		LCD[3][8]=m_rus;
-		LCD[3][9]=i_rus;
-		LCD[3][10]=t_rus;
-		LCD[3][11]='e';
-		LCD[3][12]=l_rus;
-		LCD[3][13]=ya_rus;
-		}
-	if (Error==ERR_ADC)
-		{
-		LCD[3][0]='O';
-		LCD[3][1]=sh_rus;
-		LCD[3][2]=i_rus;
-		LCD[3][3]=b_rus;
-		LCD[3][4]=k_rus;
-		LCD[3][5]='a';
-		
-		LCD[3][7]='A';
-		LCD[3][8]=C_rus;
-		LCD[3][9]=P_rus;
-		}
-	if (Error==ERR_DM_LOSS)
-		{
-		LCD[3][0]='O';
-		LCD[3][1]=b_rus;
-		LCD[3][2]='p';
-		LCD[3][3]=ii_rus;
-		LCD[3][4]=v_rus;
-
-		LCD[3][6]='p';
-		LCD[3][7]='a';
-		LCD[3][8]=z_rus;
-		LCD[3][9]='p';
-		LCD[3][10]=ya_rus;
-		LCD[3][11]=d_rus;
-		LCD[3][12]='.';
-		
-		LCD[3][14]=m_rus;
-		LCD[3][15]='o';
-		LCD[3][16]=d_rus;
-		LCD[3][17]='y';
-		LCD[3][18]=l_rus;
-		LCD[3][19]=ya_rus;
-		}		
-	WH2004_string_wr(&LCD[3][0], line3, 20);
-	}
-else
-	{
-	if ((LCD[3][0]!='T')&&(LCD[3][0]!='t'))
-		{
-		LCD_wr_set();
-		//update_LCD_set();
-		}		
-//----------------------------------ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ----------------------------------
+    /* ОТОБРАЖЕНИЕ НОМЕРА ЦИКЛА */
+    if (cycle_cnt_last != cCnt) {
+        uint_to_str(cCnt, &LCD[0][S_P], 1);
+        WH2004_string_wr(&LCD[0][S_P], LA_0 + S_P, 1);
+        cycle_cnt_last=cCnt;
+    }
+    /* -ОТОБРАЖЕНИЕ ОШИБОК */
+    if (Error) {
+        memcpy(&LCD[0][2], "Error", 5);
+        uint_to_str(Error, &LCD[0][7], 2);
+        memset(&LCD[0][9], ' ', 6);
+        WH2004_string_wr(&LCD[0][2], LA_0+2, 13);
+        memset(LCD[3], ' ', 20);
+        switch (Error) {
+        case ERR_OVERLOAD:
+        case ERR_DISCH_PWR:
+            decd_cpy(LCD[3], "Перегрузка", 10);
+            if (Error==ERR_OVERLOAD)
+                decd_cpy(&LCD[3][11], "заряда", 6);
+            else if (Error==ERR_DISCH_PWR)
+                decd_cpy(&LCD[3][11], "разряда", 7);
+            break;
+        case ERR_CONNECTION:
+        case ERR_CONNECTION1:
+            decd_cpy(LCD[3], "Переполюсовка", 13);
+            break;
+        case ERR_NO_AKB:
+            decd_cpy(LCD[3], "Нет АКБ!!!", 10);
+            break;
+        case ERR_OVERTEMP1:
+            LCD[3][16] = '1';
+            goto over_msg;
+        case ERR_OVERTEMP2:
+            LCD[3][16] = '2';
+            goto over_msg;
+        case ERR_OVERTEMP3:
+            decd_cpy(&LCD[3][16], "внеш", 4);
+                LCD[3][16]=v_rus;
+                LCD[3][17]=n_rus;
+                LCD[3][18]='e';
+                LCD[3][19]=sh_rus;
+        over_msg:
+            decd_cpy(LCD[3], "Перегрев датчик", 15);
+            break;
+        case ERR_SET:
+            decd_cpy(LCD[3], "Задано неверное U", 17);
+            break;
+        case ERR_Stg:
+            decd_cpy(LCD[3], "Этап поврежден", 14);
+            break;
+        case ERR_OUT:
+            decd_cpy(LCD[3], "КЗ выпрямителя", 14);
+            break;
+        case ERR_ADC:
+            decd_cpy(LCD[3], "Ошибка АЦП", 10);
+            break;
+        case ERR_DM_LOSS:
+            decd_cpy(LCD[3], "Обрыв разряд. модуля", 20);
+        }
+        WH2004_string_wr(&LCD[3][0], LA_3, 20);
+    } else {
+        if ((LCD[3][0]!='T')&&(LCD[3][0]!='t'))  LCD_wr_set();
+        /* ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ */
 #ifndef DEBUG_ALG
-	if (PwmStatus==STOP)
-		{
-		if (LCD[2][19]!=' ')
-			{
-			LCD[2][19]=' ';
-			WH2004_string_wr(&LCD[2][19], line2+19, 1);
-			}
-		}
-	else
-		{
-		if (pLim)
-			{
-			if (LCD[2][19]!='P')
-				{
-				LCD[2][19]='P';
-				WH2004_string_wr(&LCD[2][19], line2+19, 1);
-				}
-			}
-		else
-			{
-			if (((I_St)&&(PwmStatus==CHARGE))||
-				((PwmStatus==DISCHARGE)&&(ADC_ADS1118[ADC_MU].word>(set_U+5))))
-				{
-				if (LCD[2][19]!='I') 
-					{
-					LCD[2][19]='I';	
-					WH2004_string_wr(&LCD[2][19], line2+19, 1);
-					}			
-				}
-			else
-				{
-				if (LCD[2][19]!='U')
-					{
-					LCD[2][19]='U';
-					WH2004_string_wr(&LCD[2][19], line2+19, 1);
-					}
-				}
-			}
-		}
+        if (PwmStatus==STOP) {
+            if (LCD[2][19]!=' ') {
+                LCD[2][19]=' ';
+                WH2004_string_wr(&LCD[2][19], LA_2+19, 1);
+            }
+        } else {
+            if (pLim) {
+                if (LCD[2][19]!='P') {
+                    LCD[2][19]='P';
+                    WH2004_string_wr(&LCD[2][19], LA_2+19, 1);
+                }
+        } else {
+            if (((I_St)&&(PwmStatus==CHARGE))
+                || ((PwmStatus==DISCHARGE) && (get_adc_res(ADC_MU) > (set_U+5)))) {
+                if (LCD[2][19]!='I')  {
+                    LCD[2][19]='I';	
+                    WH2004_string_wr(&LCD[2][19], LA_2+19, 1);
+                }			
+            } else {
+                if (LCD[2][19]!='U') {
+                    LCD[2][19]='U';
+                    WH2004_string_wr(&LCD[2][19], LA_2+19, 1);
+                }
+            }
+        }
+    }
 #endif
-	}
+}
 
 //===================================ОТЛАДОЧНАЯ ИНФОРМАЦИЯ==========================================
 #ifdef DEBUG_ALG
@@ -834,6 +525,6 @@ WH2004_string_wr(&LCD[3][15], line3+15, 5);
 #endif
 //==================================================================================================
 
-WH2004_inst_wr(Cursor_pos[Cursor_point]);  //вернуть курсор на место
-if (CsuState==0) WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
+    WH2004_inst_wr(Cursor_pos[Cursor_point]);  //вернуть курсор на место
+    if (CsuState==0) WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
 }

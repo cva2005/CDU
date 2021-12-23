@@ -108,7 +108,6 @@ extern "C" {
 #define	RX_TMR_ON()\
 {\
     if (RtuIdleCount >= FRAME_RTU_ERROR) RtuBusState = BUS_IDLE;\
-    RsActiveCount = 0;\
     RtuIdleCount = 0; /* очистить счетчик интервалов MODBUS RTU */\
     AsciiIdleCount = 0; /* очистить счетчик интервалов ASCII */\
     RX_TRM(TCNT,) = 0; /* очистить счетный регистр таймера */\

@@ -2,7 +2,6 @@
 #include <sys/config.h>
 #include "csu/csu.h"
 #include "csu/mtd.h"
-#include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "pwm/pwm.h"
 #include "key.h"
@@ -77,7 +76,7 @@ void key_up(void)
 				}
 			case pr_I:
 				{
-				if (ZR_mode==DISCHARGE)
+				if (SetMode==DISCHARGE)
 					{
 					//set_Id++;
 					set_Id+=Step;
@@ -130,7 +129,7 @@ void key_up(void)
 		}//if (CsuState==0)
 	else
 		{
-		if (ZR_mode==DISCHARGE)
+		if (SetMode==DISCHARGE)
 			{
 			set_Id++;
 			if (set_Id>max_set_Id) set_Id=Id_A(0,2);
@@ -168,7 +167,7 @@ void key_dw(void)
 				}
 			case pr_I:
 				{
-				if (ZR_mode==DISCHARGE)
+				if (SetMode==DISCHARGE)
 					{
 					//set_Id--;
 					set_Id-=Step;
@@ -218,7 +217,7 @@ void key_dw(void)
 		}//if (CsuState==0)
 	else
 		{
-		if (ZR_mode==DISCHARGE)
+		if (SetMode==DISCHARGE)
 			{
 			set_Id--;
 			if ((set_Id<Id_A(0,2))||(set_Id>max_set_Id)) set_Id=max_set_Id;

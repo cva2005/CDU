@@ -1,6 +1,5 @@
 #pragma message	("@(#)csu.c")
 #include <system.h>
-#include "lcd/wh2004.h"
 #include "lcd/lcd.h"
 #include "pwm/pwm.h"
 #include "spi/adc/ads1118.h"
@@ -21,7 +20,8 @@ unsigned char ERR_Ext = 0, OUT_err_cnt = 0;
 static bool InitF, SatU;
 bool pLim = false, LedPwr;
 unsigned int StbCnt;
-unsigned char ZR_mode = 1, Error = 0;
+unsigned char Error = 0;
+csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
 	0.0012, /* Kp; gain factor */
 	5000.0, /* Ti integration time */
@@ -196,7 +196,7 @@ void Start_CSU (csu_st mode) {
         Stop_PWM(SOFT);
         pLim = false;
     }
-    CsuState = (csu_st)(mode & 0x0F);
+    CsuState = mode;
     if (CsuState == PAUSE) {
         if (RELAY_EN) out_off();
         return;
@@ -371,9 +371,8 @@ inline void check_auto_start (void) {
                     if (AutoStr.u_pwm > get_adc_res(ADC_MU)) {
                     // напряжение на выходе меньше чем напряжение запуска
                         if (CsuState == STOP)
-                            AutoStr.rst_time = get_fin_time(Cfg.time_set);
+                            AutoStr.rst_time = get_fin_time(MS(Cfg.time_set));
                         if (Error) AutoStr.err_cnt--;
-                        else AutoStr.err_cnt = Cfg.cnt_set;
                         key_power();// нажата кнопка Старт/Стоп
                     }
                 }

@@ -7,6 +7,12 @@ extern "C" {
 #endif
 
 typedef struct {
+    uint8_t h;
+    uint8_t m;
+    uint8_t s;
+} hms_t;
+
+typedef struct {
 	unsigned char T		:1;
 	unsigned char I		:1;	
 	unsigned char U		:1;
@@ -20,7 +26,7 @@ typedef struct {
 typedef union {
 	struct {
 		unsigned char data_type;//1
-		unsigned char type; //2
+		csu_st type; //2
 		stop_flag_t stop_flag; //3
 		unsigned int I_ch; //4,5
 		unsigned int U_ch; //6,7
@@ -33,9 +39,10 @@ typedef union {
 		unsigned int end_dU; //18, 19
 		unsigned int end_Temp; //20,22
 		unsigned int end_C;   //22, 23
-		unsigned char end_H; //24
-		unsigned char end_M; //25
-		unsigned char end_S; //26
+        hms_t end;
+		//unsigned char end_H; //24
+		//unsigned char end_M; //25
+		//unsigned char end_S; //26
 	} fld;
 	unsigned char byte[32];
 	unsigned int word[16];
@@ -47,9 +54,10 @@ typedef union {
 		unsigned char name[17]; //2-18
 		unsigned int Im; //19, 20
 		unsigned int Um; //21, 22
-		unsigned char Hm;//23
-		unsigned char Mm;//24
-		unsigned char Sm;//25
+        hms_t end;
+		//unsigned char Hm;//23
+		//unsigned char Mm;//24
+		//unsigned char Sm;//25
 		unsigned char Cnt;//26
 		unsigned char NStg;//27
 		//unsigned int Next_Mtd; //28, 29
@@ -68,8 +76,10 @@ typedef struct {
 
 #define MTD_N           15
 #define DEF_MTD_Stg     1
+#define INF_TIME        100
+#define DU_TIME         SEC(400UL)
 
-unsigned char fin_cond (void);
+bool fin_cond (void);
 void stg_status (void);
 void calc_mtd (void);
 void calc_stg (void);

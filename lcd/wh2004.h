@@ -32,11 +32,12 @@ extern "C" {
 #endif
 
 
-#define line0 0x80
-#define line1 0xC0
-#define line2 0x94
-#define line3 0xD4
-
+#define LA_0    0x80
+#define LA_1    0xC0
+#define LA_2    0x94
+#define LA_3    0xD4
+#define LN      4 // line num
+#define SL      20 // string len
 
 #define J_rus  163
 #define Z_rus  164
