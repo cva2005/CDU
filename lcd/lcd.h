@@ -2,6 +2,7 @@
 #define LDC_H
 #pragma message	("@(#)ldc.h")
 #include "wh2004.h"
+#include "tsens/ds1820.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -48,16 +49,13 @@ void update_LCD_work(void);
 #endif
 //void update_LCD_error(unsigned char error);
 
-
-//char hex_to_ASCII(unsigned char N);
-void calculate_temp(signed char *temp, char *point);
-void calculate_param(unsigned int val, unsigned int k, char *point);
-void calculate_time(unsigned char P1, unsigned char P2, unsigned char P3, char *point);
 void LCD_change_mode(unsigned char *mode);
 bool conn_msg (void);
 
 extern char LCD[LN][SL];
 extern unsigned char  Cursor_pos[PR_NUM], Cursor_point;
+extern int16_t Tmp[TCH];
+extern bool CapCalc;
 
 #ifdef __cplusplus
 }

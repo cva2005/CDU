@@ -15,7 +15,7 @@ uint16_t msNum = 0;
 bool SaveMtd = false;
 unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
 unsigned int max_set_U, max_set_I, max_set_Id;
-uint8_t Hour = 0, Min = 0, Sec = 0, Hour_Stg, Min_Stg, Sec_Stg;
+hms_t Tm = {0,0,0}, Ts;
 stime_t PulseStep; //время импульса заряд/разряд при импульсном режиме
 stime_t dUtime; // Время когда не увеличивается U при заряде щелочного АКБ
 
@@ -150,7 +150,7 @@ void calc_stg(void) {
     if (Stg.fld.type==STOP) Stg.fld.type = PAUSE;
     Fin.max_U=0;
     PulseStep = get_fin_time(SEC(Stg.fld.T_ch)); // время импульса заряда в имп. режиме
-    Sec_Stg = Min_Stg = Hour_Stg = 0;
+    memset(&Ts, 0, sizeof(Ts));
     fCnt = INF_TIME; //установить паузу в определении условий окончания
 }
 
@@ -183,7 +183,7 @@ void read_stg (unsigned char num) {
 
 void start_mtd (unsigned char num) {
     uint32_t s, error_calc;
-	Hour = Min = Sec = 0;	
+    memset(&Tm, 0, sizeof(Tm));
 	if (num) {
 		//рсчитать значения в вольтах
 		s = set_U * Cfg.K_U;
@@ -317,12 +317,13 @@ void delete_all_mtd (void) {
     mCnt = sCnt = cCnt = 0;
 }
 
+/* ToDo: compare as uint32_t */
 static bool end_time (hms_t *tm) {
-    if (Hour_Stg > tm->h) return true;
-    if (Hour_Stg == tm->h) {
-        if (Min_Stg > tm->m) return true;
-        if (Min_Stg == tm->m) {
-            if (Sec_Stg >= tm->s) return true;
+    if (Ts.h > tm->h) return true;
+    if (Ts.h == tm->h) {
+        if (Ts.m > tm->m) return true;
+        if (Ts.m == tm->m) {
+            if (Ts.s >= tm->s) return true;
         }
     }
     return false;

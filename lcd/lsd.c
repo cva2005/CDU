@@ -1,19 +1,18 @@
 #pragma message	("@(#)ldc.c")
 #include <system.h>
 #include "spi/adc/ads1118.h"
-#include "tsens/ds1820.h"
 #include "pwm/pwm.h"
 #include "csu/csu.h"
 #include "csu/mtd.h"
 #include "lcd.h"
 
-static bool ConMsg;
+static bool ConMsg, CapCalc;
 char LCD[LN][SL];
 const uint8_t LADDR[LN] = {LA_0, LA_1, LA_2, LA_3};
 ADC_Type ADC_last[4];
-Temp_type Temp1_last, Temp2_last;
-unsigned char Sec_last=0xFF, cycle_cnt_last, Stg_cnt_last;
-unsigned char  Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point=0;
+int16_t Tmp[TCH], TmpOld[TCH];
+unsigned char cycle_cnt_last, Stg_cnt_last;
+unsigned char Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point=0;
 unsigned char LCD_mode=0;
 cap_t Cap; // Capacity of Battery
 const char RuCh[64] = {
@@ -35,7 +34,7 @@ void decd_cpy (char *dst, const char *src, uint8_t n) {
 
 void uint_to_str (uint16_t n, char *p, uint8_t dig) {
     while (dig--) {
-        p[dig] = n % 10;
+        p[dig] = n % 10 + 0x30;
         n /= 10;
     }
 }
@@ -57,19 +56,24 @@ point[2]=hex_to_ASCII((val%1000)/100);
 point[3]=hex_to_ASCII((val%100)/10);
 point[4]=hex_to_ASCII(val%10);
 }*/
+#define D1K     1000UL
+#define D10K    10000UL
+#define D100K   100000UL
+#define D1M     10000000UL
+#define D10M    100000000UL
+#define D100M   1000000000UL
 // ToDo: check time interval!
 static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
-    uint32_t cur = 0UL;
     if (sign != 0) {
-        cur = ((uint32_t)val * (uint32_t)k) / 10000 * 2778UL; //+(uint32_t)b;
-        cur = cur / 100000UL;
-        Cap.dC += (int)cur * sign;
-        if (Cap.dC > 10000) {
+        uint32_t cur = val * k / D10K * 2778UL; //+(uint32_t)b;
+        cur = cur / D100K;
+        Cap.dC += cur * sign;
+        if (Cap.dC > D10K) {
             Cap.C++;
-            Cap.dC -= 10000;
-        } else if (Cap.dC < -10000) {
+            Cap.dC -= D10K;
+        } else if (Cap.dC < -D10K) {
             Cap.C--;
-            Cap.dC += 10000;
+            Cap.dC += D10K;
         }		
     }
     if (Cap.C < 0) {
@@ -84,64 +88,42 @@ static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
     p[4] = ',';
 }
 
-void calculate_param(unsigned int val, unsigned int k, char *point)
-{uint32_t cur_val=0UL;
-	
-	cur_val=(uint32_t)val*(uint32_t)k;//+(uint32_t)b;
-	
-	if (((cur_val%1000000UL)/100000UL)>4)
-		{
-		cur_val+=1000000UL;
-		}
-	point[0]=hex_to_ASCII(cur_val/100000000UL);//hex_to_ASCII(tmp_data>>4);
-	point[1]=hex_to_ASCII((cur_val%100000000UL)/10000000UL);//hex_to_ASCII(tmp_data&0x0F);
-	point[2]=',';
-	point[3]=hex_to_ASCII((cur_val%10000000UL)/1000000UL);//*/
+static void calc_prm (uint16_t val, uint16_t k, char *p) {
+	uint32_t cur = val * k; //+(uint32_t)b;
+    val = (cur % D1M) / 100;
+    cur /= D1M;
+    if (val >= 5) cur++; // mathematical rounding
+    uint_to_str(val, p, 3);
+    p[3] = p[2];
+    p[2] = ',';
+}
+/* Temperature range default 0.0625°C / bit */
+static void calc_tmp (int16_t t, char *p) {
+    if (t == ERR_WCODE) {
+        memcpy(p, "Error", 5);
+        return;
+    }
+    if (t < 0) {
+        p[0]='-';
+        t *= -1;
+    }
+    uint16_t d = t * 5 / 8; // T[°C] * 10
+    if (d > 999) {
+        p[0] = '+';
+        uint_to_str(d, &p[1], 3);
+    } else {
+        uint_to_str(d, p, 4);
+    }
+    p[4] = p[3];
+    p[3] = ',';
 }
 
-void calculate_temp(signed char *temp, char *point)
-{unsigned char deg_val[16]={0,1,1,2,3,3,4,4,5,6,6,7,8,8,9,9};//, tmp_data;
- unsigned char tmp;	
-	
-if (((unsigned char)temp[0]!=0xFF)||((unsigned char)temp[1]!=0xFF))
-	{
-	if (temp[0]>=0)
-		{
-		if (temp[0]>99) point[0]=hex_to_ASCII(temp[0]/100);
-		else point[0]='+';
-		point[1]=hex_to_ASCII((temp[0]%100)/10);//hex_to_ASCII(tmp_data>>4);
-		point[2]=hex_to_ASCII(temp[0]%10);//hex_to_ASCII(tmp_data&0x0F);
-		point[3]=',';
-		point[4]=hex_to_ASCII(deg_val[(unsigned char)temp[1]]);
-		}
-	else
-		{
-		point[0]='-';
-		if (((unsigned char)temp[1])!=0) tmp=(-1*temp[0])-1;
-		else tmp=-1*temp[0];
-		point[1]=hex_to_ASCII(tmp/10);//hex_to_ASCII(tmp_data>>4);
-		point[2]=hex_to_ASCII(tmp%10);//hex_to_ASCII(tmp_data&0x0F);
-		point[3]=',';
-		point[4]=hex_to_ASCII((10-deg_val[(unsigned char)temp[1]])%10);
-		}
-	}
-else
-	{
-    memcpy(point, "Error", 5);
-	/*point[0]='E';
-	point[1]='r';
-	point[2]='r';
-	point[3]='o';
-	point[4]='r';*/
-	}
-}
-
-void calc_time (uint8_t h, uint8_t m, uint8_t s, char *p)
+static void calc_time (hms_t *t, char *p)
 {
-    if (h < 100 && m < 60 && s < 60) {
-        uint_to_str (h, &p[0], 2);
-        uint_to_str (m, &p[3], 2);
-        uint_to_str (s, &p[6], 2);
+    if (t->h < 100 && t->m < 60 && t->s < 60) {
+        uint_to_str (t->h, &p[0], 2);
+        uint_to_str (t->m, &p[3], 2);
+        uint_to_str (t->s, &p[6], 2);
         p[2] = p[5] = ':';
     } else {
         memcpy(p, "--:--:--", 8);
@@ -168,8 +150,7 @@ if (*mode==0)
 	LCD[3][18]=' ';
 	LCD[3][19]=' ';
 	
-	Temp1_last.word=0xEFFF;
-	Temp2_last.word=0xEFFF;
+	TmpOld[0] = TmpOld[1] = ERR_WCODE;
 	*mode=1;
 	}	
 else
@@ -180,7 +161,7 @@ else
 	LCD[3][11]=' ';
 	LCD[3][12]='C';
 	LCD[3][13]='=';
-	calculate_time(Hour, Min, Sec, &LCD[3][T_P]);
+	calc_time(&Tm, &LCD[3][T_P]);
 	calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
 	*mode=0;
 	}
@@ -313,25 +294,23 @@ void update_LCD_set (void) {
     LCD[0][19]=hex_to_ASCII(Mtd.fld.Cnt);
     LCD[1][19]=hex_to_ASCII(Mtd.fld.NStg);
     /* отображение времени */
-    calculate_time(mt.h, mt.m, mt.s, &LCD[3][T_P]);
+    calc_time(&mt, &LCD[3][T_P]);
     /* отображение ёмкости */
     Cap.C = Cap.dC = 0;
     calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
     /* отображение тока и напряжения */
-    if (SetMode==2) calculate_param(set_Id, Cfg.K_Id, &LCD[1][Is_P]);
-    else calculate_param(set_I , Cfg.K_I , &LCD[1][Is_P]);
-    calculate_param(set_U, Cfg.K_U, &LCD[2][Us_P]);
+    if (SetMode==2) calc_prm(set_Id, Cfg.K_Id, &LCD[1][Is_P]);
+    else calc_prm(set_I , Cfg.K_I , &LCD[1][Is_P]);
+    calc_prm(set_U, Cfg.K_U, &LCD[2][Us_P]);
     for (i = 0; i < LN; i++) WH2004_string_wr(LCD[i], LADDR[i], SL);
     WH2004_inst_wr(Cursor_pos[Cursor_point]);
     WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
     ADC_last[ADC_MU].word=ERR_WCODE;
     ADC_last[ADC_MI].word=ERR_WCODE;
     ADC_last[ADC_DI].word=ERR_WCODE;
-    Sec_last=UINT8_MAX;
     cycle_cnt_last=UINT8_MAX;
     Stg_cnt_last=UINT8_MAX;
-    Temp1_last.word=ERR_WCODE;
-    Temp2_last.word=ERR_WCODE;
+    TmpOld[0] = TmpOld[1] = ERR_WCODE;
 }
 #endif
 
@@ -343,19 +322,19 @@ void update_LCD_work (void) {
         if (get_adc_res(ADC_DI) != ADC_last[ADC_MI].word) {
             LCD[1][I_P]='-';
             ADC_last[ADC_MI].word=get_adc_res(ADC_DI);
-            calculate_param(get_adc_res(ADC_DI), Cfg.K_Id, &LCD[1][I_P+1]);
+            calc_prm(get_adc_res(ADC_DI), Cfg.K_Id, &LCD[1][I_P+1]);
             WH2004_string_wr(&LCD[1][I_P],LA_1+I_P, 5); //отобразить
-            calculate_param(set_Id , Cfg.K_Id , &LCD[1][Is_P]);
+            calc_prm(set_Id , Cfg.K_Id , &LCD[1][Is_P]);
             WH2004_string_wr(&LCD[1][Is_P],LA_1+Is_P, 4); //отобразить
         }		
     } else {
         if (get_adc_res(ADC_MI) !=ADC_last[ADC_MI].word) { //если значение тока изменилось
             LCD[1][I_P]='+';
             ADC_last[ADC_MI].word=get_adc_res(ADC_MI);
-            calculate_param(get_adc_res(ADC_MI), Cfg.K_I, &LCD[1][I_P+1]);
+            calc_prm(get_adc_res(ADC_MI), Cfg.K_I, &LCD[1][I_P+1]);
             WH2004_string_wr(&LCD[1][I_P],LA_1+I_P, 5); //отобразить
             if (PwmStatus!=STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в LCD_wr_set
-                calculate_param(set_I , Cfg.K_I , &LCD[1][Is_P]);
+                calc_prm(set_I , Cfg.K_I , &LCD[1][Is_P]);
                 WH2004_string_wr(&LCD[1][Is_P],LA_1+Is_P, 4); //отобразить	
             }
         }
@@ -370,37 +349,37 @@ void update_LCD_work (void) {
     }
     /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ */
     if (PwmStatus != STOP) {
-        if (Sec_last!=Sec) {		
+        if (CapCalc == false) {		
             if (PwmStatus == DISCHARGE)
                 calc_cap(-1, get_adc_res(ADC_DI), Cfg.K_Id, &LCD[3][C_P]);
             else calc_cap(1, get_adc_res(ADC_MI), Cfg.K_I, &LCD[3][C_P]);
             if (LCD_mode == 0) {
                 WH2004_string_wr(&LCD[3][C_P],LA_3+C_P, 6);	 
-                calculate_time(Hour, Min, Sec, &LCD[3][T_P]);
+                calc_time(&Tm, &LCD[3][T_P]);
                 WH2004_string_wr(&LCD[3][T_P],LA_3+T_P, 8);
             }
-            Sec_last = Sec;
+            CapCalc = true;
         }
     }	
     /* ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ */
     if (LCD_mode != 0) {
-        if (Temp1_last.word != Temp1.word) { //если значение изменилось, то отобразить его на дисплее
-            calculate_temp(&Temp1.fld.V, &LCD[3][T1_P]); //преобразовать значение в цифры дисплея
+        if (TmpOld[0] != Tmp[0]) { //если значение изменилось, то отобразить его на дисплее
+            calc_tmp(Tmp[0], &LCD[3][T1_P]); //преобразовать значение в цифры дисплея
             WH2004_string_wr(&LCD[3][T1_P],LA_3+T1_P, 5); //отобразить
-            Temp1_last.word=Temp1.word;
+            TmpOld[0] = Tmp[0];
         }
-        if (Temp2_last.word != Temp2.word) { //если значение изменилось, то отобразить его на дисплее
-            calculate_temp(&Temp2.fld.V, &LCD[3][T2_P]); //преобразовать значение в цифры дисплея
+        if (TmpOld[1] != Tmp[1]) { //если значение изменилось, то отобразить его на дисплее
+            calc_tmp(Tmp[1], &LCD[3][T2_P]); //преобразовать значение в цифры дисплея
             WH2004_string_wr(&LCD[3][T2_P],LA_3+T2_P, 5); //отобразить
-            Temp2_last.word=Temp2.word;
+            TmpOld[1] = Tmp[1];
         }
     }
     /* ОТОБРАЖЕНИЕ НАПРЯЖЕНИЯ */
     if (get_adc_res(ADC_MU) != ADC_last[ADC_MU].word) { //если значение напряжения изменилось
-        calculate_param(get_adc_res(ADC_MU), Cfg.K_U, &LCD[2][U_P]);
+        calc_prm(get_adc_res(ADC_MU), Cfg.K_U, &LCD[2][U_P]);
         WH2004_string_wr(&LCD[2][U_P],LA_2+U_P, 5); //отобразить
         ADC_last[ADC_MU].word=get_adc_res(ADC_MU);
-        calculate_param(set_U , Cfg.K_U , &LCD[2][Us_P]);
+        calc_prm(set_U , Cfg.K_U , &LCD[2][Us_P]);
         WH2004_string_wr(&LCD[2][Us_P],LA_2+Us_P, 4); //отобразить
     }
     /* ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК */

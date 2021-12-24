@@ -92,12 +92,13 @@ extern "C" {
 #define ERR_CONNECTION1		13 //неверное подключение АКБ
 #define ERR_DM_LOSS			14 //обрыв разярдного модуля
 //----------------------------------------------------------------------
-#define MAX_T1              86
-#define MAX_T2ch            95
-#define MAX_T2dch           95
-#define FAN_OFF_T           34
-#define FAN_ON_T            37
-#define FAN_CND_T           4
+#define TVAL(x)             (x * 16)
+#define MAX_T1              TVAL(86)
+#define MAX_T2ch            TVAL(95)
+#define MAX_T2dch           TVAL(95)
+#define FAN_OFF_T           TVAL(34)
+#define FAN_ON_T            TVAL(37)
+#define FAN_CND_T           TVAL(4)
 //----------------------------------------------------------------------
 //#define Good_Con (PINB&0x08)
 #define Overload (PIND&0x08)
@@ -242,6 +243,7 @@ void Init_ExtInt (void);
 void calc_cfg (void);
 void csu_time_drv (void);
 void inline check_auto_start (void);
+void fan_ctrl (void);
 
 extern uint16_t set_I, set_U, set_Id;
 extern uint8_t change_UI;

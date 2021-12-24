@@ -9,7 +9,8 @@
 #include "key/key.h"
 #include "csu/csu.h"
 
-stime_t AlarmDel;
+stime_t AlarmDel, FanTime;
+static uint8_t ErrT[TCH] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
 uint16_t id_dw_Clb, id_up_Clb;
@@ -273,11 +274,11 @@ void err_check (void) {
     if (PwmStatus == DISCHARGE) {
         goto check_over_t2;
     } else if (PwmStatus == CHARGE) {
-        if ((Temp1.fld.V > MAX_T1) && (Temp1.word != ERR_WCODE))
+        if ((Tmp[0] > MAX_T1) && (Tmp[0] != ERR_WCODE))
             /* проверка перегрева транзисторов */
-            Error=ERR_OVERTEMP1;
+            Error = ERR_OVERTEMP1;
         check_over_t2:
-        if ((Temp2.fld.V > MAX_T2ch) && (Temp2.word != ERR_WCODE))
+        if ((Tmp[1] > MAX_T2ch) && (Tmp[1] != ERR_WCODE))
             /* проверка перегрева выпрямительных диодов */
         Error = ERR_OVERTEMP2;
     }
@@ -319,23 +320,24 @@ void csu_time_drv (void) {
     }*/
     if (PwmStatus != STOP && !get_time_left(TickSec)) {
         TickSec = get_fin_time(SEC(1));
-        Sec++; // секунды метода
-        Sec_Stg++; // секунды этапа
-        if (Sec > 59) {
-            Min++; // минуты метода
-            Sec = 0;
+        CapCalc = false;
+        Tm.s++; // секунды метода
+        Ts.s++; // секунды этапа
+        if (Tm.s > 59) {
+            Tm.m++; // минуты метода
+            Tm.s = 0;
         }
-        if (Min > 59) {
-            if (Hour < 255) Hour++;	//Часы метода
-            Min = 0;
+        if (Tm.m > 59) {
+            if (Tm.h < 255) Tm.h++;	//Часы метода
+            Tm.m = 0;
         }
-        if (Sec_Stg > 59) {
-            Min_Stg++; // Минты этапа
-            Sec_Stg = 0;
+        if (Ts.s > 59) {
+            Ts.m++; // Минты этапа
+            Ts.s = 0;
         }
-        if (Min_Stg > 59) {
-            Hour_Stg++;	//Часы этапа
-            Min_Stg = 0;
+        if (Ts.m > 59) {
+            Ts.h++;	//Часы этапа
+            Ts.m = 0;
         }
     }
     /* Индикация ошибок для LED */
@@ -377,6 +379,34 @@ inline void check_auto_start (void) {
                     }
                 }
             }
+        }
+    }
+}
+
+static void read_tmp (void) {
+    uint8_t err = get_tmp_res(Tmp);
+    uint8_t mask = T1_ERROR;
+    for (uint8_t i = 0; i < TCH; i++) {
+        if (err & mask) {
+            if (ErrT[i] < READ_ERR_CNT) ErrT[i]++;
+            else Tmp[i] = ERR_WCODE;
+        } else ErrT[i] = 0;
+        mask <<= 1;
+    }
+    tmp_convert();
+}
+
+void fan_ctrl (void) {
+    if (!get_time_left(FanTime)) {
+        FanTime = get_fin_time(MS(500));
+        read_tmp();
+        if (!Cfg.bf1.FAN_CONTROL) {
+            int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
+            if (t1 > FAN_ON_T || t2 > FAN_ON_T ||
+                (t1 >= -FAN_CND_T && t1 < FAN_CND_T) ||
+                (t2 >= -FAN_CND_T && t2 < FAN_CND_T) ||
+                t1 == ERR_WCODE || t2 == ERR_WCODE) FAN(1);
+            else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(0);
         }
     }
 }

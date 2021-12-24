@@ -1,10 +1,6 @@
 #pragma message	("@(#)ds1820.c")
-#include "../sys/system.h"
-#include "../net/usart.h"
+#include <system.h>
 #include "ds1820.h"
-
-unsigned char Err_Thermometr, Err1_cnt=0, Err2_cnt=0; //use if need
-Temp_type Temp1, Temp2;
 
 unsigned char Tmp_Presence_pulse(void)
 {//unsigned int i;
@@ -123,7 +119,7 @@ RETURNS VALUE:
 
 
 
-unsigned char Thermometr_Start_Convert(void)
+unsigned char tmp_convert(void)
 {unsigned char error;
  error=Tmp_Presence_pulse();//Give present pulse and take answer, if not answer error 1-not device
  
@@ -152,49 +148,24 @@ unsigned char Thermometr_Convert_Fin(void)
  return (bit_receive); //1 - convert Fined, 0 - convert process
 }
 
-
-
-//unsigned char Read_Current_Temperature(unsigned int *Current_tmp)
-//{unsigned char i, CRC=0;
-//unsigned char Temperature[9];
-// Tmp_Presence_pulse(); //Give present pulse and take answer
-// Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
-// Write_Byte_Tmp(0xBE); //Send command: "Read RAM"
-// for (i=0; i<9; i++)	  //Read of 9 data byte
-// 	{Temperature[i]=Read_Byte_Tmp(); //Read one byte of data
-//	 if ((i!=8)) CRC=CRC8_Tmp(Temperature[i], CRC); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
-// 	 }
-// *Current_tmp=((unsigned int)Temperature[1]<<8)|Temperature[0];
-// if (Temperature[8]!=CRC) return(0x01);		  //if calculated CRC!=Read CRC (last byte (8)) - error of read
-// return(0x00);
-//}
-
-
-unsigned char Read_Current_Temperature(Temp_type *tmp1, Temp_type *tmp2)
-{unsigned char i, CRC1=0, CRC2=0, error=0;
-unsigned char Temperature1[9], Temperature2[9];
- error=Tmp_Presence_pulse(); //Give present pulse and take answer
- Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
- Write_Byte_Tmp(0xBE); //Send command: "Read RAM"
- for (i=0; i<9; i++)	  //Read of 9 data byte
- 	{
-	Read_Byte_Tmp(&Temperature1[i], &Temperature2[i]); //Read one byte of data
-	if ((i!=8)) 
-		{
-		CRC1=CRC8_Tmp(Temperature1[i], CRC1); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
-		CRC2=CRC8_Tmp(Temperature2[i], CRC2); //calculated CRC for this byte (exclude last byte (9) of receive CRC)
-		}
- 	}
-	 
- tmp1->fld.V=(Temperature1[1]<<4)|(Temperature1[0]>>4);
- tmp1->fld.D=Temperature1[0]&0x0F;
- 
- tmp2->fld.V=(Temperature2[1]<<4)|(Temperature2[0]>>4);
- tmp2->fld.D=Temperature2[0]&0x0F;
-
- if (Temperature1[8]!=CRC1) error|=0x01;
- if (Temperature2[8]!=CRC2) error|=0x02;
- return(error);
+uint8_t get_tmp_res (int16_t *tmp) {
+    uint8_t i, crc1, crc2, err, b1[9], b2[9];
+    crc1 = crc2 = err = 0;
+    err = Tmp_Presence_pulse(); //Give present pulse and take answer
+    Write_Byte_Tmp(0xCC); //Send command: "Skip ROM"
+    Write_Byte_Tmp(0xBE); //Send command: "Read RAM"
+    for (i = 0; i < 9; i++) { //Read of 9 data byte
+        Read_Byte_Tmp(&b1[i], &b2[i]);
+        if (i < 8) {
+            crc1 = CRC8_Tmp(b1[i], crc1);
+            crc2 = CRC8_Tmp(b2[i], crc2);
+        }
+    }
+    tmp[0] = *(int16_t *)b1;
+    tmp[1] = *(int16_t *)b2;
+    if (b1[8] != crc1) err |= T1_ERROR;
+    if (b2[8] != crc2) err |= T2_ERROR;
+    return err;
 }
 
 /*

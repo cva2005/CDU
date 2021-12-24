@@ -25,7 +25,6 @@ unsigned char time_rd=0; //время между чтениями датчиков температуры
 #define DOWN_LIM        100.0f*/
 
 static inline void init_gpio (void);
-static inline void fan_ctrl (void);
 static inline void check_key_press (void);
 
 void main (void) {
@@ -120,39 +119,9 @@ unsigned int i_power_limit(unsigned int p, unsigned int i) {
 	return(i);
 }
 
-void Read_temp(void)
-{Temp_type Temp1_v, Temp2_v;
-
-Err_Thermometr=Read_Current_Temperature(&Temp1_v, &Temp2_v);
-//-------датчик N1
-if (Err_Thermometr&Tmask1)
-	{
-	if (Err1_cnt<READ_ERR_CNT) Err1_cnt++;
-	else Temp1.word=ERR_WCODE;
-	}
-else
-	{
-	Err1_cnt=0;
-	Temp1.word=Temp1_v.word;
-	}
-//-------датчик N2
-if (Err_Thermometr&Tmask2)
-	{
-	if (Err2_cnt<READ_ERR_CNT) Err2_cnt++;
-	else Temp2.word=ERR_WCODE;
-	}
-else
-	{
-	Err2_cnt=0;
-	Temp2.word=Temp2_v.word;
-	}
-
-Err_Thermometr=Thermometr_Start_Convert();
-}
-
 void update_LED(void)
 {
-/*if (Error||Err_Thermometr)
+/*if (Error||ErrTmp)
 	{
 	if ((Error==ERR_OVERLOAD)||(Error==ERR_OUT)||(Error==ERR_ADC)) LED_ERR(1);//LED&=0x7F;
 	}
@@ -203,23 +172,6 @@ static inline void check_key_press (void) {
     } else { //если нет нажатой кнопки
         KeyPress=100;
         Step=1;
-    }
-}
-
-static inline void fan_ctrl (void) {
-    if (!time_rd) { //Если пришло время прочитать датчик температуры
-        time_rd = 30; //Установить время следующего чтения датчика
-        Read_temp(); //Прочитать датчики температуры
-        if (!Cfg.bf1.FAN_CONTROL) { //Если запрещено внешнее управление вентиляторами
-            if ((Temp1.fld.V > FAN_ON_T) || (Temp2.fld.V > FAN_ON_T) ||
-                ((Temp1.fld.V >= - FAN_CND_T) && (Temp1.fld.V < FAN_CND_T)) ||
-                ((Temp2.fld.V >= -FAN_CND_T) && (Temp2.fld.V < FAN_CND_T)) ||
-                (Temp1.fld.D == 0xFF) || (Temp2.fld.D == 0xFF)) {
-                FAN(1);
-            } else {
-                if ((Temp1.fld.V < FAN_OFF_T) && (Temp2.fld.V < FAN_OFF_T)) FAN(0);
-            }
-        }
     }
 }
 
@@ -313,7 +265,7 @@ if ((connect_st==0)||(Cfg.bf1.DEBUG_ON==1))
 			if (mSec<10) LED_ERR(0);//PORTC=PINC|0x80;
 			else LED_ERR(1);//PORTC=PINC&0x7F;
 			}*/
-		/*if ((Error==ERR_OVERTEMP1)||(Error==ERR_OVERTEMP2)||(Err_Thermometr!=0))
+		/*if ((Error==ERR_OVERTEMP1)||(Error==ERR_OVERTEMP2)||(ErrTmp!=0))
 			{
 			if (mSec==29) LED_ERRinv;//PORTC=PINC^0x80;
 			}*/
