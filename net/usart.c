@@ -392,7 +392,7 @@ if (rx_point>4) //если принято больше 4-х байт
 						{	
 						if (rx_pack.fld.data.rx_ver.cmd.bit.EEPROM!=0)
 							save_num(&rx_pack.fld.data.rx_ver.number[0]);
-						if (Cfg.bf1.LCD_ON) LCD_wr_connect(1);
+						if (Cfg.bf1.LCD_ON) lcd_wr_connect(1);
 						}						
 					}
 

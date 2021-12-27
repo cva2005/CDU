@@ -11,12 +11,12 @@
 #include "key/key.h"
 #include "spi/adc/ads1118.h"
 
-int TEST1=0, TEST2=0, TEST3=0, TEST4=0;
 bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
 unsigned char time_rd=0; //время между чтениями датчиков температуры
+stime_t LcdRefr;
 
 /*-#define NO_BATT_TIME    70
 #define INF_TAU         50.0f
@@ -25,7 +25,6 @@ unsigned char time_rd=0; //время между чтениями датчиков температуры
 #define DOWN_LIM        100.0f*/
 
 static inline void init_gpio (void);
-static inline void check_key_press (void);
 
 void main (void) {
     init_gpio();
@@ -33,14 +32,15 @@ void main (void) {
     Read_temp(); //Запустить на измерение датчик температуры 
     read_cfg();
     if (Cfg.bf1.LCD_ON) {
-        LCD_wr_connect(false);
-        LCD_wr_set();
+        lcd_wr_connect(false);
+        lcd_wr_set();
     }
     init_rs();
     SYS_TMR_ON();
     START_RX();
     __enable_interrupt();
     adc_init();
+    // ToDo: use WDT?
     if (Cfg.bf1.FAN_CONTROL == 0) {
         FAN(1);
         delay_ms(500);
@@ -70,24 +70,25 @@ void main (void) {
                         Stop_CSU(STOP);
                         read_mtd();
 					}
-                    LCD_wr_set();
+                    lcd_wr_set();
 				}				
 			} else	{ //если подключение появилось, а значения дисплея не обновлены
-                if (!Cfg.bf1.DEBUG_ON && !conn_msg()) LCD_wr_connect(true);
+                if (!Cfg.bf1.DEBUG_ON && !conn_msg()) lcd_wr_connect(true);
             }			
         }
         if (!rs_active() || Cfg.bf1.DEBUG_ON) {
             if (Cfg.bf1.LED_ON)	update_LED();
             if (Cfg.bf1.LCD_ON) {
-                if (!LCD_refresh) {
-                    update_LCD_work();
-                    if (!CsuState) LCD_refresh = 25;
+                if (!get_time_left(LcdRefr)) {
+                    lsd_update_work();
+                    if (CsuState == STOP)
+                        LcdRefr = get_fin_time(MS(400));
                 }
             }
             if (CsuState && SelfCtrl) { //Если идёт заряд или разряд и управление зарядом осуществляет ЗРМ самостоятельно
                 stg_status(); //проверить статус этапа: испульсный режим или нет, в случае необходимости изменить исмпульс
 			}
-            check_key_press();
+            check_key();
             check_auto_start();
         }
 		if (ALARM_ON()) { // отключение сигнала окончания работы
@@ -141,40 +142,6 @@ else
 	{LED_STI(0);LED_STU(0);}//LED|=0x30;
 }
 
-static inline void check_key_press (void) {
-    uint8_t key_n;
-    if (scan_key(&key_n)) { //если есть нажатая кнопка
-        if (Key_delay==0) { //если разрешена обработка кнопок
-            if (Cfg.bf1.LCD_ON) {
-                if (!KeyPress) { //Если долгое время клавишу удерживали нажатой
-                    KeyPress = 200;
-                    if (Step==1) Step = 10;
-                    else Step=20;
-                }
-                if (key_n==K5) key_power();//если нажата кнопка Старт/Стоп
-                if (key_n==K4) key_set();//если нажата кнопка Set
-                if (key_n==K3) key_up(); //если нажата кнопка вверх
-                if (key_n==K2) key_dw(); //если нажата кнопка вниз		
-            }
-            if (Cfg.bf1.LED_ON) {
-                if (!KeyPress) { //Если долгое время клавишу удерживали нажатой
-                    KeyPress = 100;
-                    if (Step == 1) Step=5;
-                    else Step=10;
-                }
-                if (key_n == K5) key_power_LED();//если нажата кнопка Старт/Стоп
-                if (key_n == K4) key_U_up();//если нажата кнопка Set
-                if (key_n == K3) key_U_dw(); //если нажата кнопка вверх
-                if (key_n == K2) key_I_up(); //если нажата кнопка вниз	
-                if (key_n == K1) key_I_dw(); 
-            }
-        }
-    } else { //если нет нажатой кнопки
-        KeyPress=100;
-        Step=1;
-    }
-}
-
 static inline void init_gpio (void) {
     DDRA = 0x07;
     DDRB = 0xB8;
@@ -210,7 +177,7 @@ if ((Cfg.bf2.ast)&&(PwmStatus==STOP))
 	
 if ((connect_st==0)||(Cfg.bf1.DEBUG_ON==1))
 	{
-	if (Key_delay>0) Key_delay--;   //Время в течении которого запрещено сканирование клавиш (пауза после нажатия клавиши)
+	if (KeyDel>0) KeyDel--;   //Время в течении которого запрещено сканирование клавиш (пауза после нажатия клавиши)
 	if (KeyPress>0) KeyPress--;		//Время удержания клавиши непрерывно нажатой
 	
 //------------------------Параметры с LCD--------------------------------

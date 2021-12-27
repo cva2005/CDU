@@ -174,7 +174,7 @@ void calc_cfg (void) {
         Clb.id.byte = 0;
 	}
     max_pwd_Id = calculate_pwd((max_set_Id + (max_set_Id / 10)), 0);
-    LCD_clear();
+    lsd_clear();
     if (Cfg.bf1.LCD_ON) Init_WH2004(1);
     else Init_WH2004(0);	
     if (Cfg.bf1.LED_ON) {

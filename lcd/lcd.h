@@ -8,6 +8,19 @@
 extern "C" {
 #endif
 
+typedef enum {
+    TIME_MODE   = 0,
+    TEMP_MODE   = 1
+} lcd_mode_t;
+
+typedef enum {
+    IDLE    = 0,
+    PLIM    = 1,
+    CURR    = 2,
+    VOLT    = 3
+} lcd_st;
+
+
 //#define Mode_pos  6
 //#define Dsf_pos  9
 #define T1_P        3
@@ -36,23 +49,22 @@ extern "C" {
 //#define pr_r_U 0xDE
 #define pr_cycle 0x8F
 
-void LCD_wr_set(void);
-void update_LCD_work(void);
+void lcd_wr_set(void);
+void lsd_update_work(void);
 #if JTAG_DBGU
-  #define LCD_clear(...)
-  #define update_LCD_set(...)
-  #define LCD_wr_connect(...)
+  #define lsd_clear(...)
+  #define lsd_update_set(...)
+  #define lcd_wr_connect(...)
 #else
-  void LCD_clear (void);
-  void update_LCD_set (void);
-  void LCD_wr_connect (bool pc);
+  void lsd_clear (void);
+  void lsd_update_set (void);
+  void lcd_wr_connect (bool pc);
 #endif
 //void update_LCD_error(unsigned char error);
 
-void LCD_change_mode(unsigned char *mode);
+void lsd_mode_ch (void);
 bool conn_msg (void);
 
-extern char LCD[LN][SL];
 extern unsigned char  Cursor_pos[PR_NUM], Cursor_point;
 extern int16_t Tmp[TCH];
 extern bool CapCalc;

@@ -214,24 +214,24 @@ void start_mtd (unsigned char num) {
 }
 
 void stop_mtd (void) {
-    update_LCD_work();
+    lsd_update_work();
     Stop_CSU(STOP);
     if (Cfg.bf1.LCD_ON) {
         CsuState = CHARGE;	
-        LCD[0][2] = Z_rus;
-        LCD[0][3] = 'a';
-        LCD[0][4] = v_rus;
-        LCD[0][5] = 'e';
-        LCD[0][6] = 'p';
-        LCD[0][7] = sh_rus;
-        LCD[0][8] = 'e';
-        LCD[0][9] = n_rus;
-        LCD[0][10] = 'o';
-        LCD[0][11] = ' ';
-        LCD[0][12] = ' ';
-        LCD[0][13] = ' ';
-        LCD[0][14] = ' ';
-        WH2004_string_wr(&LCD[0][2], LA_0 + 2, 13); // refrash
+        Lcd[0][2] = Z_rus;
+        Lcd[0][3] = 'a';
+        Lcd[0][4] = v_rus;
+        Lcd[0][5] = 'e';
+        Lcd[0][6] = 'p';
+        Lcd[0][7] = sh_rus;
+        Lcd[0][8] = 'e';
+        Lcd[0][9] = n_rus;
+        Lcd[0][10] = 'o';
+        Lcd[0][11] = ' ';
+        Lcd[0][12] = ' ';
+        Lcd[0][13] = ' ';
+        Lcd[0][14] = ' ';
+        WH2004_string_wr(&Lcd[0][2], LA_0 + 2, 13); // refrash
 	}
 }
 

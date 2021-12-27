@@ -121,7 +121,7 @@ static void frame_parse (void) {
 									set_Id = preset_Id; //установить разрядный ток
 									set_U = preset_U; //установить напряжение
 									if (CsuState != rd.rx_data.cmd) {
-										SelfCtrl = 0;
+										SelfCtrl = false;
 										Start_CSU((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
 									}
 								}
@@ -181,7 +181,7 @@ static void frame_parse (void) {
 					if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
 						if (rd.rx_ver.cmd.bit.EEPROM!=0)
 							save_num(&rd.rx_ver.number[0]);
-						if (Cfg.bf1.LCD_ON) LCD_wr_connect(true);
+						if (Cfg.bf1.LCD_ON) lcd_wr_connect(true);
 					}						
                     break;
                 case ALG_PKT:
@@ -239,8 +239,8 @@ static void tx_reply (void) {
         else td.tx_data.I = ADC_O[ADC_MI];
         td.tx_data.U = ADC_O[ADC_MU];
         td.tx_data.Ip = ADC_O[ADC_MUp];
-        td.tx_data.t1 = Temp1.word;
-        td.tx_data.t2 = Temp2.word;
+        td.tx_data.t1 = Tmp[0];
+        td.tx_data.t2 = Tmp[1];
         len = sizeof(tx_data_type);
         if (Cfg.bf1.IN_DATA == 0) len--;
         else td.tx_data.In_st = (KEY_MASK ^ 0xF8) >> 3;
@@ -262,9 +262,8 @@ static void tx_reply (void) {
         td.tx_usr.D_U=7;
         td.tx_usr.D_Id=7;
         td.tx_usr.D_Ip=7;
-        if (rd.rx_usr.cmd.bit.ADR_SET) tx.src_adr = rx.dest_adr; //подставить другой адрес в ответе, если происходит изменени адреса
-        //rx_pack.fld.data.rx_usr.cmd.bit.ADR_SET=0;
-        //tx_lenght_calc=sizeof(tx_usr_type)-12; //-12 только для того чтобы работала старая CE1
+        /* адрес в ответе, если происходит изменени адреса */
+        if (rd.rx_usr.cmd.bit.ADR_SET) tx.src_adr = rx.dest_adr;
         len = sizeof(tx_usr_type); 
         break;
     case SYS_CFG:
