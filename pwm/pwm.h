@@ -6,24 +6,24 @@
 extern "C" {
 #endif
 
-#define P_WDU_start     0
-#define P_WDI_start     0
+#define PWM_U_NULL      0
+#define PWM_I_NULL      0
 #define MAX_CK          0x1FFF 
-#define P_wdI           OCR1B
-#define P_wdU           OCR1A
+#define PWM_I           OCR1B
+#define PWM_U           OCR1A
 #define SOFT            true
 #define HARD            false
     
-unsigned short PwmDuty (float out);
-void Stop_PWM(bool soft);
-void soft_start(unsigned char control_out);
-unsigned int calculate_pwd(unsigned int val, unsigned char limit);
-void soft_start_disch(void);
-void Correct_PWM(unsigned char pr);
+uint16_t PwmDuty (float out);
+void Stop_PWM (bool soft);
+void soft_start (uint8_t control_out);
+uint16_t calculate_pwd (uint16_t val, uint8_t limit);
+void soft_start_disch (void);
+void Correct_PWM (uint8_t pr);
 
-extern unsigned int max_pwd_I, max_pwd_U, max_pwd_Id;
+extern uint16_t max_pwd_I, max_pwd_U, max_pwd_Id;
 extern csu_st PwmStatus;
-extern unsigned char PWM_set;
+extern uint8_t PWM_set;
 
 #ifdef __cplusplus
 }

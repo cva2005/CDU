@@ -6,6 +6,11 @@
 extern "C" {
 #endif
 
+typedef enum {
+    UP_PRESS    = 1,
+    DOWN_PRESS  = -1
+} up_dw_t;
+
 void check_key (void);
 void key_power (void);
 

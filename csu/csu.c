@@ -99,14 +99,14 @@ void Correct_UI (void) {
             float tmp;
             if (Uerr <= 0) tmp = Uerr;
             else tmp = Ierr;
-            P_wdI = PwmDuty(pid_r(&Pid_Ic, tmp));
-            P_wdU = PwmDuty(pid_r(&Pid_U, Uerr));
+            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp));
+            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr));
         } else { // discharge
             if (SatU) {
-                P_wdI = PwmDuty(pid_r(&Pid_Id,  -Uerr));
+                PWM_I = PwmDuty(pid_r(&Pid_Id,  -Uerr));
             } else { // !SatU
                 if (Uerr > 0) SatU = true;
-                P_wdI = PwmDuty(pid_r(&Pid_Id, Ierr));
+                PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr));
             }
         }      
         BreakTime = get_fin_time(SEC(1));
@@ -247,7 +247,7 @@ void err_check (void) {
                         Error = ERR_DM_LOSS;
                     }
                     if ((set_Id > (get_adc_res(ADC_DI) + Id_A(0,2))) &&
-                        (P_wdI == max_pwd_Id)) {
+                        (PWM_I == max_pwd_Id)) {
                         /* реальный ток в 2 раза меньше заданного */
                         Error = ERR_DM_LOSS;
                     }
@@ -260,14 +260,14 @@ void err_check (void) {
          /* диагностика обрыва нагрузки и блок не в группе */
         if ((PwmStatus == CHARGE) && set_I) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
-            if (get_time_left(BreakTime) && (P_wdI > 0)) Error = ERR_NO_AKB;
+            if (get_time_left(BreakTime) && (PWM_I > 0)) Error = ERR_NO_AKB;
         }
         if ((PwmStatus == DISCHARGE) && set_Id) {
             if ((ADC_DI) >= Id_A(0,1)) {
             set_break_time:
                 BreakTime = get_fin_time(SEC(1));
             }
-            if (get_time_left(BreakTime) && (P_wdI > 0)) Error = ERR_NO_AKB;
+            if (get_time_left(BreakTime) && (PWM_I > 0)) Error = ERR_NO_AKB;
         }
     }
     /* ѕроверка перегрева */
