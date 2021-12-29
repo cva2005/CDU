@@ -11,25 +11,15 @@
 #include "key/key.h"
 #include "spi/adc/ads1118.h"
 
-bool SelfCtrl = false; //управление методом заряда производится самостоятельно или удалённо
 unsigned int dU_time;	//время при котором напряжение неизменно в заряде щелочного АКБ
 unsigned int fast_correct=0; //таймаут запрета на быструю коррекцию ШИМ
 unsigned char correct_off=0, change_UI=0; //запрет коррекции ШИМ, заданные значения тока и напряжения изменились
-unsigned char time_rd=0; //время между чтениями датчиков температуры
-stime_t LcdRefr;
-
-/*-#define NO_BATT_TIME    70
-#define INF_TAU         50.0f
-#define CURR_DT         100.0f
-#define ST_TIME         100U
-#define DOWN_LIM        100.0f*/
 
 static inline void init_gpio (void);
 
 void main (void) {
     init_gpio();
     ALARM_OUT(0);
-    Read_temp(); //Запустить на измерение датчик температуры 
     read_cfg();
     if (Cfg.bf1.LCD_ON) {
         lcd_wr_connect(false);
@@ -51,95 +41,8 @@ void main (void) {
     while (true) {	  	
         net_drv();
         adc_drv();
-        csu_time_drv();
-        err_check();
-        if (Read_ADS1118(&ADS1118_chanal)) { //Если есть оцифрованные каналы
-            if (!Cfg.bf1.LED_ON || RsActive) Correct_UI();
-        }
-        if (Clb.id.bit.save == 1) {
-            if (!Clb.id.bit.error && (Clb.id.bit.dw_Fin || Clb.id.bit.up_Fin)) {
-                save_clb();
-                Clb.id.byte = 0;
-            }
-        }
-        fan_ctrl();
-        if (Cfg.bf1.LCD_ON) {
-            if (!rs_active()) { //если подключение прервалось, а значения дисплея не обновлены
-                if (conn_msg()) {
-                    if (Cfg.bf1.DIAG_WIDE) {
-                        Stop_CSU(STOP);
-                        read_mtd();
-					}
-                    lcd_wr_set();
-				}				
-			} else	{ //если подключение появилось, а значения дисплея не обновлены
-                if (!Cfg.bf1.DEBUG_ON && !conn_msg()) lcd_wr_connect(true);
-            }			
-        }
-        if (!rs_active() || Cfg.bf1.DEBUG_ON) {
-            if (Cfg.bf1.LED_ON)	update_LED();
-            if (Cfg.bf1.LCD_ON) {
-                if (!get_time_left(LcdRefr)) {
-                    lsd_update_work();
-                    if (CsuState == STOP)
-                        LcdRefr = get_fin_time(MS(400));
-                }
-            }
-            if (CsuState && SelfCtrl) { //Если идёт заряд или разряд и управление зарядом осуществляет ЗРМ самостоятельно
-                stg_status(); //проверить статус этапа: испульсный режим или нет, в случае необходимости изменить исмпульс
-			}
-            check_key();
-            check_auto_start();
-        }
-		if (ALARM_ON()) { // отключение сигнала окончания работы
- 			if (!get_time_left(AlarmDel)) {
-				ALARM_OUT(0);
-			}
-		}
+        csu_drv();
 	}
-}
-
-unsigned int i_power_limit(unsigned int p, unsigned int i) {
-    uint32_t U, Id;
-	pLim = false;
-	//U=adc_to_value(ADC_ADS1118[ADC_MU].word, ku_cfg.K[ADC_MU], 0, BASE_D)/1000000UL;
-	U=(((uint32_t)ADC_ADS1118[ADC_MU].word)*((uint32_t)Cfg.K_U))/1000000UL;	
-	if (U>0)
-		{
-		//Id=value_to_adc((((uint64_t)p*10000000ULL)/(uint64_t)U), ku_cfg.K[ADC_DI], 0, BASE_D);
-		Id=(((uint64_t)p*10000000ULL)/(uint64_t)U)/Cfg.K_Id;
-		if ((Id<32768)&&(Id>0))
-			{
-			if (i>(uint16_t)Id) 
-				{
-				i=Id; 
-				pLim = true;
-				}	//если превышена мощность, то снизить ток и установить флаг ограничения мощности
-			}
-		}
-	return(i);
-}
-
-void update_LED(void)
-{
-/*if (Error||ErrTmp)
-	{
-	if ((Error==ERR_OVERLOAD)||(Error==ERR_OUT)||(Error==ERR_ADC)) LED_ERR(1);//LED&=0x7F;
-	}
-else LED_ERR(0);//LED|=0x80;*/
-
-if (Error==ERR_CONNECTION) LED_POL(1);
-else LED_POL(0);//LED|=0x08;
-	
-if (CsuState!=0) LED_PWR(1);//LED&=0xBF;
-
-if (PwmStatus==CHARGE)
-	{
-	if (I_St) {LED_STI(1);LED_STU(0);}//LED=LED&0xDF|0x10;
-	else	  {LED_STI(0);LED_STU(1);}//LED=LED&0xEF|0x20;
-	}
-else
-	{LED_STI(0);LED_STU(0);}//LED|=0x30;
 }
 
 static inline void init_gpio (void) {

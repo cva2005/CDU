@@ -52,18 +52,19 @@ typedef enum {
 void lcd_wr_set(void);
 void lsd_update_work(void);
 #if JTAG_DBGU
-  #define lsd_clear(...)
-  #define lsd_update_set(...)
-  #define lcd_wr_connect(...)
+    #define lsd_clear(...)
+    #define lsd_update_set(...)
+    #define lcd_wr_connect(...)
+    #define lsd_stop_msg(...)
 #else
-  void lsd_clear (void);
-  void lsd_update_set (void);
-  void lcd_wr_connect (bool pc);
+    void lsd_clear (void);
+    void lsd_update_set (void);
+    void lcd_wr_connect (bool pc);
+    void lsd_stop_msg (void);
 #endif
-//void update_LCD_error(unsigned char error);
 
 void lsd_mode_ch (void);
-bool conn_msg (void);
+bool lsd_conn_msg (void);
 
 extern unsigned char  Cursor_pos[PR_NUM], Cursor_point;
 extern int16_t Tmp[TCH];

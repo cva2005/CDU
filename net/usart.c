@@ -316,14 +316,14 @@ if (rx_point>4) //если принято больше 4-х байт
 									if (CsuState!=rx_pack.fld.data.rx_data.cmd) 
 										{
 										SelfCtrl=0;
-										Start_CSU(rx_pack.fld.data.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
+										csu_start(rx_pack.fld.data.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
 										}
 									}
 								}
 							}
 						else
 							{
-							if (((CsuState|RELAY_EN)!=rx_pack.fld.data.rx_data.cmd)||(Error!=0)) Stop_CSU(rx_pack.fld.data.rx_data.cmd);
+							if (((CsuState|RELAY_EN)!=rx_pack.fld.data.rx_data.cmd)||(Error!=0)) csu_stop(rx_pack.fld.data.rx_data.cmd);
 							}	
 						}//	if (rx_pack.pack.header.length>2) //если в пакете данных есть команда					
 					}//if (rx_pack.fld.type==0x01)
@@ -398,7 +398,7 @@ if (rx_point>4) //если принято больше 4-х байт
 
 				if (rx_pack.fld.header.type==0x05) //Если принят пакет с алгоритмом программы
 					{
-					if (CsuState!=0) Stop_CSU(0);
+					if (CsuState!=0) csu_stop(0);
 					if (rx_pack.fld.data.rx_alg.cmd==0x01) 
 						{	
 						Mtd_cnt=0; Stg_cnt=0; cycle_cnt=0;//номера метода, этапа и цикла

@@ -29,7 +29,6 @@ typedef struct {
     uint16_t time_set;
     uint16_t u_set;
     uint8_t cnt_set;
-    uint8_t rsv;
 } cfg_t;
 
 #define N_CH        8 // chars in work number
@@ -53,11 +52,10 @@ typedef struct {
 		} bit;
 		uint8_t byte;
 	} id;
-	uint8_t crc8;
 } clb_t;
 
 #define EEPROM_SIZE     1024
-#define MS_SIZE sizeof(stg_t) > sizeof(mtd_t) ? sizeof(stg_t) : sizeof(mtd_t)
+#define MS_SIZE         sizeof(ms_t)
 
 /* metod/Stg type */
 typedef struct {
@@ -65,7 +63,8 @@ typedef struct {
     uint8_t crc;
 } ms_t;
 
-#define CFG_SIZE (sizeof(Cfg) + sizeof(Num) + sizeof(uint8_t) * 3)
+#define CFG_SIZE (sizeof(cfg_t) + sizeof(num_t) +\
+    sizeof(clb_t) + sizeof(uint8_t) * 3)
 #define MS_N (EEPROM_SIZE - CFG_SIZE) / MS_SIZE
 /* тип структуры EEPROM */
 typedef struct {

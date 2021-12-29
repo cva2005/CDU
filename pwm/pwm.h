@@ -17,7 +17,7 @@ extern "C" {
 uint16_t PwmDuty (float out);
 void Stop_PWM (bool soft);
 void soft_start (uint8_t control_out);
-uint16_t calculate_pwd (uint16_t val, uint8_t limit);
+uint16_t calc_pwd (uint16_t val, uint8_t limit);
 void soft_start_disch (void);
 void Correct_PWM (uint8_t pr);
 

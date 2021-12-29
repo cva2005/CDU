@@ -63,7 +63,7 @@ void key_power (void) {
         SelfCtrl = true;
         start_mtd(1);
     } else {
-        Stop_CSU(STOP);
+        csu_stop(STOP);
         read_mtd();
         lsd_update_set();
     }
@@ -156,8 +156,8 @@ static void key_up_dw (up_dw_t up_dw) {
 }
 
 static inline void key_power_led (void) {
-    if (CsuState != STOP) Stop_CSU(STOP);
-    else Start_CSU(CHARGE);
+    if (CsuState != STOP) csu_stop(STOP);
+    else csu_start(CHARGE);
     KeyDel = get_fin_time(MS(800));
 }
 

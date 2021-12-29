@@ -69,11 +69,11 @@ void stg_status (void) {
         if (!get_time_left(PulseStep)) { // истекло время импульса
             if (CsuState == DISCHARGE) { // сменить на заряд
                 set_U = set_UmemC; // напряжение заряда
-                Start_CSU(CHARGE);
+                csu_start(CHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_ch));
             } else {
                 set_U=set_UmemD;
-                Start_CSU(DISCHARGE);
+                csu_start(DISCHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_dch));
             }
         }	
@@ -88,16 +88,16 @@ void stg_status (void) {
             switch (Stg.fld.type) {
             case DISCHARGE:
                 if (PwmStatus != DISCHARGE)
-                    Start_CSU(DISCHARGE);
+                    csu_start(DISCHARGE);
                 break;
             case CHARGE:
             case PULSE:
                 if (PwmStatus != CHARGE)
-                    Start_CSU(CHARGE);
+                    csu_start(CHARGE);
                  break;
             case PAUSE:
                 if (CsuState != PAUSE)
-                    Start_CSU(PAUSE);
+                    csu_start(PAUSE);
            }
         } else { // следующего этапа нет
             if ((cCnt<Mtd.fld.Cnt)||(cCnt>9)) { //есть повотрные циклы?
@@ -206,32 +206,19 @@ void start_mtd (unsigned char num) {
 	read_stg(sCnt);
 	calc_stg();
 	if (Stg.fld.type == DISCHARGE) {
-        Start_CSU(DISCHARGE);
+        csu_start(DISCHARGE);
 	} else {
-		if (Stg.fld.type==PAUSE) Start_CSU(PAUSE);	
-		else Start_CSU(CHARGE);	
+		if (Stg.fld.type==PAUSE) csu_start(PAUSE);	
+		else csu_start(CHARGE);	
 	}	
 }
 
 void stop_mtd (void) {
     lsd_update_work();
-    Stop_CSU(STOP);
+    csu_stop(STOP);
     if (Cfg.bf1.LCD_ON) {
-        CsuState = CHARGE;	
-        Lcd[0][2] = Z_rus;
-        Lcd[0][3] = 'a';
-        Lcd[0][4] = v_rus;
-        Lcd[0][5] = 'e';
-        Lcd[0][6] = 'p';
-        Lcd[0][7] = sh_rus;
-        Lcd[0][8] = 'e';
-        Lcd[0][9] = n_rus;
-        Lcd[0][10] = 'o';
-        Lcd[0][11] = ' ';
-        Lcd[0][12] = ' ';
-        Lcd[0][13] = ' ';
-        Lcd[0][14] = ' ';
-        WH2004_string_wr(&Lcd[0][2], LA_0 + 2, 13); // refrash
+        CsuState = CHARGE;
+        lsd_stop_msg();
 	}
 }
 

@@ -37,7 +37,7 @@
                 </option>
                 <option>
                     <name>GGEnableConfig</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>GG64KFlash</name>
@@ -216,7 +216,7 @@
                 </option>
                 <option>
                     <name>GenDeviceSelectMenu</name>
-                    <state>m32	ATmega32</state>
+                    <state>m32a	ATmega32A</state>
                 </option>
                 <option>
                     <name>OGProductVersion</name>
@@ -775,7 +775,7 @@
                 </option>
                 <option>
                     <name>XclFile</name>
-                    <state>$TOOLKIT_DIR$\src\template\cfgm32.xcl</state>
+                    <state>$TOOLKIT_DIR$\config\lnkm32as.xcl</state>
                 </option>
                 <option>
                     <name>XclFileSlave</name>
@@ -887,7 +887,7 @@
                 </option>
                 <option>
                     <name>ExtraOutputFile</name>
-                    <state>cdu.a90</state>
+                    <state></state>
                 </option>
                 <option>
                     <name>ExtraOutputFormat</name>
@@ -1002,20 +1002,20 @@
                 </option>
                 <option>
                     <name>DebugInformation</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>XOutOverride</name>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>OutputFile</name>
-                    <state>$PROJ_FNAME$.d90</state>
+                    <state>cdu.d90</state>
                 </option>
                 <option>
                     <name>OutputFormat</name>
                     <version>11</version>
-                    <state>70</state>
+                    <state>25</state>
                 </option>
                 <option>
                     <name>FormatVariant</name>
@@ -1024,7 +1024,7 @@
                 </option>
                 <option>
                     <name>SecondaryOutputFile</name>
-                    <state>(None for the selected format)</state>
+                    <state></state>
                 </option>
             </data>
         </settings>

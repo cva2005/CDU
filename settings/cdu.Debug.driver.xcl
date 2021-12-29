@@ -1,10 +1,10 @@
-"--cpu=m32" 
+"--cpu=m32a" 
 
 "--enhanced_core" 
 
 "-p" 
 
-"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.4\avr\Config\iom32.ddf" 
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.4\avr\Config\iom32a.ddf" 
 
 "--eeprom_size" 
 

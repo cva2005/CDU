@@ -6,7 +6,8 @@
 #include "csu/mtd.h"
 #include "lcd.h"
 
-static bool ConMsg, CapCalc;
+static bool ConMsg;
+bool CapCalc;
 static char Lcd[LN][SL];
 static const uint8_t LADDR[LN] = {LA_0, LA_1, LA_2, LA_3};
 static lcd_st LsdState = IDLE;
@@ -40,7 +41,7 @@ static void uint_to_str (uint16_t n, char *p, uint8_t dig) {
     }
 }
 
-bool conn_msg (void) {
+bool lsd_conn_msg (void) {
     return ConMsg;
 }
 
@@ -49,12 +50,6 @@ static inline char dprn (unsigned char d) {
     return (d + 0x30);
 }
 
-#define D1K     1000UL
-#define D10K    10000UL
-#define D100K   100000UL
-#define D1M     10000000UL
-#define D10M    100000000UL
-#define D100M   1000000000UL
 // ToDo: check time interval!
 static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
     if (sign != 0) {
@@ -204,6 +199,11 @@ void lsd_update_set (void) {
     AdcOld[ADC_MU] = AdcOld[ADC_MI] = AdcOld[ADC_DI] =
     TmpOld[0] = TmpOld[1] = ERR_WCODE;
     cOld = sOld = UINT8_MAX;
+}
+
+void lsd_stop_msg (void) {
+    decd_cpy(&Lcd[0][2], "Завершено    ", 13);
+    WH2004_string_wr(&Lcd[0][2], LA_0 + 2, 13); // refrash
 }
 #endif
 
@@ -389,6 +389,8 @@ void lsd_update_work (void) {
             WH2004_string_wr(&sc, LA_2 + 19, 1);
         }
     }
-    WH2004_inst_wr(Cursor_pos[Cursor_point]);  //вернуть курсор на место
-    if (CsuState == STOP) WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
+    /* вернуть курсор на место */
+    WH2004_inst_wr(Cursor_pos[Cursor_point]);
+    if (CsuState == STOP) WH2004_inst_wr(0x0F);
+    /* Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on) */
 }

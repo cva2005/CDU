@@ -45,8 +45,7 @@ static const cfg_t DefaultCfg = {
     0, // unsigned char cdu_dsch_dsb :1;
     AUTOSTART_TIME, // uint16_t time_set;
     AUTOSTART_U, // uint16_t u_set;
-    AUTOSTART_CNT, // uint8_t cnt_set;
-    0 // uint8_t Reserved;
+    AUTOSTART_CNT // uint8_t cnt_set;
 };
 
 void read_cfg (void) {

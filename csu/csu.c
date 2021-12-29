@@ -9,7 +9,15 @@
 #include "key/key.h"
 #include "csu/csu.h"
 
-stime_t AlarmDel, FanTime;
+static inline void check_auto_start (void);
+static inline void csu_control (void);
+static inline void start_cntrl (void);
+static inline void update_led (void);
+static inline void err_check (void);
+static inline void read_tmp (void);
+static void out_off (void);
+
+stime_t LcdRefr, AlarmDel, FanTime;
 static uint8_t ErrT[TCH] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
@@ -20,6 +28,7 @@ unsigned int  dm_loss_cnt = 0;
 unsigned char ERR_Ext = 0, OUT_err_cnt = 0;
 static bool InitF, SatU;
 bool pLim = false, LedPwr;
+bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 unsigned int StbCnt;
 unsigned char Error = 0;
 csu_st CsuState, SetMode = STOP;
@@ -72,44 +81,94 @@ static pid_t Pid_Id = {
 	0.0     /* Xi integral zone */
 };
 
-static inline void start_cntrl (void);
-static void out_off (void);
-
-void Correct_UI (void) {
-    if (PwmStatus == STOP) return;
-    if (!get_time_left(CntrlTime)) {
-        CntrlTime = get_fin_time(CNTRL_T);
-        uint16_t err_i;
-        uint16_t err_u = set_U - get_adc_res(ADC_MU);
-        if (PwmStatus == CHARGE) {
-            err_i = set_I - get_adc_res(ADC_MI);
-        } else { // discharge
-            err_i = i_power_limit(Cfg.P_maxW, set_Id);
-            err_i -= get_adc_res(ADC_DI);
+void csu_drv (void) {
+    if (PwmStatus != STOP && !get_time_left(TickSec)) {
+        TickSec = get_fin_time(SEC(1));
+        CapCalc = false;
+        Tm.s++; // секунды метода
+        Ts.s++; // секунды этапа
+        if (Tm.s > 59) {
+            Tm.m++; // минуты метода
+            Tm.s = 0;
         }
-        if (/*Stg.fld.type == PULSE ||*/ !InitF) {
-            InitF = true;
-            Uerr = (float)err_u;
-            Ierr = (float)err_i;
-        } else {
-            Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
-            Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
+        if (Tm.m > 59) {
+            if (Tm.h < 255) Tm.h++;	//Часы метода
+            Tm.m = 0;
         }
-        if (PwmStatus == CHARGE) {
-            float tmp;
-            if (Uerr <= 0) tmp = Uerr;
-            else tmp = Ierr;
-            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp));
-            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr));
-        } else { // discharge
-            if (SatU) {
-                PWM_I = PwmDuty(pid_r(&Pid_Id,  -Uerr));
-            } else { // !SatU
-                if (Uerr > 0) SatU = true;
-                PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr));
+        if (Ts.s > 59) {
+            Ts.m++; // Минты этапа
+            Ts.s = 0;
+        }
+        if (Ts.m > 59) {
+            Ts.h++;	//Часы этапа
+            Ts.m = 0;
+        }
+    }
+    /* Индикация ошибок для LED */
+    if (Cfg.bf1.LED_ON && CsuState == STOP
+        && !get_time_left(LedPwrTime)) {
+        LedPwrTime = get_fin_time(PWR_TIME);
+        LED_PWR(LedPwr);
+        LedPwr = !LedPwr;
+    }
+    /* FAN control section */
+    if (!get_time_left(FanTime)) {
+        FanTime = get_fin_time(MS(500));
+        read_tmp();
+        if (!Cfg.bf1.FAN_CONTROL) {
+            int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
+            if (t1 > FAN_ON_T || t2 > FAN_ON_T ||
+                (t1 >= -FAN_CND_T && t1 < FAN_CND_T) ||
+                (t2 >= -FAN_CND_T && t2 < FAN_CND_T) ||
+                t1 == ERR_WCODE || t2 == ERR_WCODE) FAN(1);
+            else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(0);
+        }
+    }
+    err_check();
+    if (!Cfg.bf1.LED_ON || rs_active()) csu_control();
+    if (Clb.id.bit.save == 1) {
+        if (!Clb.id.bit.error
+            && (Clb.id.bit.dw_Fin || Clb.id.bit.up_Fin)) {
+            save_clb();
+            Clb.id.byte = 0;
+        }
+    }
+    if (Cfg.bf1.LCD_ON) {
+        if (!rs_active()) { //если подключение прервалось, а значения дисплея не обновлены
+            if (lsd_conn_msg()) {
+                if (Cfg.bf1.DIAG_WIDE) {
+                    csu_stop(STOP);
+                    read_mtd();
+                }
+                lcd_wr_set();
+            }				
+        } else	{ //если подключение появилось, а значения дисплея не обновлены
+            if (!Cfg.bf1.DEBUG_ON && !lsd_conn_msg()) lcd_wr_connect(true);
+        }			
+    }
+    if (!rs_active() || Cfg.bf1.DEBUG_ON) {
+        if (Cfg.bf1.LED_ON)	update_led();
+        if (Cfg.bf1.LCD_ON) {
+            if (!get_time_left(LcdRefr)) {
+                lsd_update_work();
+                if (CsuState == STOP)
+                LcdRefr = get_fin_time(MS(400));
             }
-        }      
-        BreakTime = get_fin_time(SEC(1));
+        }
+        if (CsuState && SelfCtrl) {
+            /* Если идёт заряд или разряд и управление зарядом
+             * осуществляет ЗРМ самостоятельно: проверить
+             * статус этапа (испульсный режим или нет),
+             * в случае необходимости изменить исмпульс */
+            stg_status();
+        }
+        check_key();
+        check_auto_start();
+    }
+    if (ALARM_ON()) {
+        if (!get_time_left(AlarmDel)) {
+            ALARM_OUT(0);
+        }
     }
 }
 
@@ -173,7 +232,7 @@ void calc_cfg (void) {
         }
         Clb.id.byte = 0;
 	}
-    max_pwd_Id = calculate_pwd((max_set_Id + (max_set_Id / 10)), 0);
+    max_pwd_Id = calc_pwd((max_set_Id + (max_set_Id / 10)), 0);
     lsd_clear();
     if (Cfg.bf1.LCD_ON) Init_WH2004(1);
     else Init_WH2004(0);	
@@ -184,7 +243,7 @@ void calc_cfg (void) {
 	}
 }
 
-void Start_CSU (csu_st mode) {
+void csu_start (csu_st mode) {
     unsigned char control_setU = 0;
     err_check();
     if (Error) return;
@@ -216,7 +275,7 @@ void Start_CSU (csu_st mode) {
     BreakTime = get_fin_time(SEC(1));
 }
 
-void Stop_CSU(csu_st mode) {
+void csu_stop (csu_st mode) {
     if (!Error) AutoStr.err_cnt = Cfg.cnt_set;
     Error = 0;
     Stop_PWM(SOFT);
@@ -227,7 +286,25 @@ void Stop_CSU(csu_st mode) {
     else RELAY_ON;
 }
 
-void err_check (void) {
+uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
+    uint32_t u, id;
+    pLim = false;
+    u = get_adc_res(ADC_MU) * Cfg.K_U / D1M;	
+    if (u > 0) {
+        id = (uint64_t)(p * D100M) / u / Cfg.K_Id;
+        if (id < 32768 && id > 0) {
+            if (i > (uint16_t)id) {
+                /* если превышена мощность, то снизить ток
+                 * и установить флаг ограничения мощности */
+                i = id; 
+                pLim = true;
+            }
+        }
+    }
+    return i;
+}
+
+static inline void err_check (void) {
     /* Проверка ошибки по внешнему входу */
     if ((Cfg.bf1.LED_ON==0)&&(Cfg.bf1.EXT_Id==1)) {
     /* индикация не светодиодная и включено управление вншним разрядным модулем */
@@ -314,56 +391,45 @@ void err_check (void) {
     }
 }
 
-void csu_time_drv (void) {
-    /*if (get_time_left(BreakTime)) {
+static inline void csu_control (void) {
+    if (PwmStatus == STOP) return;
+    if (!get_time_left(CntrlTime)) {
+        CntrlTime = get_fin_time(CNTRL_T);
+        uint16_t err_i;
+        uint16_t err_u = set_U - get_adc_res(ADC_MU);
+        if (PwmStatus == CHARGE) {
+            err_i = set_I - get_adc_res(ADC_MI);
+        } else { // discharge
+            err_i = i_pwr_lim(Cfg.P_maxW, set_Id);
+            err_i -= get_adc_res(ADC_DI);
+        }
+        if (/*Stg.fld.type == PULSE ||*/ !InitF) {
+            InitF = true;
+            Uerr = (float)err_u;
+            Ierr = (float)err_i;
+        } else {
+            Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
+            Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
+        }
+        if (PwmStatus == CHARGE) {
+            float tmp;
+            if (Uerr <= 0) tmp = Uerr;
+            else tmp = Ierr;
+            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp));
+            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr));
+        } else { // discharge
+            if (SatU) {
+                PWM_I = PwmDuty(pid_r(&Pid_Id,  -Uerr));
+            } else { // !SatU
+                if (Uerr > 0) SatU = true;
+                PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr));
+            }
+        }      
         BreakTime = get_fin_time(SEC(1));
-    }*/
-    if (PwmStatus != STOP && !get_time_left(TickSec)) {
-        TickSec = get_fin_time(SEC(1));
-        CapCalc = false;
-        Tm.s++; // секунды метода
-        Ts.s++; // секунды этапа
-        if (Tm.s > 59) {
-            Tm.m++; // минуты метода
-            Tm.s = 0;
-        }
-        if (Tm.m > 59) {
-            if (Tm.h < 255) Tm.h++;	//Часы метода
-            Tm.m = 0;
-        }
-        if (Ts.s > 59) {
-            Ts.m++; // Минты этапа
-            Ts.s = 0;
-        }
-        if (Ts.m > 59) {
-            Ts.h++;	//Часы этапа
-            Ts.m = 0;
-        }
-    }
-    /* Индикация ошибок для LED */
-    if (Cfg.bf1.LED_ON && CsuState == STOP && !get_time_left(LedPwrTime)) {
-        LedPwrTime = get_fin_time(PWR_TIME);
-        LED_PWR(LedPwr);
-        LedPwr = !LedPwr;
     }
 }
 
-static inline void start_cntrl (void) {
-    pid_init(&Pid_U);
-    pid_init(&Pid_Ic);
-    pid_init(&Pid_Id);
-    TickSec = get_fin_time(SEC(1));
-    LedPwrTime = get_fin_time(PWR_TIME);
-    CntrlTime = get_fin_time(CNTRL_T);
-}
-
-static void out_off (void) {
-    RELAY_OFF;
-    ALARM_OUT(1);
-    AlarmDel = get_fin_time(SEC(5));
-}
-
-inline void check_auto_start (void) {
+static inline void check_auto_start (void) {
     if (Cfg.bf2.astart) { // включён автостарт
         if (PwmStatus == STOP) { // преобразователь выключен
             if (AutoStr.err_cnt) {
@@ -383,7 +449,40 @@ inline void check_auto_start (void) {
     }
 }
 
-static void read_tmp (void) {
+static inline void update_led (void) {
+    if (Error == ERR_CONNECTION) LED_POL(1);
+    else LED_POL(0);
+    if (CsuState != STOP) LED_PWR(1);
+    if (PwmStatus == CHARGE) {
+        if (I_St) {
+            LED_STI(1);
+            LED_STU(0);
+        } else {
+            LED_STI(0);
+            LED_STU(1);
+        }
+    } else {
+        LED_STI(0);
+        LED_STU(0);
+    }
+}
+
+static inline void start_cntrl (void) {
+    pid_r_init(&Pid_U);
+    pid_r_init(&Pid_Ic);
+    pid_r_init(&Pid_Id);
+    TickSec = get_fin_time(SEC(1));
+    LedPwrTime = get_fin_time(PWR_TIME);
+    CntrlTime = get_fin_time(CNTRL_T);
+}
+
+static void out_off (void) {
+    RELAY_OFF;
+    ALARM_OUT(1);
+    AlarmDel = get_fin_time(SEC(5));
+}
+
+static inline void read_tmp (void) {
     uint8_t err = get_tmp_res(Tmp);
     uint8_t mask = T1_ERROR;
     for (uint8_t i = 0; i < TCH; i++) {
@@ -394,21 +493,6 @@ static void read_tmp (void) {
         mask <<= 1;
     }
     tmp_convert();
-}
-
-void fan_ctrl (void) {
-    if (!get_time_left(FanTime)) {
-        FanTime = get_fin_time(MS(500));
-        read_tmp();
-        if (!Cfg.bf1.FAN_CONTROL) {
-            int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
-            if (t1 > FAN_ON_T || t2 > FAN_ON_T ||
-                (t1 >= -FAN_CND_T && t1 < FAN_CND_T) ||
-                (t2 >= -FAN_CND_T && t2 < FAN_CND_T) ||
-                t1 == ERR_WCODE || t2 == ERR_WCODE) FAN(1);
-            else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(0);
-        }
-    }
 }
 
 #pragma vector=INT1_vect

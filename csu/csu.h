@@ -112,7 +112,7 @@ extern "C" {
 #define FAN_ST ((PINB&0x18)>>3)
 #define FAN(x) ((x)?(PORTB|=(1<<3)):(PORTB&=~(1<<3)))
 
-#define LED_ERR(x) ((x)?(PORTC|=(1<<7)):(PORTC&=~(1<<7)))
+#define LED_ERR(x) x ? (PORTC |= 1 << 7) : (PORTC &= ~(1 << 7))
 #define ALARM_OUT LED_ERR // управление реле сигнализации
 #define ALARM_ON() (PINC7)
 #define LED_ERRinv PORTC^=(1<<7);
@@ -232,18 +232,12 @@ typedef enum {
 //#define DOWN_LIM    100.0f
 
 unsigned char U_align_st (void);
-unsigned int i_power_limit (unsigned int p, unsigned int i);
-void err_check (void);
-void Start_CSU (csu_st mode);
-void Stop_CSU (csu_st mode);
-void Read_temp (void);
-void update_LED (void);
-void Correct_UI (void);
+uint16_t i_pwr_lim (uint16_t p, uint16_t i);
 void Init_ExtInt (void);
+void csu_start (csu_st mode);
+void csu_stop (csu_st mode);
+void csu_drv (void);
 void calc_cfg (void);
-void csu_time_drv (void);
-void inline check_auto_start (void);
-void fan_ctrl (void);
 
 extern uint16_t set_I, set_U, set_Id;
 extern uint8_t change_UI;

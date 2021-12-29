@@ -55,7 +55,7 @@ void soft_start (uint8_t control_out) {
     change_UI = 0;
 }
 
-uint16_t calculate_pwd (uint16_t val, uint8_t limit) {
+uint16_t calc_pwd (uint16_t val, uint8_t limit) {
     int32_t p, k, b;
     k = 1000L * (Clb.setI2 - Clb.setI1) / (Clb.pwm2 - Clb.pwm1);
     b = Clb.pwm1 - (int32_t)Clb.setI1 * 1000L / k;
@@ -69,7 +69,7 @@ uint16_t calculate_pwd (uint16_t val, uint8_t limit) {
 void soft_start_disch (void) {
     Start_PWM_T1(DISCHARGE);
     /* ѕроверка превышени€ общей мощности */
-    PWM_I = calculate_pwd(i_power_limit(Cfg.P_maxW, set_Id), 1);
+    PWM_I = calc_pwd(i_pwr_lim(Cfg.P_maxW, set_Id), 1);
     PWM_U = 0;
     change_UI = 0;
     /* установить флаг дл€ калибровки: проконтролировать калибровку */

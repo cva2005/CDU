@@ -27,7 +27,6 @@ unsigned char Read_ROM_Tmp(unsigned char *Temperature);
 unsigned char CRC8_Tmp(unsigned char data, unsigned char CRC);
 unsigned char Thermometr_Convert_Fin(void);
 unsigned char tmp_convert(void);
-void read_tmp (void);
 
 #ifdef __cplusplus
 }

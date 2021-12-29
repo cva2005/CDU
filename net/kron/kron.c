@@ -122,13 +122,13 @@ static void frame_parse (void) {
 									set_U = preset_U; //установить напряжение
 									if (CsuState != rd.rx_data.cmd) {
 										SelfCtrl = false;
-										Start_CSU((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
+										csu_start((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
 									}
 								}
 							}
 						} else {
 							if (((CsuState | RELAY_EN) != rd.rx_data.cmd) || Error)
-                                Stop_CSU((csu_st)rd.rx_data.cmd);
+                                csu_stop((csu_st)rd.rx_data.cmd);
 						}	
 					}
                     break;
@@ -185,7 +185,7 @@ static void frame_parse (void) {
 					}						
                     break;
                 case ALG_PKT:
-					if (CsuState != 0) Stop_CSU(STOP);
+					if (CsuState != 0) csu_stop(STOP);
                     switch (rd.rx_alg.cmd) {
                     case FIND_CMD:
 						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла

@@ -22,7 +22,7 @@ typedef struct {
 } pid_t;
 
 
-void pid_init (pid_t *S);
+void pid_r_init (pid_t *S);
 float pid_r (pid_t *S, float in);
 
 #ifdef	__cplusplus
