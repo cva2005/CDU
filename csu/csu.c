@@ -13,7 +13,7 @@ static inline void check_auto_start (void);
 static inline void csu_control (void);
 static inline void start_cntrl (void);
 static inline void update_led (void);
-static inline void err_check (void);
+static inline err_t err_check (void);
 static inline void read_tmp (void);
 static void out_off (void);
 
@@ -31,7 +31,7 @@ static bool InitF, SatU;
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 unsigned int StbCnt;
-unsigned char Error = 0;
+err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
 	0.0012, /* Kp; gain factor */
@@ -125,7 +125,11 @@ void csu_drv (void) {
             else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(0);
         }
     }
-    err_check();
+    if (Error = err_check()) {
+        /* если преобразователь не выключен: выключить преобразователь */
+        if (PwmStatus != STOP) Stop_PWM(HARD);
+        if (RELAY_EN) out_off();
+    }
     if (!Cfg.bf1.LED_ON || rs_active()) csu_control();
     if (Clb.id.bit.save == 1) {
         if (!Clb.id.bit.error
@@ -174,7 +178,7 @@ void csu_drv (void) {
 }
 
 void calc_cfg (void) {
-    Error = 0;
+    Error = NO_ERR;
     if (Cfg.maxI > 5000) Cfg.maxI = 5000;
     MaxI = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
     if (Cfg.bf1.GroupM) MaxI = MaxI + I_A(1,0);
@@ -245,15 +249,14 @@ void calc_cfg (void) {
 }
 
 void csu_start (csu_st mode) {
-    unsigned char control_setU = 0;
-    err_check();
-    if (Error) return;
+    if (Error = err_check()) return;
+    bool task_u = false;
     if (CsuState == STOP) {
-         start_cntrl();
+        start_cntrl();
+        if (TaskU && Cfg.bf1.DIAG_WIDE
+            && !!Cfg.bf1.GroupM) task_u = true;
     }
-    if (CsuState == STOP && TaskU) control_setU = 1;
-    else control_setU = 0;
-    if (PwmStatus!=0) {
+    if (PwmStatus != STOP) {
         Stop_PWM(SOFT);
         pLim = false;
     }
@@ -268,7 +271,7 @@ void csu_start (csu_st mode) {
         delay_ms(100);
     }
     if (CsuState == CHARGE) {
-        soft_start(Cfg.bf1.DIAG_WIDE&&control_setU&&(Cfg.bf1.GroupM==0));
+        soft_start(task_u);
     }
     if (CsuState == DISCHARGE) {
         soft_start_disch();	
@@ -278,7 +281,7 @@ void csu_start (csu_st mode) {
 
 void csu_stop (csu_st mode) {
     if (!Error) AutoStr.err_cnt = Cfg.cnt_set;
-    Error = 0;
+    Error = NO_ERR;
     Stop_PWM(SOFT);
     InitF = pLim = false;
     CsuState = STOP;
@@ -305,29 +308,30 @@ uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
     return i;
 }
 
-static inline void err_check (void) {
+static inline err_t err_check (void) {
     /* Проверка ошибки по внешнему входу */
-    if ((Cfg.bf1.LED_ON==0)&&(Cfg.bf1.EXT_Id==1)) {
-    /* индикация не светодиодная и включено управление вншним разрядным модулем */
-        if ((OverTempExt && 1) != (Cfg.bf1.EXTt_pol && 1)) ERR_Ext++;
+    if (Cfg.bf1.LED_ON == 0 && Cfg.bf1.EXT_Id == 1) {
+    /* индикация не светодиодная и включено
+     * управление вншним разрядным модулем */
+        if (OverTempExt != Cfg.bf1.EXTt_pol) ERR_Ext++;
         /* проверка срабатывания внешнего термореле */
         else ERR_Ext = 0;
-        if (ERR_Ext > EXT_ERR_VAL) Error = ERR_OVERTEMP3;
+        if (ERR_Ext > EXT_ERR_VAL) return ERR_OVERTEMP3;
     }
     /* Проверка на обрыв РМ */
 	if (Cfg.dmSlave) {
 		if (Cfg.bf1.DIAG_WIDE && (PwmStatus == DISCHARGE)) {
         /* включена расширеная диагностика */
-            if ((dm_loss_cnt > 0) && (dm_loss_cnt < 10)) {
+            if (dm_loss_cnt > 0 && dm_loss_cnt < 10) {
                 if (get_adc_res(ADC_DI) > Id_A(0,1)) {
-                    if ((TaskU < get_adc_res(ADC_MU)) && !pLim
-                        && (TaskId > (get_adc_res(ADC_DI) << 1))) {
-                        Error = ERR_DM_LOSS;
+                    if (TaskU < get_adc_res(ADC_MU) && !pLim
+                        && TaskId > get_adc_res(ADC_DI) << 1) {
+                        return ERR_DM_LOSS;
                     }
-                    if ((TaskId > (get_adc_res(ADC_DI) + Id_A(0,2))) &&
-                        (PWM_I == max_pwd_Id)) {
+                    if (TaskId > get_adc_res(ADC_DI) + Id_A(0,2) &&
+                        PWM_I == max_pwd_Id) {
                         /* реальный ток в 2 раза меньше заданного */
-                        Error = ERR_DM_LOSS;
+                        return ERR_DM_LOSS;
                     }
                 }
             }
@@ -336,16 +340,16 @@ static inline void err_check (void) {
     /* Проверка на обрыв нагрузки */
     if (Cfg.bf1.I0_SENSE && !Cfg.bf1.GroupM) {
          /* диагностика обрыва нагрузки и блок не в группе */
-        if ((PwmStatus == CHARGE) && TaskI) {
+        if (PwmStatus == CHARGE && TaskI) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
-            if (get_time_left(BreakTime) && (PWM_I > 0)) Error = ERR_NO_AKB;
+            if (get_time_left(BreakTime) && PWM_I > 0) return ERR_NO_AKB;
         }
-        if ((PwmStatus == DISCHARGE) && TaskId) {
-            if ((ADC_DI) >= Id_A(0,1)) {
+        if (PwmStatus == DISCHARGE && TaskId) {
+            if (get_adc_res(ADC_DI) >= Id_A(0,1)) {
             set_break_time:
                 BreakTime = get_fin_time(SEC(1));
             }
-            if (get_time_left(BreakTime) && (PWM_I > 0)) Error = ERR_NO_AKB;
+            if (get_time_left(BreakTime) && (PWM_I > 0)) return ERR_NO_AKB;
         }
     }
     /* Проверка перегрева */
@@ -354,42 +358,32 @@ static inline void err_check (void) {
     } else if (PwmStatus == CHARGE) {
         if ((Tmp[0] > MAX_T1) && (Tmp[0] != ERR_WCODE))
             /* проверка перегрева транзисторов */
-            Error = ERR_OVERTEMP1;
+            return ERR_OVERTEMP1;
         check_over_t2:
         if ((Tmp[1] > MAX_T2ch) && (Tmp[1] != ERR_WCODE))
             /* проверка перегрева выпрямительных диодов */
-        Error = ERR_OVERTEMP2;
+        return ERR_OVERTEMP2;
     }
     /* Проверка полярности подключения АКБ (переполюсовка) */
     if (!Cfg.bf1.GroupM) {
-        if (ADC_O[ADC_MU] < Cfg.B[ADC_MU]) {
-            if ((Cfg.B[ADC_MU] - ADC_O[ADC_MU]) > 300) Error = ERR_CONNECTION;
-            else if (Error == ERR_CONNECTION) Error = 0;
-        } else if (Error == ERR_CONNECTION) Error = 0;
+        if ((Cfg.B[ADC_MU] - ADC_O[ADC_MU]) > 300) return ERR_CONNECTION;
     }
     /*Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя */
     if (Cfg.bf1.DIAG_WIDE) {
         if ((PwmStatus==STOP)&&(Cfg.bf1.GroupM==0)) {
         /* Если преобразователь выключен и блок работает не в группе */
-            if ((get_adc_res(ADC_MU) > U_V(0,8)) &&
-                (get_adc_res(ADC_MUp) < U_V(0,2))) {
+            if (get_adc_res(ADC_MU) > U_V(0,8) &&
+                get_adc_res(ADC_MUp) < U_V(0,2)) {
                 if (OUT_err_cnt < 250) OUT_err_cnt++;
             } else OUT_err_cnt = 0;
             /* если на выходе после реле напряжение есть,
                а до реле напряжения нет, значит КЗ выхода */
-            if (OUT_err_cnt > 2) Error = ERR_OUT;
-            if (!OUT_err_cnt && (Error == ERR_OUT)) Error = 0;
-            /* Если данные конфигурации АЦП неверные значит АЦП неисправен */
-            //if (!ADC_cfg_rd.word || (ADC_cfg_rd.word == ERR_WCODE)) Error = ERR_ADC;
+            if (OUT_err_cnt > 2) return ERR_OUT;
         }
-        if (adc_error()) Error = ERR_ADC; /* не удаётся прочитать значение АЦП */
+        if (adc_error()) return ERR_ADC; /* не удаётся прочитать значение АЦП */
     }
-    if (Overload) Error = ERR_OVERLOAD; /* проверка защиты от перегрузки */
-    if (Error) {
-        /* если преобразователь не выключен: выключить преобразователь */
-        if (PwmStatus != STOP) Stop_PWM(HARD);
-        if (RELAY_EN) out_off();
-    }
+    if (Overload) return ERR_OVERLOAD; /* проверка защиты от перегрузки */
+    return NO_ERR;
 }
 
 static inline void csu_control (void) {
@@ -420,7 +414,7 @@ static inline void csu_control (void) {
             PWM_U = PwmDuty(pid_r(&Pid_U, Uerr));
         } else { // discharge
             if (SatU) {
-                PWM_I = PwmDuty(pid_r(&Pid_Id,  -Uerr));
+                PWM_I = PwmDuty(pid_r(&Pid_Id, -Uerr));
             } else { // !SatU
                 if (Uerr > 0) SatU = true;
                 PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr));

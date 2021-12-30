@@ -78,19 +78,23 @@ extern "C" {
 #define B_PWD_U 27//40
 
 //---------------------------------------------ОШИБКИ-----------------------
-#define	ERR_OVERLOAD		1 //перегрузка тока или напряжения при заряде
-#define	ERR_DISCH_PWR		2 //перегрузка тока или напряжения при разряде
-#define ERR_CONNECTION 		3 //неверное подключение АКБ
-#define ERR_NO_AKB			4 //АКБ не подключен
-#define ERR_OVERTEMP1		5 //перегрев входного каскада
-#define ERR_OVERTEMP2		6 //перегрев выходного каскада
-#define ERR_OVERTEMP3		7 //перегрев внешнего радиатора
-#define ERR_SET				8 //неверно задано напряжение (задано меньше чем на выходе ЗРМ)
-#define ERR_ADC				9 //Неисправность АЦП
-#define ERR_Stg			10 //Неверные параметры этапа
-#define ERR_OUT				12 //Короткое замыкание выхода
-#define ERR_CONNECTION1		13 //неверное подключение АКБ
-#define ERR_DM_LOSS			14 //обрыв разярдного модуля
+typedef enum {
+    NO_ERR            = 0, //перегрузка тока или напряжения при заряде
+    ERR_OVERLOAD      = 1, //перегрузка тока или напряжения при заряде
+    ERR_DISCH_PWR     = 2, //перегрузка тока или напряжения при разряде
+    ERR_CONNECTION    = 3, //неверное подключение АКБ
+    ERR_NO_AKB        = 4, //АКБ не подключен
+    ERR_OVERTEMP1     = 5, //перегрев входного каскада
+    ERR_OVERTEMP2     = 6, //перегрев выходного каскада
+    ERR_OVERTEMP3     = 7, //перегрев внешнего радиатора
+    ERR_SET           = 8, //неверно задано напряжение (задано меньше чем на выходе ЗРМ)
+    ERR_ADC           = 9, //Неисправность АЦП
+    ERR_STG           = 10, //Неверные параметры этапа
+    ERR_OUT           = 12, //Короткое замыкание выхода
+    ERR_CONNECTION1	  = 13, //неверное подключение АКБ
+    ERR_DM_LOSS		  = 14 //обрыв разярдного модуля
+} err_t;
+
 //----------------------------------------------------------------------
 #define TVAL(x)             (x * 16)
 #define MAX_T1              TVAL(86)
@@ -242,7 +246,7 @@ void calc_cfg (void);
 
 extern uint16_t TaskI, TaskU, TaskId;
 extern uint16_t MaxI, MaxId, MaxU;
-extern uint8_t Error;
+extern err_t Error;
 extern bool SelfCtrl, pLim;
 extern uint16_t id_dw_Clb, id_up_Clb;
 extern csu_st CsuState, SetMode;

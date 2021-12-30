@@ -257,7 +257,7 @@ void lcd_update_work (void) {
         case ERR_SET:
             decd_cpy(Lcd[3], "Задано неверное U", 17);
             break;
-        case ERR_Stg:
+        case ERR_STG:
             decd_cpy(Lcd[3], "Этап поврежден", 14);
             break;
         case ERR_OUT:
@@ -410,4 +410,4 @@ static void tc_set (void) {
     memcpy(&Lcd[3][0], "T=", 2);
     memcpy(&Lcd[3][10], "; C=", 4);
 }
-#endif // #if !JTAG_DBGU
+#endif // #ifndef JTAG_DBGU

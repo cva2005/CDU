@@ -177,7 +177,7 @@ void read_stg (unsigned char num) {
         n += StgNum[i];
     }
     n += num;
-    if (eeread_stg(n, &Stg) == false) Error = ERR_Stg;
+    if (eeread_stg(n, &Stg) == false) Error = ERR_STG;
 }
 
 void start_mtd (unsigned char num) {
