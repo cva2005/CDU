@@ -11,9 +11,6 @@ typedef enum {
     DOWN_PRESS  = -1
 } up_dw_t;
 
-void check_key (void);
-void key_power (void);
-
 #define K5          0x78
 #define K4          0xB8
 #define K3          0xD8
@@ -21,6 +18,10 @@ void key_power (void);
 #define K1          0xF0
 #define ALL_OFF     0xF8
 #define KEY_MASK    (PINA & ALL_OFF)
+
+void check_key (void);
+void key_power (void);
+uint8_t cursor_pos (void);
 
 #ifdef __cplusplus
 }

@@ -21,6 +21,7 @@ stime_t LcdRefr, AlarmDel, FanTime;
 static uint8_t ErrT[TCH] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
+int16_t Tmp[TCH];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
 static float Uerr, Ierr;
@@ -84,7 +85,7 @@ static pid_t Pid_Id = {
 void csu_drv (void) {
     if (PwmStatus != STOP && !get_time_left(TickSec)) {
         TickSec = get_fin_time(SEC(1));
-        CapCalc = false;
+        lcd_tick_sec();
         Tm.s++; // секунды метода
         Ts.s++; // секунды этапа
         if (Tm.s > 59) {
@@ -135,7 +136,7 @@ void csu_drv (void) {
     }
     if (Cfg.bf1.LCD_ON) {
         if (!rs_active()) { //если подключение прервалось, а значения дисплея не обновлены
-            if (lsd_conn_msg()) {
+            if (lcd_conn_msg()) {
                 if (Cfg.bf1.DIAG_WIDE) {
                     csu_stop(STOP);
                     read_mtd();
@@ -143,14 +144,14 @@ void csu_drv (void) {
                 lcd_wr_set();
             }				
         } else	{ //если подключение появилось, а значения дисплея не обновлены
-            if (!Cfg.bf1.DEBUG_ON && !lsd_conn_msg()) lcd_wr_connect(true);
+            if (!Cfg.bf1.DEBUG_ON && !lcd_conn_msg()) lcd_wr_connect(true);
         }			
     }
     if (!rs_active() || Cfg.bf1.DEBUG_ON) {
         if (Cfg.bf1.LED_ON)	update_led();
         if (Cfg.bf1.LCD_ON) {
             if (!get_time_left(LcdRefr)) {
-                lsd_update_work();
+                lcd_update_work();
                 if (CsuState == STOP)
                 LcdRefr = get_fin_time(MS(400));
             }
@@ -175,20 +176,20 @@ void csu_drv (void) {
 void calc_cfg (void) {
     Error = 0;
     if (Cfg.maxI > 5000) Cfg.maxI = 5000;
-    max_set_I = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
-    if (Cfg.bf1.GroupM) max_set_I = max_set_I + I_A(1,0);
+    MaxI = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
+    if (Cfg.bf1.GroupM) MaxI = MaxI + I_A(1,0);
     if (Cfg.dmSlave == 0) {
         if (Cfg.maxId > maxId_EXT0) Cfg.maxId = maxId_EXT0;
     } else {
         if (Cfg.maxId > maxId_EXT12) Cfg.maxId = maxId_EXT12;
     }
-    max_set_Id = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
-    if (Cfg.bf1.GroupM) max_set_Id = max_set_Id + I_A(1,0);
+    MaxId = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
+    if (Cfg.bf1.GroupM) MaxId = MaxId + I_A(1,0);
     if (Cfg.maxU > 4000) Cfg.maxU = 4000;
-    max_set_U = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
-    max_pwd_I = (uint32_t)max_set_I * 100UL / K_PWD_I + B_PWD_I;
+    MaxU = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
+    max_pwd_I = (uint32_t)MaxI * 100UL / K_PWD_I + B_PWD_I;
     if (max_pwd_I < 85) max_pwd_I = 85;
-    max_pwd_U = (uint32_t)max_set_U * 100UL / K_PWD_U + B_PWD_U;
+    max_pwd_U = (uint32_t)MaxU * 100UL / K_PWD_U + B_PWD_U;
     if (Cfg.dmSlave > 2) Cfg.dmSlave = 2;
     if (Cfg.dmSlave > 0) Cfg.bf1.EXT_Id = 1;
     else Cfg.bf1.EXT_Id = 0;
@@ -210,7 +211,7 @@ void calc_cfg (void) {
         id_up_Clb = HI_Id_EXT2;
         if (Cfg.P_maxW > 14000) Cfg.P_maxW = 14000;
 	}
-    if (id_up_Clb > max_set_Id) id_up_Clb = max_set_Id >> 1;
+    if (id_up_Clb > MaxId) id_up_Clb = MaxId >> 1;
     if (read_clb() == false) {
         if (Cfg.dmSlave == 0) {
             Clb.pwm1 = PWM1_Id_EXT0;
@@ -232,8 +233,8 @@ void calc_cfg (void) {
         }
         Clb.id.byte = 0;
 	}
-    max_pwd_Id = calc_pwd((max_set_Id + (max_set_Id / 10)), 0);
-    lsd_clear();
+    max_pwd_Id = calc_pwd((MaxId + (MaxId / 10)), 0);
+    lcd_clear();
     if (Cfg.bf1.LCD_ON) Init_WH2004(1);
     else Init_WH2004(0);	
     if (Cfg.bf1.LED_ON) {
@@ -250,7 +251,7 @@ void csu_start (csu_st mode) {
     if (CsuState == STOP) {
          start_cntrl();
     }
-    if (CsuState == STOP && set_U) control_setU = 1;
+    if (CsuState == STOP && TaskU) control_setU = 1;
     else control_setU = 0;
     if (PwmStatus!=0) {
         Stop_PWM(SOFT);
@@ -319,11 +320,11 @@ static inline void err_check (void) {
         /* включена расширеная диагностика */
             if ((dm_loss_cnt > 0) && (dm_loss_cnt < 10)) {
                 if (get_adc_res(ADC_DI) > Id_A(0,1)) {
-                    if ((set_U < get_adc_res(ADC_MU)) && !pLim
-                        && (set_Id > (get_adc_res(ADC_DI) << 1))) {
+                    if ((TaskU < get_adc_res(ADC_MU)) && !pLim
+                        && (TaskId > (get_adc_res(ADC_DI) << 1))) {
                         Error = ERR_DM_LOSS;
                     }
-                    if ((set_Id > (get_adc_res(ADC_DI) + Id_A(0,2))) &&
+                    if ((TaskId > (get_adc_res(ADC_DI) + Id_A(0,2))) &&
                         (PWM_I == max_pwd_Id)) {
                         /* реальный ток в 2 раза меньше заданного */
                         Error = ERR_DM_LOSS;
@@ -335,11 +336,11 @@ static inline void err_check (void) {
     /* Проверка на обрыв нагрузки */
     if (Cfg.bf1.I0_SENSE && !Cfg.bf1.GroupM) {
          /* диагностика обрыва нагрузки и блок не в группе */
-        if ((PwmStatus == CHARGE) && set_I) {
+        if ((PwmStatus == CHARGE) && TaskI) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
             if (get_time_left(BreakTime) && (PWM_I > 0)) Error = ERR_NO_AKB;
         }
-        if ((PwmStatus == DISCHARGE) && set_Id) {
+        if ((PwmStatus == DISCHARGE) && TaskId) {
             if ((ADC_DI) >= Id_A(0,1)) {
             set_break_time:
                 BreakTime = get_fin_time(SEC(1));
@@ -396,11 +397,11 @@ static inline void csu_control (void) {
     if (!get_time_left(CntrlTime)) {
         CntrlTime = get_fin_time(CNTRL_T);
         uint16_t err_i;
-        uint16_t err_u = set_U - get_adc_res(ADC_MU);
+        uint16_t err_u = TaskU - get_adc_res(ADC_MU);
         if (PwmStatus == CHARGE) {
-            err_i = set_I - get_adc_res(ADC_MI);
+            err_i = TaskI - get_adc_res(ADC_MI);
         } else { // discharge
-            err_i = i_pwr_lim(Cfg.P_maxW, set_Id);
+            err_i = i_pwr_lim(Cfg.P_maxW, TaskId);
             err_i -= get_adc_res(ADC_DI);
         }
         if (/*Stg.fld.type == PULSE ||*/ !InitF) {

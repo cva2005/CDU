@@ -11,7 +11,6 @@ unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 unsigned char BuffLen; /* размер буфера при передаче кадра */
 unsigned char RsError; /* регистр ошибки сети RS232/RS485 */
 static char RsTemp; /* регистр временного хранения */
-static char Tmp; /* вспомогательная переменная */
 static bool RxError; /* признак сетевой ошибки */
 unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 signed char RxIpNew; /* указатель хвоста буфера приема */
@@ -105,12 +104,12 @@ void usart_tx_empty(void)
 #pragma type_attribute=__interrupt
 void usart_rx_byte(void)
 {
-    Tmp = UART(UCSR,A); /* сохранить регистр статуса */
+    uint8_t st = UART(UCSR,A); /* сохранить регистр статуса */
     RsTemp = UART(UDR,); /* сохранить принятый байт */
-    if (Tmp & (SHL(UART(FE,)) | SHL(UART(DOR,)))) { /* апп. ошибка FERR/OERR */
+    if (st & (SHL(UART(FE,)) | SHL(UART(DOR,)))) { /* апп. ошибка FERR/OERR */
         RsError = 0x21; /* установить регистр ошибки сети RS485 */
         RxError = true; /* установить флаг ошибки */
-    } else if (Tmp & SHL(UART(PE,))) { /* аппаратная ошибка паритета */
+    } else if (st & SHL(UART(PE,))) { /* аппаратная ошибка паритета */
         RsError = 0x22 /*+ Cfg.RsDataBits*/; /* ошибка паритета */
         RxError = true; /* установить флаг ошибки */
     } else { /* аппаратных ошибок не обнаружено */

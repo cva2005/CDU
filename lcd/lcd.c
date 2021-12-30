@@ -6,15 +6,24 @@
 #include "csu/mtd.h"
 #include "lcd.h"
 
+#ifndef JTAG_DBGU
+static void decd_cpy (char *dst, const char *src, uint8_t n);
+static void uint_to_str (uint16_t n, char *p, uint8_t dig);
+static inline char dprn (unsigned char d);
+static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p);
+static void calc_prm (uint16_t val, uint16_t k, char *p);
+static void calc_tmp (int16_t t, char *p);
+static void calc_time (hms_t *t, char *p);
+static void tc_set (void);
+
 static bool ConMsg;
-bool CapCalc;
+static bool TickSec = false;
 static char Lcd[LN][SL];
 static const uint8_t LADDR[LN] = {LA_0, LA_1, LA_2, LA_3};
-static lcd_st LsdState = IDLE;
+static lcd_st lcdState = IDLE;
 uint16_t AdcOld[4];
-int16_t Tmp[TCH], TmpOld[TCH];
+int16_t TmpOld[TCH];
 static int8_t cOld, sOld;
-unsigned char Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle}, Cursor_point = 0;
 lcd_mode_t LcdMode = TIME_MODE;
 cap_t Cap; // Capacity of Battery
 static const char RuCh[64] = {
@@ -24,111 +33,26 @@ static const char RuCh[64] = {
     0x70,0x63,0xBF,0x79,0xE4,0x78,0xE5,0xC0,0xC1,0xE6,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7
 };
 
-#define TBL_NUM 0xC0
-static void decd_cpy (char *dst, const char *src, uint8_t n) {
-    char ch;
-    while (n--) {
-        ch = *src++;
-        if (ch >= TBL_NUM) *dst = RuCh[ch - TBL_NUM];
-        *dst++ = ch;
+void lcd_tick_sec (void) {
+    TickSec = true;
+}
+
+void lcd_start (void) {
+    if (Cfg.bf1.LCD_ON) {
+        lcd_wr_connect(false);
+        lcd_wr_set();
     }
 }
 
-static void uint_to_str (uint16_t n, char *p, uint8_t dig) {
-    while (dig--) {
-        p[dig] = n % 10 + 0x30;
-        n /= 10;
-    }
-}
-
-bool lsd_conn_msg (void) {
+bool lcd_conn_msg (void) {
     return ConMsg;
 }
 
-static inline char dprn (unsigned char d) {
-    if (d > 9) return ('x');
-    return (d + 0x30);
-}
-
-// ToDo: check time interval!
-static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
-    if (sign != 0) {
-        uint32_t cur = val * k / D10K * 2778UL; //+(uint32_t)b;
-        cur = cur / D100K;
-        Cap.dC += cur * sign;
-        if (Cap.dC > D10K) {
-            Cap.C++;
-            Cap.dC -= D10K;
-        } else if (Cap.dC < -D10K) {
-            Cap.C--;
-            Cap.dC += D10K;
-        }		
-    }
-    if (Cap.C < 0) {
-        p[0] = '-';
-        val = (-1) * Cap.C;	
-    } else {
-        p[0] = '+';
-        val = Cap.C;
-    }
-    uint_to_str(val, &p[1], 4);
-    p[5] = p[4];
-    p[4] = ',';
-}
-
-static void calc_prm (uint16_t val, uint16_t k, char *p) {
-	uint32_t cur = val * k; //+(uint32_t)b;
-    val = (cur % D1M) / 100;
-    cur /= D1M;
-    if (val >= 5) cur++; // mathematical rounding
-    uint_to_str(val, p, 3);
-    p[3] = p[2];
-    p[2] = ',';
-}
-/* Temperature range default 0.0625°C / bit */
-static void calc_tmp (int16_t t, char *p) {
-    if (t == ERR_WCODE) {
-        memcpy(p, "Error", 5);
-        return;
-    }
-    if (t < 0) {
-        p[0]='-';
-        t *= -1;
-    }
-    uint16_t d = t * 5 / 8; // T[°C] * 10
-    if (d > 999) {
-        p[0] = '+';
-        uint_to_str(d, &p[1], 3);
-    } else {
-        uint_to_str(d, p, 4);
-    }
-    p[4] = p[3];
-    p[3] = ',';
-}
-
-static void calc_time (hms_t *t, char *p) {
-    if (t->h < 100 && t->m < 60 && t->s < 60) {
-        uint_to_str (t->h, &p[0], 2);
-        uint_to_str (t->m, &p[3], 2);
-        uint_to_str (t->s, &p[6], 2);
-        p[2] = p[5] = ':';
-    } else {
-        memcpy(p, "--:--:--", 8);
-    }
-}
-
-#if !JTAG_DBGU
-void lsd_clear (void) {
+void lcd_clear (void) {
     memset(Lcd, ' ', sizeof(Lcd));
 }
-#endif
 
-static void tc_set (void) {
-    memcpy(&Lcd[3][0], "T=", 2);
-    memcpy(&Lcd[3][10], "; C=", 4);
-}
-
-void lsd_mode_ch (void) {
+void lcd_mode_ch (void) {
     if (LcdMode == TIME_MODE) {
         memcpy(&Lcd[3][0], "t1=", 3);
         memcpy(&Lcd[3][8], "; t2=", 5);
@@ -146,7 +70,7 @@ void lsd_mode_ch (void) {
 
 void lcd_wr_set (void) {
     ConMsg = false;
-    lsd_clear();
+    lcd_clear();
     memcpy(&Lcd[0][0], "P:", 2);
     decd_cpy(&Lcd[0][15], "Ц= /", 4);
     memcpy(&Lcd[1][0], "I=", 2);
@@ -156,12 +80,11 @@ void lcd_wr_set (void) {
     memcpy(&Lcd[2][7], "B(", 2);
     memcpy(&Lcd[2][13], "B)", 2);
     tc_set();
-    lsd_update_set();
+    lcd_update_set();
 }
 
-#if !JTAG_DBGU
 void lcd_wr_connect (bool pc) {
-    lsd_clear();
+    lcd_clear();
     memcpy(&Lcd[0][5], "KRON GROUP", 10);
     ConMsg = pc;
     if (pc) decd_cpy(Lcd[1], "ПК подключен...", 15);
@@ -175,10 +98,10 @@ void lcd_wr_connect (bool pc) {
 }
 
 #define mt Mtd.fld.end // metod time fields
-void lsd_update_set (void) {
+void lcd_update_set (void) {
     uint8_t i;
     if (!Cfg.bf1.LCD_ON) return;	
-    if (LcdMode == TEMP_MODE) lsd_mode_ch();
+    if (LcdMode == TEMP_MODE) lcd_mode_ch();
     /* отображение названия метода */
     memcpy(&Lcd[0][2], Mtd.fld.name, sizeof(Mtd.fld.name));
     /* отображение номера цикла */
@@ -190,24 +113,23 @@ void lsd_update_set (void) {
     Cap.C = Cap.dC = 0;
     calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &Lcd[3][C_P]);
     /* отображение тока и напряжения */
-    if (SetMode == DISCHARGE) calc_prm(set_Id, Cfg.K_Id, &Lcd[1][Is_P]);
-    else calc_prm(set_I , Cfg.K_I , &Lcd[1][Is_P]);
-    calc_prm(set_U, Cfg.K_U, &Lcd[2][Us_P]);
+    if (SetMode == DISCHARGE) calc_prm(TaskId, Cfg.K_Id, &Lcd[1][Is_P]);
+    else calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
+    calc_prm(TaskU, Cfg.K_U, &Lcd[2][Us_P]);
     for (i = 0; i < LN; i++) WH2004_string_wr(Lcd[i], LADDR[i], SL);
-    WH2004_inst_wr(Cursor_pos[Cursor_point]);
+    WH2004_inst_wr(cursor_pos());
     WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
     AdcOld[ADC_MU] = AdcOld[ADC_MI] = AdcOld[ADC_DI] =
     TmpOld[0] = TmpOld[1] = ERR_WCODE;
     cOld = sOld = UINT8_MAX;
 }
 
-void lsd_stop_msg (void) {
+void lcd_stop_msg (void) {
     decd_cpy(&Lcd[0][2], "Завершено    ", 13);
     WH2004_string_wr(&Lcd[0][2], LA_0 + 2, 13); // refrash
 }
-#endif
 
-void lsd_update_work (void) {
+void lcd_update_work (void) {
     if (Cfg.bf1.LCD_ON == 0) return;
     WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
     /* ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА */
@@ -219,7 +141,7 @@ void lsd_update_work (void) {
             AdcOld[ADC_MI] = adc_res;
             calc_prm(adc_res, Cfg.K_Id, &Lcd[1][I_P+1]);
             WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
-            calc_prm(set_Id , Cfg.K_Id , &Lcd[1][Is_P]);
+            calc_prm(TaskId , Cfg.K_Id , &Lcd[1][Is_P]);
             WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить
         }		
     } else {
@@ -230,7 +152,7 @@ void lsd_update_work (void) {
             calc_prm(adc_res, Cfg.K_I, &Lcd[1][I_P+1]);
             WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
             if (PwmStatus != STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в lcd_wr_set
-                calc_prm(set_I , Cfg.K_I , &Lcd[1][Is_P]);
+                calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
                 WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить	
             }
         }
@@ -243,9 +165,9 @@ void lsd_update_work (void) {
             sOld = sCnt;
         }
     }
-    /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ */
+    /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ & CAPACITY */
     if (PwmStatus != STOP) {
-        if (CapCalc == false) {		
+        if (TickSec == true) {		
             if (PwmStatus == DISCHARGE)
                 calc_cap(-1, get_adc_res(ADC_DI), Cfg.K_Id, &Lcd[3][C_P]);
             else calc_cap(1, get_adc_res(ADC_MI), Cfg.K_I, &Lcd[3][C_P]);
@@ -254,7 +176,7 @@ void lsd_update_work (void) {
                 calc_time(&Tm, &Lcd[3][T_P]);
                 WH2004_string_wr(&Lcd[3][T_P],LA_3+T_P, 8);
             }
-            CapCalc = true;
+            TickSec = false;
         }
     }	
     /* ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ */
@@ -276,7 +198,7 @@ void lsd_update_work (void) {
         AdcOld[ADC_MU] = adc_res;
         calc_prm(adc_res, Cfg.K_U, &Lcd[2][U_P]);
         WH2004_string_wr(&Lcd[2][U_P],LA_2+U_P, 5); //отобразить
-        calc_prm(set_U , Cfg.K_U , &Lcd[2][Us_P]);
+        calc_prm(TaskU , Cfg.K_U , &Lcd[2][Us_P]);
         WH2004_string_wr(&Lcd[2][Us_P],LA_2+Us_P, 4); //отобразить
     }
     /* ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК */
@@ -354,30 +276,30 @@ void lsd_update_work (void) {
         bool change = false;
         char sc;
         if (PwmStatus == STOP) {
-            if (LsdState != IDLE) {
-                LsdState = IDLE;
+            if (lcdState != IDLE) {
+                lcdState = IDLE;
                 sc = ' ';
                 change = true;
             }
         } else {
             if (pLim) {
-                if (LsdState != PLIM) {
-                    LsdState = PLIM;
+                if (lcdState != PLIM) {
+                    lcdState = PLIM;
                     sc = 'P';
                     change = true;
                 }
             } else {
                 if ((I_St && PwmStatus == CHARGE) ||
                     (PwmStatus == DISCHARGE
-                     && (get_adc_res(ADC_MU) > set_U + 5))) {
-                    if (LsdState != CURR) {
-                        LsdState = CURR;
+                     && (get_adc_res(ADC_MU) > TaskU + 5))) {
+                    if (lcdState != CURR) {
+                        lcdState = CURR;
                         sc = 'I';
                         change = true;
                     }
                 } else {
-                    if (LsdState != VOLT) {
-                        LsdState = VOLT;
+                    if (lcdState != VOLT) {
+                        lcdState = VOLT;
                         sc = 'U';
                         change = true;
                     }
@@ -390,7 +312,102 @@ void lsd_update_work (void) {
         }
     }
     /* вернуть курсор на место */
-    WH2004_inst_wr(Cursor_pos[Cursor_point]);
+    WH2004_inst_wr(cursor_pos());
     if (CsuState == STOP) WH2004_inst_wr(0x0F);
     /* Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on) */
 }
+
+#define TBL_NUM 0xC0
+static void decd_cpy (char *dst, const char *src, uint8_t n) {
+    char ch;
+    while (n--) {
+        ch = *src++;
+        if (ch >= TBL_NUM) *dst = RuCh[ch - TBL_NUM];
+        *dst++ = ch;
+    }
+}
+
+static void uint_to_str (uint16_t n, char *p, uint8_t dig) {
+    while (dig--) {
+        p[dig] = n % 10 + 0x30;
+        n /= 10;
+    }
+}
+
+static inline char dprn (unsigned char d) {
+    if (d > 9) return ('x');
+    return (d + 0x30);
+}
+
+// ToDo: check time interval!
+static void calc_cap (int8_t sign, uint16_t val, uint16_t k, char *p) {
+    if (sign != 0) {
+        uint32_t cur = val * k / D10K * 2778UL; //+(uint32_t)b;
+        cur = cur / D100K;
+        Cap.dC += cur * sign;
+        if (Cap.dC > D10K) {
+            Cap.C++;
+            Cap.dC -= D10K;
+        } else if (Cap.dC < -D10K) {
+            Cap.C--;
+            Cap.dC += D10K;
+        }		
+    }
+    if (Cap.C < 0) {
+        p[0] = '-';
+        val = (-1) * Cap.C;	
+    } else {
+        p[0] = '+';
+        val = Cap.C;
+    }
+    uint_to_str(val, &p[1], 4);
+    p[5] = p[4];
+    p[4] = ',';
+}
+
+static void calc_prm (uint16_t val, uint16_t k, char *p) {
+	uint32_t cur = val * k; //+(uint32_t)b;
+    val = (cur % D1M) / 100;
+    cur /= D1M;
+    if (val >= 5) cur++; // mathematical rounding
+    uint_to_str(val, p, 3);
+    p[3] = p[2];
+    p[2] = ',';
+}
+/* Temperature range default 0.0625°C / bit */
+static void calc_tmp (int16_t t, char *p) {
+    if (t == ERR_WCODE) {
+        memcpy(p, "Error", 5);
+        return;
+    }
+    if (t < 0) {
+        p[0]='-';
+        t *= -1;
+    }
+    uint16_t d = t * 5 / 8; // T[°C] * 10
+    if (d > 999) {
+        p[0] = '+';
+        uint_to_str(d, &p[1], 3);
+    } else {
+        uint_to_str(d, p, 4);
+    }
+    p[4] = p[3];
+    p[3] = ',';
+}
+
+static void calc_time (hms_t *t, char *p) {
+    if (t->h < 100 && t->m < 60 && t->s < 60) {
+        uint_to_str (t->h, &p[0], 2);
+        uint_to_str (t->m, &p[3], 2);
+        uint_to_str (t->s, &p[6], 2);
+        p[2] = p[5] = ':';
+    } else {
+        memcpy(p, "--:--:--", 8);
+    }
+}
+
+static void tc_set (void) {
+    memcpy(&Lcd[3][0], "T=", 2);
+    memcpy(&Lcd[3][10], "; C=", 4);
+}
+#endif // #if !JTAG_DBGU

@@ -19,7 +19,7 @@ static rs_pkt_t Buff; /* буфер приема/передачи */
 BUS_STATE KronBusState; /* машина сотояния приема кадра */
 static unsigned char IpBuff; /* указатель данных в буфере приема */
 unsigned char KronIdleCount; /* счетчик интервалов времени */
-static unsigned int preset_I,  preset_Id, preset_U;
+static unsigned int preTaskI,  preTaskId, preTaskU;
 
 static void tx_reply (void);
 static void frame_parse (void);
@@ -84,26 +84,23 @@ static void frame_parse (void) {
                 case DATA_PKT:
 					if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
 						if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //если режим "заряд"
-							if (set_I != rd.rx_data.setI) change_UI = 1;
 							if (rd.rx_data.setI > Cfg.B[ADC_MI])
-								preset_I = rd.rx_data.setI - Cfg.B[ADC_MI];
-							else preset_I = 0;
-							if (preset_I > max_set_I) preset_I = max_set_I;
+								preTaskI = rd.rx_data.setI - Cfg.B[ADC_MI];
+							else preTaskI = 0;
+							if (preTaskI > MaxI) preTaskI = MaxI;
 						}
 						if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //если режим "разряд"
-							if (set_Id != rd.rx_data.setI) change_UI = 1;
 							if (rd.rx_data.setI > Cfg.B[ADC_DI])
-								preset_Id = rd.rx_data.setI - Cfg.B[ADC_DI];
-							else preset_Id = 0;
-							if (preset_Id > max_set_Id) preset_Id = max_set_Id;
+								preTaskId = rd.rx_data.setI - Cfg.B[ADC_DI];
+							else preTaskId = 0;
+							if (preTaskId > MaxId) preTaskId = MaxId;
 						}
 					}
 					if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
-						if (set_U != rd.rx_data.setU) change_UI = 1;
 						if (rd.rx_data.setU > Cfg.B[ADC_MU])
-							preset_U = rd.rx_data.setU - Cfg.B[ADC_MU];
-						else preset_U = 0;
-						if (preset_U > max_set_U) preset_U = max_set_U;
+							preTaskU = rd.rx_data.setU - Cfg.B[ADC_MU];
+						else preTaskU = 0;
+						if (preTaskU > MaxU) preTaskU = MaxU;
 					}
 					if (rx.length > 3) { //если в пакете есть контрольные биты
 						if (Cfg.bf1.FAN_CONTROL) { //Если разрешён контроль выходных реле и вентиляторов
@@ -117,9 +114,9 @@ static void frame_parse (void) {
                               if (rd.rx_data.cmd == 0x03) {
 									key_power();
 								} else {
-									set_I = preset_I; //установить зарядный ток
-									set_Id = preset_Id; //установить разрядный ток
-									set_U = preset_U; //установить напряжение
+									TaskI = preTaskI; //установить зарядный ток
+									TaskId = preTaskId; //установить разрядный ток
+									TaskU = preTaskU; //установить напряжение
 									if (CsuState != rd.rx_data.cmd) {
 										SelfCtrl = false;
 										csu_start((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	

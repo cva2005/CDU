@@ -91,8 +91,8 @@ void create_mtd (unsigned char num);
 uint8_t find_free (void);
 void delete_all_mtd (void);
 
-extern unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
-extern unsigned int max_set_I, max_set_Id, max_set_U;
+extern unsigned int TaskI, TaskId, TaskU, TaskUmemC, TaskUmemD;
+extern unsigned int MaxI, MaxId, MaxU;
 extern uint8_t mCnt, sCnt, cCnt;
 extern uint8_t StgNum[MTD_N];
 extern unsigned int msNum;

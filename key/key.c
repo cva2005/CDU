@@ -6,9 +6,6 @@
 #include "pwm/pwm.h"
 #include "key.h"
 
-static stime_t KeyDel, KeyPress;
-static unsigned char Step = 1;
-
 static inline void key_set (void);
 static void key_up_dw (up_dw_t up_dw);
 static inline void key_power_led (void);
@@ -16,6 +13,14 @@ static inline void key_U_up (void);
 static inline void key_U_dw (void);
 static inline void key_I_up (void);
 static inline void key_I_dw (void);
+
+static stime_t KeyDel, KeyPress;
+static uint8_t Step = 1, Cursor_point = 0;
+static uint8_t Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle};
+
+uint8_t cursor_pos (void) {
+    return Cursor_pos[Cursor_point];
+}
 
 void check_key (void) {
     uint8_t key, mask;
@@ -65,7 +70,7 @@ void key_power (void) {
     } else {
         csu_stop(STOP);
         read_mtd();
-        lsd_update_set();
+        lcd_update_set();
     }
     KeyDel = get_fin_time(MS(800));
 }
@@ -76,7 +81,7 @@ static inline void key_set (void) {
         if (Cursor_point == PR_NUM) Cursor_point = 0;
     } else {
         Cursor_point = 0;
-        lsd_mode_ch();
+        lcd_mode_ch();
     }
     WH2004_inst_wr(Cursor_pos[Cursor_point]);
     KeyDel = get_fin_time(MS(320));
@@ -94,19 +99,19 @@ static void key_up_dw (up_dw_t up_dw) {
             goto set_del_320;
         case pr_I:
             if (SetMode == DISCHARGE) {
-                set_Id += stp;
-                if (set_Id > max_set_Id) set_Id = Id_A(0,2);
-                else if (set_Id < Id_A(0,2)) set_Id = max_set_Id;
+                TaskId += stp;
+                if (TaskId > MaxId) TaskId = Id_A(0,2);
+                else if (TaskId < Id_A(0,2)) TaskId = MaxId;
             } else {
-                set_I += stp;
-                if (set_I > max_set_I) set_I = I_A(0,2);
-                else if (set_I < I_A(0,2)) set_I = max_set_I;
+                TaskI += stp;
+                if (TaskI > MaxI) TaskI = I_A(0,2);
+                else if (TaskI < I_A(0,2)) TaskI = MaxI;
             }
             break;
         case pr_U:
-            set_U += stp;
-            if (set_U > max_set_U) set_U = U_V(0,2);
-            else if (set_U < U_V(0,2)) set_U = max_set_U;
+            TaskU += stp;
+            if (TaskU > MaxU) TaskU = U_V(0,2);
+            else if (TaskU < U_V(0,2)) TaskU = MaxU;
             break;
         case pr_time:
             if (up_dw == UP_PRESS) {
@@ -133,21 +138,21 @@ static void key_up_dw (up_dw_t up_dw) {
         set_del_320:
             KeyDel = get_fin_time(MS(320));
         }
-        lsd_update_set();
+        lcd_update_set();
     } else {
         if (SetMode == DISCHARGE) {
-            set_Id += (int8_t)up_dw;
-            if (set_Id > max_set_Id) set_Id = Id_A(0,2);
-            else if (set_Id < Id_A(0,2)) set_Id = max_set_Id;
+            TaskId += (int8_t)up_dw;
+            if (TaskId > MaxId) TaskId = Id_A(0,2);
+            else if (TaskId < Id_A(0,2)) TaskId = MaxId;
         } else {
             if (I_St) {
-                set_I += (int8_t)up_dw;
-                if (set_I > max_set_I) set_I = I_A(0,2);
-                else if (set_I < I_A(0,2)) set_I = max_set_I;
+                TaskI += (int8_t)up_dw;
+                if (TaskI > MaxI) TaskI = I_A(0,2);
+                else if (TaskI < I_A(0,2)) TaskI = MaxI;
             } else {
-                set_U += (int8_t)up_dw;
-                if (set_U > max_set_U) set_U = U_V(0,2);
-                else if (set_U < U_V(0,2)) set_U = max_set_U;
+                TaskU += (int8_t)up_dw;
+                if (TaskU > MaxU) TaskU = U_V(0,2);
+                else if (TaskU < U_V(0,2)) TaskU = MaxU;
 
             }
         }

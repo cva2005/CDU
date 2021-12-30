@@ -49,26 +49,29 @@ typedef enum {
 //#define pr_r_U 0xDE
 #define pr_cycle 0x8F
 
-void lcd_wr_set(void);
-void lsd_update_work(void);
-#if JTAG_DBGU
-    #define lsd_clear(...)
-    #define lsd_update_set(...)
+#ifdef JTAG_DBGU
+    #define lcd_wr_set(...)
+    #define lcd_clear(...)
+    #define lcd_update_set(...)
     #define lcd_wr_connect(...)
-    #define lsd_stop_msg(...)
+    #define lcd_stop_msg(...)
+    #define lcd_start(...)
+    #define lcd_mode_ch(...)
+    #define lcd_conn_msg(...) true
+    #define lcd_update_work(...)
+    #define lcd_tick_sec(...)
 #else
-    void lsd_clear (void);
-    void lsd_update_set (void);
+    void lcd_wr_set(void);
+    void lcd_clear (void);
+    void lcd_update_set (void);
     void lcd_wr_connect (bool pc);
-    void lsd_stop_msg (void);
+    void lcd_stop_msg (void);
+    void lcd_start (void);
+    void lcd_mode_ch (void);
+    bool lcd_conn_msg (void);
+    void lcd_update_work (void);
+    void lcd_tick_sec (void);
 #endif
-
-void lsd_mode_ch (void);
-bool lsd_conn_msg (void);
-
-extern unsigned char  Cursor_pos[PR_NUM], Cursor_point;
-extern int16_t Tmp[TCH];
-extern bool CapCalc;
 
 #ifdef __cplusplus
 }

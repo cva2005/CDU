@@ -13,8 +13,8 @@ uint8_t fCnt;
 uint8_t StgNum[MTD_N] = {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint16_t msNum = 0;
 bool SaveMtd = false;
-unsigned int set_I, set_Id, set_U, set_UmemC, set_UmemD;
-unsigned int max_set_U, max_set_I, max_set_Id;
+unsigned int TaskI, TaskId, TaskU, TaskUmemC, TaskUmemD;
+unsigned int MaxU, MaxI, MaxId;
 hms_t Tm = {0,0,0}, Ts;
 stime_t PulseStep; //время импульса заряд/разряд при импульсном режиме
 stime_t dUtime; // Время когда не увеличивается U при заряде щелочного АКБ
@@ -68,11 +68,11 @@ void stg_status (void) {
     if (Stg.fld.type == PULSE) { // импульсный режим
         if (!get_time_left(PulseStep)) { // истекло время импульса
             if (CsuState == DISCHARGE) { // сменить на заряд
-                set_U = set_UmemC; // напряжение заряда
+                TaskU = TaskUmemC; // напряжение заряда
                 csu_start(CHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_ch));
             } else {
-                set_U=set_UmemD;
+                TaskU=TaskUmemD;
                 csu_start(DISCHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_dch));
             }
@@ -80,11 +80,10 @@ void stg_status (void) {
     }
     fin_cond(); //проверить условие окончания этапа (если да то fCnt не будет перезагружен)
     if (fCnt == 0) { //условия окончания выполняются и вышло время антидребезга?
-        if ((sCnt+1) < Mtd.fld.NStg) { //в методе есть информация о следующем этапе?
+        if (sCnt + 1 < Mtd.fld.NStg) { //в методе есть информация о следующем этапе?
             sCnt++; // переключиться на следующий этап
             read_stg(sCnt); // прочитать следующий этап
             calc_stg();
-            change_UI = 1;
             switch (Stg.fld.type) {
             case DISCHARGE:
                 if (PwmStatus != DISCHARGE)
@@ -118,25 +117,25 @@ void stg_status (void) {
 /* расчёт параметров метода */
 void calc_mtd (void) {
     SetMode = Stg.fld.type;
-    set_U = (uint16_t)U_adc(Mtd.fld.Um);
-    set_Id = (uint16_t)Id_adc(Mtd.fld.Im);
-    set_I = (uint16_t)I_adc(Mtd.fld.Im);
+    TaskU = (uint16_t)U_adc(Mtd.fld.Um);
+    TaskId = (uint16_t)Id_adc(Mtd.fld.Im);
+    TaskI = (uint16_t)I_adc(Mtd.fld.Im);
     /* Если в методе больше 10 циклов, то ограничить их 10-ю */
     if (Mtd.fld.Cnt > 10) Mtd.fld.Cnt = 10;
 }
 
 /* расчёт параметров этапа */
 void calc_stg(void) {
-    set_I = (uint16_t)I_m(Mtd.fld.Im, Stg.fld.I_ch);
-    if (set_I > max_set_I) set_I = max_set_I;
-    set_Id = (uint16_t)Id_m(Mtd.fld.Im, Stg.fld.I_dch);
-    if (set_Id > max_set_Id) set_Id = max_set_Id;
-    set_UmemC = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_ch);
-    if (set_UmemC > max_set_U) set_UmemC = max_set_U;
-    set_UmemD = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_dch);
-    if (set_UmemD > max_set_U) set_UmemD = max_set_U;
-    if (Stg.fld.type == DISCHARGE) set_U = set_UmemD;
-    else set_U = set_UmemC;
+    TaskI = (uint16_t)I_m(Mtd.fld.Im, Stg.fld.I_ch);
+    if (TaskI > MaxI) TaskI = MaxI;
+    TaskId = (uint16_t)Id_m(Mtd.fld.Im, Stg.fld.I_dch);
+    if (TaskId > MaxId) TaskId = MaxId;
+    TaskUmemC = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_ch);
+    if (TaskUmemC > MaxU) TaskUmemC = MaxU;
+    TaskUmemD = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_dch);
+    if (TaskUmemD > MaxU) TaskUmemD = MaxU;
+    if (Stg.fld.type == DISCHARGE) TaskU = TaskUmemD;
+    else TaskU = TaskUmemC;
     if (Stg.fld.stop_flag.U)
         Fin.U = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.end_U);
     if (Stg.fld.stop_flag.dU)
@@ -186,13 +185,13 @@ void start_mtd (unsigned char num) {
     memset(&Tm, 0, sizeof(Tm));
 	if (num) {
 		//рсчитать значения в вольтах
-		s = set_U * Cfg.K_U;
+		s = TaskU * Cfg.K_U;
 		error_calc = s % 1000000UL;
 		if ((error_calc / 100000UL) > 4) s += 1000000UL; //убрать погрешность
 		Mtd.fld.Um = (uint16_t)((s - error_calc) / 100000UL);
 		//расчитать ток в амперах
-		if (Stg.fld.type == DISCHARGE) s = set_Id * Cfg.K_Id;
-		else s = set_I * Cfg.K_I;
+		if (Stg.fld.type == DISCHARGE) s = TaskId * Cfg.K_Id;
+		else s = TaskI * Cfg.K_I;
 		error_calc = s % 1000000UL;
 		if ((error_calc / 100000UL) > 4) s += 1000000UL; //убрать погрешность
 		Mtd.fld.Im = (uint16_t)((s - error_calc) / 100000UL);
@@ -214,11 +213,11 @@ void start_mtd (unsigned char num) {
 }
 
 void stop_mtd (void) {
-    lsd_update_work();
+    lcd_update_work();
     csu_stop(STOP);
     if (Cfg.bf1.LCD_ON) {
         CsuState = CHARGE;
-        lsd_stop_msg();
+        lcd_stop_msg();
 	}
 }
 

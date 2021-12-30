@@ -6,7 +6,6 @@ extern "C" {
 #define DS1820_H
 #pragma message	("@(#)ds1820.h")
 
-#define TCH             2
 #define READ_ERR_CNT    8
 #define Direction_Wr    (DDRB|=0x03)
 #define Direction_Rd    (DDRB&=0xFC)

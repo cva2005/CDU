@@ -1,9 +1,7 @@
 #pragma message	("@(#)wh2004.c")
-
 #include <system.h>
 #include "wh2004.h"
 #include "csu/csu.h"
-#include "net/usart.h"
 
 #if !JTAG_DBGU
 void Init_WH2004(unsigned char enable)

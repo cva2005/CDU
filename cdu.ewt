@@ -2191,10 +2191,10 @@
     <group>
         <name>lcd</name>
         <file>
-            <name>$PROJ_DIR$\lcd\lcd.h</name>
+            <name>$PROJ_DIR$\lcd\lcd.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\lcd\lsd.c</name>
+            <name>$PROJ_DIR$\lcd\lcd.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\lcd\wh2004.c</name>
@@ -2237,12 +2237,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\net\net_imp.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\usart.c</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\usart.h</name>
         </file>
     </group>
     <group>

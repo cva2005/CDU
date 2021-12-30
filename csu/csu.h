@@ -230,6 +230,7 @@ typedef enum {
 #define PWR_TIME        MS(160) // led power time
 #define CNTRL_T         MS(300) // control dicrete time
 //#define DOWN_LIM    100.0f
+#define TCH             2
 
 unsigned char U_align_st (void);
 uint16_t i_pwr_lim (uint16_t p, uint16_t i);
@@ -239,15 +240,15 @@ void csu_stop (csu_st mode);
 void csu_drv (void);
 void calc_cfg (void);
 
-extern uint16_t set_I, set_U, set_Id;
-extern uint8_t change_UI;
-extern uint16_t max_set_I, max_set_Id, max_set_U;
+extern uint16_t TaskI, TaskU, TaskId;
+extern uint16_t MaxI, MaxId, MaxU;
 extern uint8_t Error;
 extern bool SelfCtrl, pLim;
 extern uint16_t id_dw_Clb, id_up_Clb;
 extern csu_st CsuState, SetMode;
 extern stime_t AlarmDel;
 extern uint16_t ADC_O[];
+extern int16_t Tmp[TCH];
 
 #ifdef __cplusplus
 }

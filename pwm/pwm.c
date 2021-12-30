@@ -50,9 +50,8 @@ static void Start_PWM_T1 (csu_st mode) {
 
 void soft_start (uint8_t control_out) {
     Start_PWM_T1(CHARGE); /* запустить преобразователь */
-    if (control_out && get_adc_res(ADC_MU) > set_U) Error = ERR_SET;
+    if (control_out && get_adc_res(ADC_MU) > TaskU) Error = ERR_SET;
     if (!Error) SD(1);
-    change_UI = 0;
 }
 
 uint16_t calc_pwd (uint16_t val, uint8_t limit) {
@@ -69,9 +68,8 @@ uint16_t calc_pwd (uint16_t val, uint8_t limit) {
 void soft_start_disch (void) {
     Start_PWM_T1(DISCHARGE);
     /* ѕроверка превышени€ общей мощности */
-    PWM_I = calc_pwd(i_pwr_lim(Cfg.P_maxW, set_Id), 1);
+    PWM_I = calc_pwd(i_pwr_lim(Cfg.P_maxW, TaskId), 1);
     PWM_U = 0;
-    change_UI = 0;
     /* установить флаг дл€ калибровки: проконтролировать калибровку */
     Clb.id.bit.control = 1;
 }

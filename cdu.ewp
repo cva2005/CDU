@@ -256,6 +256,7 @@
                     <state>SYS_UART</state>
                     <state>SYS_TRM0</state>
                     <state>UART_DS_MODE</state>
+                    <state>JTAG_DBGU</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -887,7 +888,7 @@
                 </option>
                 <option>
                     <name>ExtraOutputFile</name>
-                    <state></state>
+                    <state>cdu.a90</state>
                 </option>
                 <option>
                     <name>ExtraOutputFormat</name>
@@ -1024,7 +1025,7 @@
                 </option>
                 <option>
                     <name>SecondaryOutputFile</name>
-                    <state></state>
+                    <state>(None for the selected format)</state>
                 </option>
             </data>
         </settings>
@@ -2150,10 +2151,10 @@
     <group>
         <name>lcd</name>
         <file>
-            <name>$PROJ_DIR$\lcd\lcd.h</name>
+            <name>$PROJ_DIR$\lcd\lcd.c</name>
         </file>
         <file>
-            <name>$PROJ_DIR$\lcd\lsd.c</name>
+            <name>$PROJ_DIR$\lcd\lcd.h</name>
         </file>
         <file>
             <name>$PROJ_DIR$\lcd\wh2004.c</name>
@@ -2196,16 +2197,6 @@
         </file>
         <file>
             <name>$PROJ_DIR$\net\net_imp.h</name>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\usart.c</name>
-            <excluded>
-                <configuration>Debug</configuration>
-                <configuration>Release</configuration>
-            </excluded>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\usart.h</name>
         </file>
     </group>
     <group>
