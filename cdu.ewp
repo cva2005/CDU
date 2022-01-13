@@ -914,7 +914,7 @@
                 </option>
                 <option>
                     <name>BufferedTermOutput</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>XcRTLibraryFile</name>
@@ -1003,7 +1003,7 @@
                 </option>
                 <option>
                     <name>DebugInformation</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>XOutOverride</name>
@@ -1011,12 +1011,12 @@
                 </option>
                 <option>
                     <name>OutputFile</name>
-                    <state>cdu.d90</state>
+                    <state>cdu.dbg</state>
                 </option>
                 <option>
                     <name>OutputFormat</name>
                     <version>11</version>
-                    <state>25</state>
+                    <state>12</state>
                 </option>
                 <option>
                     <name>FormatVariant</name>

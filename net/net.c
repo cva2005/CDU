@@ -73,7 +73,7 @@ void start_tx(char first, unsigned char *buff)
 #pragma type_attribute=__interrupt
 void usart_tx_byte(void)
 {
-    if (TxIpBuff == BuffLen) { /* последний байт кадра регистре сдвига */
+    if (TxIpBuff > BuffLen) { /* последний байт кадра регистре сдвига */
         CLR_BIT(UART(UCSR,B), UART(UDRIE,)); /* запреть прерывание UDRE */
         UART(UCSR,A) = SHL(UART(TXC,));   /* сбросим возможный флаг TXC */
         SET_BIT(UART(UCSR,B), UART(TXCIE,)); /* прер. по перед. байта в линию */

@@ -82,129 +82,129 @@ static void frame_parse (void) {
 			if (rx.length > 1) { //если в пакете есть поле типа пакета
                 switch (rx.type) {
                 case DATA_PKT:
-					if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
-						if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //если режим "заряд"
-							if (rd.rx_data.setI > Cfg.B[ADC_MI])
-								preTaskI = rd.rx_data.setI - Cfg.B[ADC_MI];
-							else preTaskI = 0;
-							if (preTaskI > MaxI) preTaskI = MaxI;
-						}
-						if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //если режим "разряд"
-							if (rd.rx_data.setI > Cfg.B[ADC_DI])
-								preTaskId = rd.rx_data.setI - Cfg.B[ADC_DI];
-							else preTaskId = 0;
-							if (preTaskId > MaxId) preTaskId = MaxId;
-						}
-					}
-					if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
-						if (rd.rx_data.setU > Cfg.B[ADC_MU])
-							preTaskU = rd.rx_data.setU - Cfg.B[ADC_MU];
-						else preTaskU = 0;
-						if (preTaskU > MaxU) preTaskU = MaxU;
-					}
-					if (rx.length > 3) { //если в пакете есть контрольные биты
-						if (Cfg.bf1.FAN_CONTROL) { //Если разрешён контроль выходных реле и вентиляторов
-							if (rd.rx_data.control.bit.FAN1_ON) FAN(1);
-							else FAN(0);
-						}
-					}
-					if (rx.length > 2) { //если в пакете данных есть команда
-						if (rd.rx_data.cmd&0x0F) { //Если это команда запуска разряда или заряда
-							if (!(rd.rx_data.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
-                              if (rd.rx_data.cmd == 0x03) {
-									key_power();
-								} else {
-									TaskI = preTaskI; //установить зарядный ток
-									TaskId = preTaskId; //установить разрядный ток
-									TaskU = preTaskU; //установить напряжение
-									if (CsuState != rd.rx_data.cmd) {
-										SelfCtrl = false;
-										csu_start((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
-									}
-								}
-							}
-						} else {
-							if (((CsuState | RELAY_EN) != rd.rx_data.cmd) || Error)
+                    if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
+                        if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //если режим "заряд"
+                            if (rd.rx_data.setI > Cfg.B[ADC_MI])
+                                preTaskI = rd.rx_data.setI - Cfg.B[ADC_MI];
+                            else preTaskI = 0;
+                            if (preTaskI > MaxI) preTaskI = MaxI;
+                        }
+                        if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //если режим "разряд"
+                            if (rd.rx_data.setI > Cfg.B[ADC_DI])
+                                preTaskId = rd.rx_data.setI - Cfg.B[ADC_DI];
+                            else preTaskId = 0;
+                            if (preTaskId > MaxId) preTaskId = MaxId;
+                        }
+                    }
+                    if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
+                        if (rd.rx_data.setU > Cfg.B[ADC_MU])
+                            preTaskU = rd.rx_data.setU - Cfg.B[ADC_MU];
+                        else preTaskU = 0;
+                        if (preTaskU > MaxU) preTaskU = MaxU;
+                    }
+                    if (rx.length > 3) { //если в пакете есть контрольные биты
+                        if (Cfg.bf1.FAN_CONTROL) { //Если разрешён контроль выходных реле и вентиляторов
+                            if (rd.rx_data.control.bit.FAN1_ON) FAN(1);
+                            else FAN(0);
+                        }
+                    }
+                    if (rx.length > 2) { //если в пакете данных есть команда
+                        if (rd.rx_data.cmd&0x0F) { //Если это команда запуска разряда или заряда
+                            if (!(rd.rx_data.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
+                                if (rd.rx_data.cmd == 0x03) {
+                                    key_power();
+                                } else {
+                                    TaskI = preTaskI; //установить зарядный ток
+                                    TaskId = preTaskId; //установить разрядный ток
+                                    TaskU = preTaskU; //установить напряжение
+                                    if (CsuState != rd.rx_data.cmd) {
+                                        SelfCtrl = false;
+                                        csu_start((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
+                                    }
+                                }
+                            }
+                        } else {
+                            if (((CsuState | RELAY_EN) != rd.rx_data.cmd) || Error)
                                 csu_stop((csu_st)rd.rx_data.cmd);
-						}	
-					}
+                        }	
+                    }
                     break;
                 case USER_CFG:
-					if (rx.length >= 12) { //если поле данных конфигурирования не пустое
-						if (rd.rx_usr.cmd.bit.ADR_SET) {
-							if ((rd.rx_usr.Adress!=0)&&(rd.rx_usr.Adress!=0xFF)) 
-								Cfg.addr = rd.rx_usr.Adress;	
-						}
-						Cfg.K_I = rd.rx_usr.K_I;
-						Cfg.K_U = rd.rx_usr.K_U;
-						Cfg.K_Ip = rd.rx_usr.K_Ip;
-						Cfg.K_Id = rd.rx_usr.K_Id;
-						if (rx.length >= 20) {				
-							Cfg.B[ADC_MI] = rd.rx_usr.B_I;		
-							Cfg.B[ADC_MU] = rd.rx_usr.B_U;
-							Cfg.B[ADC_MUp] = rd.rx_usr.B_Ip;
-							Cfg.B[ADC_DI] = rd.rx_usr.B_Id;
-						}
-						calc_cfg();		
-						if (rd.rx_usr.cmd.bit.EEPROM) save_cfg();
-					}
+                    if (rx.length >= 12) { //если поле данных конфигурирования не пустое
+                        if (rd.rx_usr.cmd.bit.ADR_SET) {
+                            if ((rd.rx_usr.Adress!=0)&&(rd.rx_usr.Adress!=0xFF)) 
+                                Cfg.addr = rd.rx_usr.Adress;	
+                        }
+                        Cfg.K_I = rd.rx_usr.K_I;
+                        Cfg.K_U = rd.rx_usr.K_U;
+                        Cfg.K_Ip = rd.rx_usr.K_Ip;
+                        Cfg.K_Id = rd.rx_usr.K_Id;
+                        if (rx.length >= 20) {				
+                            Cfg.B[ADC_MI] = rd.rx_usr.B_I;		
+                            Cfg.B[ADC_MU] = rd.rx_usr.B_U;
+                            Cfg.B[ADC_MUp] = rd.rx_usr.B_Ip;
+                            Cfg.B[ADC_DI] = rd.rx_usr.B_Id;
+                        }
+                        calc_cfg();		
+                        if (rd.rx_usr.cmd.bit.EEPROM) save_cfg();
+                    }
                     break;
                 case SYS_CFG:
-					if (rx.length >= 12) { //если поле данных конфигурирования не пустое
-						rd.rx_sys.mode.bit.RELAY_MODE = 1;
-						rd.rx_sys.cmd.bit.TE_DATA = 0;	
-						((uint8_t *)&Cfg.bf1)[0] = rd.rx_sys.cmd.byte;
-						((uint8_t *)&Cfg.bf1)[1] = rd.rx_sys.mode.byte;
-						/* Защита от одновременного включения LCD и LED (LCD Приоритет) */
+                    if (rx.length >= 12) { //если поле данных конфигурирования не пустое
+                        rd.rx_sys.mode.bit.RELAY_MODE = 1;
+                        rd.rx_sys.cmd.bit.TE_DATA = 0;	
+                        ((uint8_t *)&Cfg.bf1)[0] = rd.rx_sys.cmd.byte;
+                        ((uint8_t *)&Cfg.bf1)[1] = rd.rx_sys.mode.byte;
+                        /* Защита от одновременного включения LCD и LED (LCD Приоритет) */
                         if (Cfg.bf1.LCD_ON) Cfg.bf1.LED_ON = 0;
-						Cfg.maxU = rd.rx_sys.maxU;
-						Cfg.maxI = rd.rx_sys.maxI;
-						Cfg.maxId = rd.rx_sys.maxId;
-						Cfg.P_maxW = rd.rx_sys.maxPd;
-						if (rx.length >= 13) //Если есть данные о количестве РМ
-							Cfg.dmSlave = rd.rx_sys.dm_cnt;
-						if (rx.length >= 17) //если есть поле дополнительной конфигурации
-							*((uint16_t *)&Cfg.bf2) = rd.rx_sys.cfg;	
-						if (rx.length >= 22) { //если есть информация об автозапуске
-							Cfg.cnt_set = rd.rx_sys.autostart_try;
-							Cfg.u_set = rd.rx_sys.autostart_u;
-							Cfg.time_set = rd.rx_sys.restart_timout;
-						}
-						calc_cfg();
-						if (rd.rx_sys.cmd.bit.EEPROM) save_cfg();
-					}
+                        Cfg.maxU = rd.rx_sys.maxU;
+                        Cfg.maxI = rd.rx_sys.maxI;
+                        Cfg.maxId = rd.rx_sys.maxId;
+                        Cfg.P_maxW = rd.rx_sys.maxPd;
+                        if (rx.length >= 13) //Если есть данные о количестве РМ
+                            Cfg.dmSlave = rd.rx_sys.dm_cnt;
+                        if (rx.length >= 17) //если есть поле дополнительной конфигурации
+                            *((uint16_t *)&Cfg.bf2) = rd.rx_sys.cfg;	
+                        if (rx.length >= 22) { //если есть информация об автозапуске
+                            Cfg.cnt_set = rd.rx_sys.autostart_try;
+                            Cfg.u_set = rd.rx_sys.autostart_u;
+                            Cfg.time_set = rd.rx_sys.restart_timout;
+                        }
+                        calc_cfg();
+                        if (rd.rx_sys.cmd.bit.EEPROM) save_cfg();
+                    }
                     break;
                 case VER_PKT:
-					if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
-						if (rd.rx_ver.cmd.bit.EEPROM!=0)
-							save_num(&rd.rx_ver.number[0]);
-						if (Cfg.bf1.LCD_ON) lcd_wr_connect(true);
-					}						
+                    if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
+                        if (rd.rx_ver.cmd.bit.EEPROM!=0)
+                            save_num(&rd.rx_ver.number[0]);
+                        if (Cfg.bf1.LCD_ON) lcd_wr_connect(true);
+                    }						
                     break;
                 case ALG_PKT:
-					if (CsuState != 0) csu_stop(STOP);
+                    if (CsuState != 0) csu_stop(STOP);
                     switch (rd.rx_alg.cmd) {
                     case FIND_CMD:
-						mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
-						for (cnt = 0; cnt < MTD_N; cnt++) StgNum[cnt] = 0;
-						msNum = find_free();
+                        mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
+                        for (cnt = 0; cnt < MTD_N; cnt++) StgNum[cnt] = 0;
+                        msNum = find_free();
                         break;
                     case DEL_CMD:
-						delete_all_mtd();
-						msNum = 0;
+                        delete_all_mtd();
+                        msNum = 0;
                         break;
                     case SAVE_CMD:
-						if (msNum < MS_N) {
-							save_alg(msNum, &rd.rx_alg.data[0]);
-							msNum++;
-						}
+                        if (msNum < MS_N) {
+                            save_alg(msNum, &rd.rx_alg.data[0]);
+                            msNum++;
+                        }
                         break;
                     case RST_CMD:
                         msNum = 0;
                     }
                     break;
                 case EEPR_PKT:
-					msNum = 0;
+                    msNum = 0;
                     break;
                 default:
                     /* Если нет поля с типом пакета (пакет нулевой длины),

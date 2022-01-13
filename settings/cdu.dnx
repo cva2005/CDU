@@ -16,12 +16,18 @@
         <ShowSource>1</ShowSource>
     </Trace1>
     <DebugChecksum>
-        <Checksum>2069363005</Checksum>
+        <Checksum>4287656076</Checksum>
     </DebugChecksum>
     <SfrWindow>
         <Show>1 1</Show>
         <Sort>4 0</Sort>
     </SfrWindow>
+    <CallStack>
+        <ShowArgs>0</ShowArgs>
+    </CallStack>
+    <Disassembly>
+        <MixedMode>1</MixedMode>
+    </Disassembly>
     <DataLog>
         <LogEnabled>0</LogEnabled>
         <GraphEnabled>0</GraphEnabled>
@@ -32,8 +38,19 @@
     <Breakpoints2>
         <Count>0</Count>
     </Breakpoints2>
+    <TermIOLog>
+        <LoggingEnabled>_ 0</LoggingEnabled>
+        <LogFile>_ ""</LogFile>
+    </TermIOLog>
+    <LogFile>
+        <LoggingEnabled>_ 0</LoggingEnabled>
+        <LogFile>_ ""</LogFile>
+        <Category>_ 0</Category>
+    </LogFile>
     <Breakpoints>
-        <Count>0</Count>
+        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\net\net.c}.96.5" 1 0 0 0 "" 0 ""</Bp0>
+        <Bp1>_ "STD_CODE" "{$PROJ_DIR$\net\kron\kron.c}.64.2" 1 0 0 0 "" 0 ""</Bp1>
+        <Count>2</Count>
     </Breakpoints>
     <Aliases>
         <Count>0</Count>
