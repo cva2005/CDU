@@ -2157,15 +2157,6 @@
     </configuration>
     <group>
         <name>csu</name>
-        <group>
-            <name>ee</name>
-            <file>
-                <name>$PROJ_DIR$\ee\eeprom.c</name>
-            </file>
-            <file>
-                <name>$PROJ_DIR$\ee\eeprom.h</name>
-            </file>
-        </group>
         <file>
             <name>$PROJ_DIR$\csu\csu.c</name>
         </file>

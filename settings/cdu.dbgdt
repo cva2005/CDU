@@ -674,7 +674,7 @@
                     <item>Cfg</item>
                     <item>BuffLen</item>
                     <item>TxIpBuff</item>
-                    <item></item>
+                    <item />
                 </expressions>
                 <col-names>
                     <item>Expression</item>

@@ -7,7 +7,7 @@ extern "C" {
 #pragma message	("@(#)stime.h")
 
 /*
- * Системное время
+ * РЎРёСЃС‚РµРјРЅРѕРµ РІСЂРµРјСЏ
  */
 
 #include "system.h"
@@ -16,25 +16,25 @@ extern "C" {
 #define MICROSEC    1000000UL
 #define NANOSEC     1000000000UL
 
-/* Частота осцилятора, Hz */
+/* Р§Р°СЃС‚РѕС‚Р° РѕСЃС†РёР»СЏС‚РѕСЂР°, Hz */
 #ifdef INT_FREQ
 #define F_OSC_HZ    8000000UL
 #else
 #define F_OSC_HZ    16000000UL
 #endif /* INT_FREQ */
 
-/* Тактовая частота CPU, Hz */
+/* РўР°РєС‚РѕРІР°СЏ С‡Р°СЃС‚РѕС‚Р° CPU, Hz */
 #define F_CPU_HZ    F_OSC_HZ
 
-/* Период системного таймера, мс */
+/* РџРµСЂРёРѕРґ СЃРёСЃС‚РµРјРЅРѕРіРѕ С‚Р°Р№РјРµСЂР°, РјСЃ */
 #define SYS_PRD_MS  10
-/* Частота следования прерываний системного таймера, Hz */
+/* Р§Р°СЃС‚РѕС‚Р° СЃР»РµРґРѕРІР°РЅРёСЏ РїСЂРµСЂС‹РІР°РЅРёР№ СЃРёСЃС‚РµРјРЅРѕРіРѕ С‚Р°Р№РјРµСЂР°, Hz */
 #define F_SYS_HZ    100
 
 #define SYS_TMR_PRE 1024
 
 /*
- * Макроподстановка для 8-битного системного таймера.
+ * РњР°РєСЂРѕРїРѕРґСЃС‚Р°РЅРѕРІРєР° РґР»СЏ 8-Р±РёС‚РЅРѕРіРѕ СЃРёСЃС‚РµРјРЅРѕРіРѕ С‚Р°Р№РјРµСЂР°.
  */
 #ifdef SYS_TRM0
 #define SYSTRM(P1,P2) P1##0##P2
@@ -79,40 +79,40 @@ stime_t get_fin_time(uint32_t delay);
 uint32_t get_time_left(stime_t stime);
 uint32_t get_interval(uint32_t run);
 
-/* Период системного таймера, CPU Cycles */
+/* РџРµСЂРёРѕРґ СЃРёСЃС‚РµРјРЅРѕРіРѕ С‚Р°Р№РјРµСЂР°, CPU Cycles */
 #define SYS_PRD (((F_CPU_HZ / SYS_TMR_PRE) / F_SYS_HZ) - 1)
 
 #define MS(x)   x > SYS_PRD_MS ? ((x + (SYS_PRD_MS / 2)) / SYS_PRD_MS) : 1
 #define SEC(x)  x * (1000 / SYS_PRD_MS)
 
-/* настройка и запуск системного таймера */
+/* РЅР°СЃС‚СЂРѕР№РєР° Рё Р·Р°РїСѓСЃРє СЃРёСЃС‚РµРјРЅРѕРіРѕ С‚Р°Р№РјРµСЂР° */
 #define SYS_TMR_ON()\
 {\
-    SYSTRM(TCNT,) = 0; /* установить счетный регистр */\
-    SYSTRM(OCR,) = SYS_PRD; /* установить регистр сравнения/сброса */\
-    /* запустить таймер (СTС Mode, prescaling) */\
+    SYSTRM(TCNT,) = 0; /* СѓСЃС‚Р°РЅРѕРІРёС‚СЊ СЃС‡РµС‚РЅС‹Р№ СЂРµРіРёСЃС‚СЂ */\
+    SYSTRM(OCR,) = SYS_PRD; /* СѓСЃС‚Р°РЅРѕРІРёС‚СЊ СЂРµРіРёСЃС‚СЂ СЃСЂР°РІРЅРµРЅРёСЏ/СЃР±СЂРѕСЃР° */\
+    /* Р·Р°РїСѓСЃС‚РёС‚СЊ С‚Р°Р№РјРµСЂ (РЎTРЎ Mode, prescaling) */\
     SYSTRM(TCCR,) = SHL(SYSTRM(WGM,1)) | CS_VAL << SYSTRM(CS,0);\
-    /* разрешить прерывание OCIEnA */\
+    /* СЂР°Р·СЂРµС€РёС‚СЊ РїСЂРµСЂС‹РІР°РЅРёРµ OCIEnA */\
     SET_BIT(TIMSK, SYSTRM(OCIE,));\
 }
 
-extern uint32_t stime; /* системное время, 100 HZ */
+extern uint32_t stime; /* СЃРёСЃС‚РµРјРЅРѕРµ РІСЂРµРјСЏ, 100 HZ */
 
 #define get_stime(cur_time)\
 {\
-    /* запретить прерывание OCn */\
+    /* Р·Р°РїСЂРµС‚РёС‚СЊ РїСЂРµСЂС‹РІР°РЅРёРµ OCn */\
     CLR_BIT(TIMSK, SYSTRM(OCIE,));\
     cur_time = stime;\
-    /* разрешить прерывание OCn */\
+    /* СЂР°Р·СЂРµС€РёС‚СЊ РїСЂРµСЂС‹РІР°РЅРёРµ OCn */\
     SET_BIT(TIMSK, SYSTRM(OCIE,));\
 }
 
 #define set_stime(new_time)\
 {\
-    /* запретить прерывание OCn */\
+    /* Р·Р°РїСЂРµС‚РёС‚СЊ РїСЂРµСЂС‹РІР°РЅРёРµ OCn */\
     CLR_BIT(TIMSK, SYSTRM(OCIE,));\
     stime = new_time;\
-    /* разрешить прерывание OCn */\
+    /* СЂР°Р·СЂРµС€РёС‚СЊ РїСЂРµСЂС‹РІР°РЅРёРµ OCn */\
     SET_BIT(TIMSK, SYSTRM(OCIE,));\
 }
 
@@ -125,8 +125,8 @@ bool run_time(uint32_t start, uint32_t delta);
 
 #define delay_ns {asm("nop"); asm("nop"); asm("nop"); asm("nop");}
 /*
- * Задержка с микросекундным интервалом.
- * Зависит от количества операций в ассемблерном цикле!
+ * Р—Р°РґРµСЂР¶РєР° СЃ РјРёРєСЂРѕСЃРµРєСѓРЅРґРЅС‹Рј РёРЅС‚РµСЂРІР°Р»РѕРј.
+ * Р—Р°РІРёСЃРёС‚ РѕС‚ РєРѕР»РёС‡РµСЃС‚РІР° РѕРїРµСЂР°С†РёР№ РІ Р°СЃСЃРµРјР±Р»РµСЂРЅРѕРј С†РёРєР»Рµ!
  */
 #define ASM_CYCLE_LEN   7
 #define delay_us(t_us)\

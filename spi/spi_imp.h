@@ -7,10 +7,10 @@ extern "C" {
 #endif
 
 /*
- * Драйвер SPI Master
+ * Р”СЂР°Р№РІРµСЂ SPI Master
  */
 
-/* линии интерфейса SPI */
+/* Р»РёРЅРёРё РёРЅС‚РµСЂС„РµР№СЃР° SPI */
 #define SPI_PORT    B
 #define _SS         4
 #define SCK         7

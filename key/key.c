@@ -31,20 +31,20 @@ void check_key (void) {
         for (uint8_t cnt = 0; cnt < 32; cnt++) { // stable cycle
             if (key != (KEY_MASK | mask)) goto no_press;
         }
-        if (!get_time_left(KeyDel)) { //åñëè ðàçðåøåíà îáðàáîòêà êíîïîê
+        if (!get_time_left(KeyDel)) { //ÐµÑÐ»Ð¸ Ñ€Ð°Ð·Ñ€ÐµÑˆÐµÐ½Ð° Ð¾Ð±Ñ€Ð°Ð±Ð¾Ñ‚ÐºÐ° ÐºÐ½Ð¾Ð¿Ð¾Ðº
             if (Cfg.bf1.LCD_ON) {
-                if (!get_time_left(KeyPress)) { // êëàâèøó óäåðæèâàëè íàæàòîé
+                if (!get_time_left(KeyPress)) { // ÐºÐ»Ð°Ð²Ð¸ÑˆÑƒ ÑƒÐ´ÐµÑ€Ð¶Ð¸Ð²Ð°Ð»Ð¸ Ð½Ð°Ð¶Ð°Ñ‚Ð¾Ð¹
                     KeyPress = get_fin_time(MS(3200));
                     if (Step == 1) Step = 10;
                     else Step = 20;
                 }
-                if (key == K5) key_power(); // êíîïêà Ñòàðò/Ñòîï
-                if (key == K4) key_set(); // êíîïêà Set
-                if (key == K3) key_up_dw(UP_PRESS); // êíîïêà ââåðõ
-                if (key == K2) key_up_dw(DOWN_PRESS); // êíîïêà âíèç
+                if (key == K5) key_power(); // ÐºÐ½Ð¾Ð¿ÐºÐ° Ð¡Ñ‚Ð°Ñ€Ñ‚/Ð¡Ñ‚Ð¾Ð¿
+                if (key == K4) key_set(); // ÐºÐ½Ð¾Ð¿ÐºÐ° Set
+                if (key == K3) key_up_dw(UP_PRESS); // ÐºÐ½Ð¾Ð¿ÐºÐ° Ð²Ð²ÐµÑ€Ñ…
+                if (key == K2) key_up_dw(DOWN_PRESS); // ÐºÐ½Ð¾Ð¿ÐºÐ° Ð²Ð½Ð¸Ð·
             }
             if (Cfg.bf1.LED_ON) {
-                if (!get_time_left(KeyPress)) { // êëàâèøó óäåðæèâàëè íàæàòîé
+                if (!get_time_left(KeyPress)) { // ÐºÐ»Ð°Ð²Ð¸ÑˆÑƒ ÑƒÐ´ÐµÑ€Ð¶Ð¸Ð²Ð°Ð»Ð¸ Ð½Ð°Ð¶Ð°Ñ‚Ð¾Ð¹
                     KeyPress = get_fin_time(MS(1600));
                     if (Step == 1) Step = 5;
                     else Step = 10;

@@ -33,23 +33,23 @@ void Stop_PWM (bool soft) {
     PWM_U = PWM_I = 0;
     ICR1 = TCNT1 = 0;
     delay_ms(10); // ToDo: remove static delay!
-    PwmStatus = STOP; //установить признак что PWM не работает
-    PWM_set = 0; //Установить признак что значения тока и напряжение не застабилизированы
+    PwmStatus = STOP; //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРёР·РЅР°Рє С‡С‚Рѕ PWM РЅРµ СЂР°Р±РѕС‚Р°РµС‚
+    PWM_set = 0; //РЈСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРёР·РЅР°Рє С‡С‚Рѕ Р·РЅР°С‡РµРЅРёСЏ С‚РѕРєР° Рё РЅР°РїСЂСЏР¶РµРЅРёРµ РЅРµ Р·Р°СЃС‚Р°Р±РёР»РёР·РёСЂРѕРІР°РЅС‹
 }
 
 static void Start_PWM_T1 (csu_st mode) {
     if (PwmStatus != STOP) Stop_PWM(HARD);
-    ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
-    PWM_U = PWM_U_NULL; //Задать ширину импульса для канала А
-    PWM_I = PWM_I_NULL; //Задать ширину импульса для канала Б
-    TCCR1A = 1 << COM1B1 | 1 << WGM11; // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
-    if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
-    TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,режим FAST PWM:ICR1	
-    PwmStatus = mode; //установить признак что PWM работает в режиме заряда
+    ICR1 = MAX_CK; //РјР°РєСЃ. Р·РЅР°С‡РµРЅРёРµ СЃС‡С‘С‚С‡РёРєР° РґР»СЏ СЂРµР¶РёРјР° PWM Frecuency Correct:ICR1;	 
+    PWM_U = PWM_U_NULL; //Р—Р°РґР°С‚СЊ С€РёСЂРёРЅСѓ РёРјРїСѓР»СЊСЃР° РґР»СЏ РєР°РЅР°Р»Р° Рђ
+    PWM_I = PWM_I_NULL; //Р—Р°РґР°С‚СЊ С€РёСЂРёРЅСѓ РёРјРїСѓР»СЊСЃР° РґР»СЏ РєР°РЅР°Р»Р° Р‘
+    TCCR1A = 1 << COM1B1 | 1 << WGM11; // OC1A РѕС‚РєР»СЋС‡РµРЅ , OC1B РёРЅРІРµСЂСЃРЅС‹Р№, СЂРµР¶РёРј FAST PWM:ICR1.
+    if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A РёРЅРІРµСЂСЃРЅС‹Р№
+    TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,СЂРµР¶РёРј FAST PWM:ICR1	
+    PwmStatus = mode; //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РїСЂРёР·РЅР°Рє С‡С‚Рѕ PWM СЂР°Р±РѕС‚Р°РµС‚ РІ СЂРµР¶РёРјРµ Р·Р°СЂСЏРґР°
 }
 
 void soft_start (uint8_t control_out) {
-    Start_PWM_T1(CHARGE); /* запустить преобразователь */
+    Start_PWM_T1(CHARGE); /* Р·Р°РїСѓСЃС‚РёС‚СЊ РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚РµР»СЊ */
     if (control_out && get_adc_res(ADC_MU) > TaskU) Error = ERR_SET;
     if (!Error) SD(1);
 }
@@ -67,9 +67,9 @@ uint16_t calc_pwd (uint16_t val, uint8_t limit) {
 
 void soft_start_disch (void) {
     Start_PWM_T1(DISCHARGE);
-    /* Проверка превышения общей мощности */
+    /* РџСЂРѕРІРµСЂРєР° РїСЂРµРІС‹С€РµРЅРёСЏ РѕР±С‰РµР№ РјРѕС‰РЅРѕСЃС‚Рё */
     PWM_I = calc_pwd(i_pwr_lim(Cfg.P_maxW, TaskId), 1);
     PWM_U = 0;
-    /* установить флаг для калибровки: проконтролировать калибровку */
+    /* СѓСЃС‚Р°РЅРѕРІРёС‚СЊ С„Р»Р°Рі РґР»СЏ РєР°Р»РёР±СЂРѕРІРєРё: РїСЂРѕРєРѕРЅС‚СЂРѕР»РёСЂРѕРІР°С‚СЊ РєР°Р»РёР±СЂРѕРІРєСѓ */
     Clb.id.bit.control = 1;
 }

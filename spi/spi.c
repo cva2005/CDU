@@ -1,5 +1,5 @@
 /*
- * Драйвер SPI Master
+ * Р”СЂР°Р№РІРµСЂ SPI Master
  */
 #pragma message	("@(#)spi.c")
 #include <system.h>
@@ -9,7 +9,7 @@
 static uint8_t spi_buf[BLEN];
 static uint8_t wr_ptr, rd_ptr;
 static uint8_t wr_len, rd_len;
-static cs_func_t cs_func; /* функция выбора ведомого */
+static cs_func_t cs_func; /* С„СѓРЅРєС†РёСЏ РІС‹Р±РѕСЂР° РІРµРґРѕРјРѕРіРѕ */
 
 void spi_init(void) {
     SET_PIN(SPI_PORT, SCK);

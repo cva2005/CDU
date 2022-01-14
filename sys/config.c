@@ -1,10 +1,10 @@
 #pragma message	("@(#)config.c")
 #include <sys/config.h>
 
-/* EEPROM параметры конфигураци */
+/* EEPROM РїР°СЂР°РјРµС‚СЂС‹ РєРѕРЅС„РёРіСѓСЂР°С†Рё */
 static __eeprom edata_t eData;
 
-/* RAM копия параметров конфигураци */
+/* RAM РєРѕРїРёСЏ РїР°СЂР°РјРµС‚СЂРѕРІ РєРѕРЅС„РёРіСѓСЂР°С†Рё */
 __no_init cfg_t Cfg;
 __no_init num_t Num;
 __no_init clb_t Clb;
@@ -120,7 +120,7 @@ void eeclr_alg (void) {
     }
 }
 
-/* Вычисление контрольной суммы CRC8 */
+/* Р’С‹С‡РёСЃР»РµРЅРёРµ РєРѕРЅС‚СЂРѕР»СЊРЅРѕР№ СЃСѓРјРјС‹ CRC8 */
 uint8_t calc_crc(uint8_t *buf, uint8_t len) {
     uint8_t crc = 0, i, b, n, d;
     for (i = 0; i < len; i++) {

@@ -11,7 +11,7 @@ extern "C" {
 #include "csu/csu.h"
 #include "csu/mtd.h"
 
-/* òèï ñòðóêòóðû ïàðàìåòðîâ êîíôèãóðàöè */
+/* Ñ‚Ð¸Ð¿ ÑÑ‚Ñ€ÑƒÐºÑ‚ÑƒÑ€Ñ‹ Ð¿Ð°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ð¾Ð² ÐºÐ¾Ð½Ñ„Ð¸Ð³ÑƒÑ€Ð°Ñ†Ð¸ */
 typedef struct {
     uint16_t K_U;
     uint16_t K_I;
@@ -44,11 +44,11 @@ typedef struct {
 	int16_t setI2;
 	union {
 		struct {
-			uint8_t control:1;	//ïðîêîíòðîëèðîâàòü êàëèáðîâêó òîêà ðàçðÿäà
-			uint8_t error:1;	    //îøèáêà êàëèáðîâêè òîêà
-			uint8_t up_Fin:1;	//âåðõíèé ïðåäåë îòêàëèáðîâàí
-			uint8_t dw_Fin:1;	//íèæíèé ïðåäåë îòêàëèáðîâàí
-			uint8_t save:1;			//íåîáõîäèìî ñîõðàíèòü çíà÷åíèÿ â EEPROM
+			uint8_t control:1;	//Ð¿Ñ€Ð¾ÐºÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ð¸Ñ€Ð¾Ð²Ð°Ñ‚ÑŒ ÐºÐ°Ð»Ð¸Ð±Ñ€Ð¾Ð²ÐºÑƒ Ñ‚Ð¾ÐºÐ° Ñ€Ð°Ð·Ñ€ÑÐ´Ð°
+			uint8_t error:1;	    //Ð¾ÑˆÐ¸Ð±ÐºÐ° ÐºÐ°Ð»Ð¸Ð±Ñ€Ð¾Ð²ÐºÐ¸ Ñ‚Ð¾ÐºÐ°
+			uint8_t up_Fin:1;	//Ð²ÐµÑ€Ñ…Ð½Ð¸Ð¹ Ð¿Ñ€ÐµÐ´ÐµÐ» Ð¾Ñ‚ÐºÐ°Ð»Ð¸Ð±Ñ€Ð¾Ð²Ð°Ð½
+			uint8_t dw_Fin:1;	//Ð½Ð¸Ð¶Ð½Ð¸Ð¹ Ð¿Ñ€ÐµÐ´ÐµÐ» Ð¾Ñ‚ÐºÐ°Ð»Ð¸Ð±Ñ€Ð¾Ð²Ð°Ð½
+			uint8_t save:1;			//Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ ÑÐ¾Ñ…Ñ€Ð°Ð½Ð¸Ñ‚ÑŒ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ñ Ð² EEPROM
 		} bit;
 		uint8_t byte;
 	} id;
@@ -66,10 +66,10 @@ typedef struct {
 #define CFG_SIZE (sizeof(cfg_t) + sizeof(num_t) +\
     sizeof(clb_t) + sizeof(uint8_t) * 3)
 #define MS_N (EEPROM_SIZE - CFG_SIZE) / MS_SIZE
-/* òèï ñòðóêòóðû EEPROM */
+/* Ñ‚Ð¸Ð¿ ÑÑ‚Ñ€ÑƒÐºÑ‚ÑƒÑ€Ñ‹ EEPROM */
 typedef struct {
     cfg_t Cfg;
-    uint8_t Crc1;
+    uint8_t Crc1; // need CRC16, if data[] == {0} -> CRC8 = 0
     num_t Num;
     uint8_t Crc2;
     clb_t Clb;

@@ -28,16 +28,6 @@
     <Disassembly>
         <MixedMode>1</MixedMode>
     </Disassembly>
-    <DataLog>
-        <LogEnabled>0</LogEnabled>
-        <GraphEnabled>0</GraphEnabled>
-        <ShowTimeLog>1</ShowTimeLog>
-        <SumEnabled>0</SumEnabled>
-        <ShowTimeSum>1</ShowTimeSum>
-    </DataLog>
-    <Breakpoints2>
-        <Count>0</Count>
-    </Breakpoints2>
     <TermIOLog>
         <LoggingEnabled>_ 0</LoggingEnabled>
         <LogFile>_ ""</LogFile>
@@ -52,6 +42,16 @@
         <Bp1>_ "STD_CODE" "{$PROJ_DIR$\net\kron\kron.c}.64.2" 1 0 0 0 "" 0 ""</Bp1>
         <Count>2</Count>
     </Breakpoints>
+    <DataLog>
+        <LogEnabled>0</LogEnabled>
+        <GraphEnabled>0</GraphEnabled>
+        <ShowTimeLog>1</ShowTimeLog>
+        <SumEnabled>0</SumEnabled>
+        <ShowTimeSum>1</ShowTimeSum>
+    </DataLog>
+    <Breakpoints2>
+        <Count>0</Count>
+    </Breakpoints2>
     <Aliases>
         <Count>0</Count>
         <SuppressDialog>0</SuppressDialog>

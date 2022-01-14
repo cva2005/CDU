@@ -1,7 +1,7 @@
 #pragma message	("@(#)kron.c")
 
 /*
- * Драйвер сетевого протокола KRON
+ * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° KRON
  */
 
 #include <sys/config.h>
@@ -15,19 +15,19 @@
 #include "kron_imp.h"
 
 static bool LongTx = false;
-static rs_pkt_t Buff; /* буфер приема/передачи */
-BUS_STATE KronBusState; /* машина сотояния приема кадра */
-static unsigned char IpBuff; /* указатель данных в буфере приема */
-unsigned char KronIdleCount; /* счетчик интервалов времени */
+static rs_pkt_t Buff; /* Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё */
+BUS_STATE KronBusState; /* РјР°С€РёРЅР° СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРёРµРјР° РєР°РґСЂР° */
+static unsigned char IpBuff; /* СѓРєР°Р·Р°С‚РµР»СЊ РґР°РЅРЅС‹С… РІ Р±СѓС„РµСЂРµ РїСЂРёРµРјР° */
+unsigned char KronIdleCount; /* СЃС‡РµС‚С‡РёРє РёРЅС‚РµСЂРІР°Р»РѕРІ РІСЂРµРјРµРЅРё */
 static unsigned int preTaskI,  preTaskId, preTaskU;
 
 static void tx_reply (void);
 static void frame_parse (void);
 
-/* драйвер KRON SLAVE устройства */
+/* РґСЂР°Р№РІРµСЂ KRON SLAVE СѓСЃС‚СЂРѕР№СЃС‚РІР° */
 void kron_drv (unsigned char ip, unsigned char len)
 {
-    if (KronBusState != BUS_STOP) { /* активен прием кадра */
+    if (KronBusState != BUS_STOP) { /* Р°РєС‚РёРІРµРЅ РїСЂРёРµРј РєР°РґСЂР° */
         if (LongTx) {
             STOP_RX();
             KronBusState = BUS_START;
@@ -36,39 +36,39 @@ void kron_drv (unsigned char ip, unsigned char len)
         while (len--) {
             if (ip >= RX_BUFF_LEN) ip = 0;
             unsigned char tmp = RxBuff[ip++];
-            if (tmp == CHAR_RS) { /* обнаружен стартовый байт KRON */
-                IpBuff = 0; /* указатель на начало буфера */
-                KronBusState = BUS_START; /* первый байт кадра принят */
+            if (tmp == CHAR_RS) { /* РѕР±РЅР°СЂСѓР¶РµРЅ СЃС‚Р°СЂС‚РѕРІС‹Р№ Р±Р°Р№С‚ KRON */
+                IpBuff = 0; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° */
+                KronBusState = BUS_START; /* РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° РїСЂРёРЅСЏС‚ */
             }
-            if (KronBusState == BUS_START) { /* первый байт кадра уже принят */
-                 if (IpBuff <= KRON_BUFF_LEN) { /* буфер не переполнен */
-                    Buff.byte[IpBuff++] = tmp; /* записать байт в буфер */
-                } else { /* переполнение буфера */
-                    KronBusState = BUS_IDLE; /* шину в режим ожидания */
+            if (KronBusState == BUS_START) { /* РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° СѓР¶Рµ РїСЂРёРЅСЏС‚ */
+                 if (IpBuff <= KRON_BUFF_LEN) { /* Р±СѓС„РµСЂ РЅРµ РїРµСЂРµРїРѕР»РЅРµРЅ */
+                    Buff.byte[IpBuff++] = tmp; /* Р·Р°РїРёСЃР°С‚СЊ Р±Р°Р№С‚ РІ Р±СѓС„РµСЂ */
+                } else { /* РїРµСЂРµРїРѕР»РЅРµРЅРёРµ Р±СѓС„РµСЂР° */
+                    KronBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
                 }
             }
         }
     } else { /* KronBusState == BUS_STOP */
         if (LongTx) tx_reply();
         else if (IpBuff > KRON_RX_MIN) frame_parse();
-        KronBusState = BUS_IDLE; /* шину в режим ожидания */
+        KronBusState = BUS_IDLE; /* С€РёРЅСѓ РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ */
     }
 }
 
 #define rx  Buff.fld.header
 #define rd  Buff.fld.data
-/* разбор кадра KRON */
+/* СЂР°Р·Р±РѕСЂ РєР°РґСЂР° KRON */
 static void frame_parse (void) {
     uint8_t cnt;
     bool multi_adr = false;
 	if (rx.length <= (IpBuff - 5)) {
-		if (!Cfg.bf1.PCC_ON) { //Если не установлен флаг управления с ПК
-			/* если это пакет даных, то не обрабатывает его если не установлен флаг управления с ПК */
+		if (!Cfg.bf1.PCC_ON) { //Р•СЃР»Рё РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ С„Р»Р°Рі СѓРїСЂР°РІР»РµРЅРёСЏ СЃ РџРљ
+			/* РµСЃР»Рё СЌС‚Рѕ РїР°РєРµС‚ РґР°РЅС‹С…, С‚Рѕ РЅРµ РѕР±СЂР°Р±Р°С‚С‹РІР°РµС‚ РµРіРѕ РµСЃР»Рё РЅРµ СѓСЃС‚Р°РЅРѕРІР»РµРЅ С„Р»Р°Рі СѓРїСЂР°РІР»РµРЅРёСЏ СЃ РџРљ */
             if (rx.type == 1) return;
-			/* если это запрос пользовательской конфигурации не с системного адреса */
+			/* РµСЃР»Рё СЌС‚Рѕ Р·Р°РїСЂРѕСЃ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё РЅРµ СЃ СЃРёСЃС‚РµРјРЅРѕРіРѕ Р°РґСЂРµСЃР° */
             if ((rx.dest_adr != SYS_ADR) && (rx.type == 2)) return;
 		}
-        /* Если на совпадает адрес получателя, то проверить мультикастовый пакет или нет */
+        /* Р•СЃР»Рё РЅР° СЃРѕРІРїР°РґР°РµС‚ Р°РґСЂРµСЃ РїРѕР»СѓС‡Р°С‚РµР»СЏ, С‚Рѕ РїСЂРѕРІРµСЂРёС‚СЊ РјСѓР»СЊС‚РёРєР°СЃС‚РѕРІС‹Р№ РїР°РєРµС‚ РёР»Рё РЅРµС‚ */
 		if ((rx.dest_adr != Cfg.addr) && (rx.dest_adr != SYS_ADR)
             && (rx.dest_adr != BROAD_ADR)) {
 			if ((rx.dest_adr & MULTI_ADR) == 0) return;
@@ -77,49 +77,49 @@ static void frame_parse (void) {
 				else multi_adr = true;
 			}
 		}
-		if ((rx.start == CHAR_RS) && !rx.src_adr) { //если принят верный пакет
+		if ((rx.start == CHAR_RS) && !rx.src_adr) { //РµСЃР»Рё РїСЂРёРЅСЏС‚ РІРµСЂРЅС‹Р№ РїР°РєРµС‚
 			if (calc_crc(Buff.byte, rx.length + 4) != Buff.byte[rx.length + 4]) return;
-			if (rx.length > 1) { //если в пакете есть поле типа пакета
+			if (rx.length > 1) { //РµСЃР»Рё РІ РїР°РєРµС‚Рµ РµСЃС‚СЊ РїРѕР»Рµ С‚РёРїР° РїР°РєРµС‚Р°
                 switch (rx.type) {
                 case DATA_PKT:
-                    if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
-                        if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //если режим "заряд"
+                    if (rx.length > 5) { //РµСЃР»Рё РІ РїР°РєРµС‚Рµ РµСЃС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ Р·Р°РґР°РІР°РµРјРѕРј С‚РѕРєРµ
+                        if ((rd.rx_data.cmd & 0x0F) == CHARGE) { //РµСЃР»Рё СЂРµР¶РёРј "Р·Р°СЂСЏРґ"
                             if (rd.rx_data.setI > Cfg.B[ADC_MI])
                                 preTaskI = rd.rx_data.setI - Cfg.B[ADC_MI];
                             else preTaskI = 0;
                             if (preTaskI > MaxI) preTaskI = MaxI;
                         }
-                        if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //если режим "разряд"
+                        if ((rd.rx_data.cmd & 0x0F) == DISCHARGE) { //РµСЃР»Рё СЂРµР¶РёРј "СЂР°Р·СЂСЏРґ"
                             if (rd.rx_data.setI > Cfg.B[ADC_DI])
                                 preTaskId = rd.rx_data.setI - Cfg.B[ADC_DI];
                             else preTaskId = 0;
                             if (preTaskId > MaxId) preTaskId = MaxId;
                         }
                     }
-                    if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
+                    if (rx.length > 7) { //РІ РїР°РєРµС‚Рµ РµСЃС‚СЊ РґР°РЅРЅС‹Рµ Рѕ Р·Р°РґР°РІР°РµРјРѕРј РЅР°РїСЂСЏР¶РµРЅРёРё?
                         if (rd.rx_data.setU > Cfg.B[ADC_MU])
                             preTaskU = rd.rx_data.setU - Cfg.B[ADC_MU];
                         else preTaskU = 0;
                         if (preTaskU > MaxU) preTaskU = MaxU;
                     }
-                    if (rx.length > 3) { //если в пакете есть контрольные биты
-                        if (Cfg.bf1.FAN_CONTROL) { //Если разрешён контроль выходных реле и вентиляторов
+                    if (rx.length > 3) { //РµСЃР»Рё РІ РїР°РєРµС‚Рµ РµСЃС‚СЊ РєРѕРЅС‚СЂРѕР»СЊРЅС‹Рµ Р±РёС‚С‹
+                        if (Cfg.bf1.FAN_CONTROL) { //Р•СЃР»Рё СЂР°Р·СЂРµС€С‘РЅ РєРѕРЅС‚СЂРѕР»СЊ РІС‹С…РѕРґРЅС‹С… СЂРµР»Рµ Рё РІРµРЅС‚РёР»СЏС‚РѕСЂРѕРІ
                             if (rd.rx_data.control.bit.FAN1_ON) FAN(1);
                             else FAN(0);
                         }
                     }
-                    if (rx.length > 2) { //если в пакете данных есть команда
-                        if (rd.rx_data.cmd&0x0F) { //Если это команда запуска разряда или заряда
-                            if (!(rd.rx_data.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
+                    if (rx.length > 2) { //РµСЃР»Рё РІ РїР°РєРµС‚Рµ РґР°РЅРЅС‹С… РµСЃС‚СЊ РєРѕРјР°РЅРґР°
+                        if (rd.rx_data.cmd&0x0F) { //Р•СЃР»Рё СЌС‚Рѕ РєРѕРјР°РЅРґР° Р·Р°РїСѓСЃРєР° СЂР°Р·СЂСЏРґР° РёР»Рё Р·Р°СЂСЏРґР°
+                            if (!(rd.rx_data.cmd & 0xF0)) { //Р•СЃР»Рё РїСЂРёС€Р»Р° РєРѕРјР°РЅРґР° СЃРѕ СЃР±СЂРѕС€РµРЅРЅС‹Рј С„Р»Р°РіРѕРј РѕС‚СЃСЂРѕС‡РєРё РІС‹РїРѕР»РЅРµРЅРёСЏ (0x0x: 0x01 РёР»Рё 0x02)
                                 if (rd.rx_data.cmd == 0x03) {
                                     key_power();
                                 } else {
-                                    TaskI = preTaskI; //установить зарядный ток
-                                    TaskId = preTaskId; //установить разрядный ток
-                                    TaskU = preTaskU; //установить напряжение
+                                    TaskI = preTaskI; //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ Р·Р°СЂСЏРґРЅС‹Р№ С‚РѕРє
+                                    TaskId = preTaskId; //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ СЂР°Р·СЂСЏРґРЅС‹Р№ С‚РѕРє
+                                    TaskU = preTaskU; //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РЅР°РїСЂСЏР¶РµРЅРёРµ
                                     if (CsuState != rd.rx_data.cmd) {
                                         SelfCtrl = false;
-                                        csu_start((csu_st)rd.rx_data.cmd); //если изменилась комнада, то запустить блок с новой командой	
+                                        csu_start((csu_st)rd.rx_data.cmd); //РµСЃР»Рё РёР·РјРµРЅРёР»Р°СЃСЊ РєРѕРјРЅР°РґР°, С‚Рѕ Р·Р°РїСѓСЃС‚РёС‚СЊ Р±Р»РѕРє СЃ РЅРѕРІРѕР№ РєРѕРјР°РЅРґРѕР№	
                                     }
                                 }
                             }
@@ -130,7 +130,7 @@ static void frame_parse (void) {
                     }
                     break;
                 case USER_CFG:
-                    if (rx.length >= 12) { //если поле данных конфигурирования не пустое
+                    if (rx.length >= 12) { //РµСЃР»Рё РїРѕР»Рµ РґР°РЅРЅС‹С… РєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРёСЏ РЅРµ РїСѓСЃС‚РѕРµ
                         if (rd.rx_usr.cmd.bit.ADR_SET) {
                             if ((rd.rx_usr.Adress!=0)&&(rd.rx_usr.Adress!=0xFF)) 
                                 Cfg.addr = rd.rx_usr.Adress;	
@@ -150,22 +150,22 @@ static void frame_parse (void) {
                     }
                     break;
                 case SYS_CFG:
-                    if (rx.length >= 12) { //если поле данных конфигурирования не пустое
+                    if (rx.length >= 12) { //РµСЃР»Рё РїРѕР»Рµ РґР°РЅРЅС‹С… РєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРёСЏ РЅРµ РїСѓСЃС‚РѕРµ
                         rd.rx_sys.mode.bit.RELAY_MODE = 1;
                         rd.rx_sys.cmd.bit.TE_DATA = 0;	
                         ((uint8_t *)&Cfg.bf1)[0] = rd.rx_sys.cmd.byte;
                         ((uint8_t *)&Cfg.bf1)[1] = rd.rx_sys.mode.byte;
-                        /* Защита от одновременного включения LCD и LED (LCD Приоритет) */
+                        /* Р—Р°С‰РёС‚Р° РѕС‚ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕРіРѕ РІРєР»СЋС‡РµРЅРёСЏ LCD Рё LED (LCD РџСЂРёРѕСЂРёС‚РµС‚) */
                         if (Cfg.bf1.LCD_ON) Cfg.bf1.LED_ON = 0;
                         Cfg.maxU = rd.rx_sys.maxU;
                         Cfg.maxI = rd.rx_sys.maxI;
                         Cfg.maxId = rd.rx_sys.maxId;
                         Cfg.P_maxW = rd.rx_sys.maxPd;
-                        if (rx.length >= 13) //Если есть данные о количестве РМ
+                        if (rx.length >= 13) //Р•СЃР»Рё РµСЃС‚СЊ РґР°РЅРЅС‹Рµ Рѕ РєРѕР»РёС‡РµСЃС‚РІРµ Р Рњ
                             Cfg.dmSlave = rd.rx_sys.dm_cnt;
-                        if (rx.length >= 17) //если есть поле дополнительной конфигурации
+                        if (rx.length >= 17) //РµСЃР»Рё РµСЃС‚СЊ РїРѕР»Рµ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё
                             *((uint16_t *)&Cfg.bf2) = rd.rx_sys.cfg;	
-                        if (rx.length >= 22) { //если есть информация об автозапуске
+                        if (rx.length >= 22) { //РµСЃР»Рё РµСЃС‚СЊ РёРЅС„РѕСЂРјР°С†РёСЏ РѕР± Р°РІС‚РѕР·Р°РїСѓСЃРєРµ
                             Cfg.cnt_set = rd.rx_sys.autostart_try;
                             Cfg.u_set = rd.rx_sys.autostart_u;
                             Cfg.time_set = rd.rx_sys.restart_timout;
@@ -175,7 +175,7 @@ static void frame_parse (void) {
                     }
                     break;
                 case VER_PKT:
-                    if (rx.length == 0x0C) { //если поле данных конфигурирования не пустое
+                    if (rx.length == 0x0C) { //РµСЃР»Рё РїРѕР»Рµ РґР°РЅРЅС‹С… РєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРёСЏ РЅРµ РїСѓСЃС‚РѕРµ
                         if (rd.rx_ver.cmd.bit.EEPROM!=0)
                             save_num(&rd.rx_ver.number[0]);
                         if (Cfg.bf1.LCD_ON) lcd_wr_connect(true);
@@ -185,7 +185,7 @@ static void frame_parse (void) {
                     if (CsuState != 0) csu_stop(STOP);
                     switch (rd.rx_alg.cmd) {
                     case FIND_CMD:
-                        mCnt = sCnt = cCnt = 0;//номера метода, этапа и цикла
+                        mCnt = sCnt = cCnt = 0;//РЅРѕРјРµСЂР° РјРµС‚РѕРґР°, СЌС‚Р°РїР° Рё С†РёРєР»Р°
                         for (cnt = 0; cnt < MTD_N; cnt++) StgNum[cnt] = 0;
                         msNum = find_free();
                         break;
@@ -207,8 +207,8 @@ static void frame_parse (void) {
                     msNum = 0;
                     break;
                 default:
-                    /* Если нет поля с типом пакета (пакет нулевой длины),
-                    то считать что это запрос данных */
+                    /* Р•СЃР»Рё РЅРµС‚ РїРѕР»СЏ СЃ С‚РёРїРѕРј РїР°РєРµС‚Р° (РїР°РєРµС‚ РЅСѓР»РµРІРѕР№ РґР»РёРЅС‹),
+                    С‚Рѕ СЃС‡РёС‚Р°С‚СЊ С‡С‚Рѕ СЌС‚Рѕ Р·Р°РїСЂРѕСЃ РґР°РЅРЅС‹С… */
                     rx.type = DATA_PKT;
                 }
             }
@@ -229,7 +229,7 @@ static void tx_reply (void) {
     switch (tx.type) {
     case DATA_PKT:
         if (PwmStatus == STOP) td.tx_data.operation = PwmStatus | RELAY_EN;
-        /* Если ШИМ остановлен, то добавить сосотяние реле */
+        /* Р•СЃР»Рё РЁРРњ РѕСЃС‚Р°РЅРѕРІР»РµРЅ, С‚Рѕ РґРѕР±Р°РІРёС‚СЊ СЃРѕСЃРѕС‚СЏРЅРёРµ СЂРµР»Рµ */
         else td.tx_data.operation = PwmStatus;
         td.tx_data.error = Error;
         if (PwmStatus == DISCHARGE) td.tx_data.I = ADC_O[ADC_DI];
@@ -259,7 +259,7 @@ static void tx_reply (void) {
         td.tx_usr.D_U=7;
         td.tx_usr.D_Id=7;
         td.tx_usr.D_Ip=7;
-        /* адрес в ответе, если происходит изменени адреса */
+        /* Р°РґСЂРµСЃ РІ РѕС‚РІРµС‚Рµ, РµСЃР»Рё РїСЂРѕРёСЃС…РѕРґРёС‚ РёР·РјРµРЅРµРЅРё Р°РґСЂРµСЃР° */
         if (rd.rx_usr.cmd.bit.ADR_SET) tx.src_adr = rx.dest_adr;
         len = sizeof(tx_usr_type); 
         break;
@@ -300,12 +300,12 @@ static void tx_reply (void) {
         if (msNum < MS_N) LongTx = true;
         len = MS_SIZE;
 	}
-    tx.length = len + 2; //прибавить два байта к длине: номер пакета и тип пакета
-    len += 6; //прибавить ещё 4 байта заголовка и 1 байт CRC
+    tx.length = len + 2; //РїСЂРёР±Р°РІРёС‚СЊ РґРІР° Р±Р°Р№С‚Р° Рє РґР»РёРЅРµ: РЅРѕРјРµСЂ РїР°РєРµС‚Р° Рё С‚РёРї РїР°РєРµС‚Р°
+    len += 6; //РїСЂРёР±Р°РІРёС‚СЊ РµС‰С‘ 4 Р±Р°Р№С‚Р° Р·Р°РіРѕР»РѕРІРєР° Рё 1 Р±Р°Р№С‚ CRC
     buf[len] = calc_crc(buf, len);
-    BuffLen = len + 1; /* полный размер буфера при передаче кадра */
-    len = buf[0]; /* сохранить первый байт кадра */
-    TxIpBuff = 1; /* указатель на начало буфера (второй байт!) */
-    start_tx(len, buf); /* стартовать передачу кадра */
+    BuffLen = len + 1; /* РїРѕР»РЅС‹Р№ СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїСЂРё РїРµСЂРµРґР°С‡Рµ РєР°РґСЂР° */
+    len = buf[0]; /* СЃРѕС…СЂР°РЅРёС‚СЊ РїРµСЂРІС‹Р№ Р±Р°Р№С‚ РєР°РґСЂР° */
+    TxIpBuff = 1; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ Р±СѓС„РµСЂР° (РІС‚РѕСЂРѕР№ Р±Р°Р№С‚!) */
+    start_tx(len, buf); /* СЃС‚Р°СЂС‚РѕРІР°С‚СЊ РїРµСЂРµРґР°С‡Сѓ РєР°РґСЂР° */
     set_active();
 }

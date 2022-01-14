@@ -1,138 +1,183 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project>
     <fileVersion>4</fileVersion>
-    <fileChecksum>1087348573</fileChecksum>
+    <fileChecksum>1240186289</fileChecksum>
     <configuration>
         <name>Debug</name>
         <outputs>
-            <file>$PROJ_DIR$\csu\csu.c</file>
-            <file>$PROJ_DIR$\csu\csu.h</file>
-            <file>$PROJ_DIR$\csu\mtd.c</file>
-            <file>$PROJ_DIR$\lcd\lcd.c</file>
-            <file>$PROJ_DIR$\lcd\lcd.h</file>
-            <file>$PROJ_DIR$\csu\mtd.h</file>
-            <file>$PROJ_DIR$\lcd\wh2004.c</file>
             <file>$PROJ_DIR$\net\kron\kron.h</file>
+            <file>$PROJ_DIR$\net\kron\kron_imp.h</file>
+            <file>$PROJ_DIR$\net\modbus\mbus.c</file>
+            <file>$PROJ_DIR$\lcd\wh2004.c</file>
+            <file>$PROJ_DIR$\net\modbus\mbus.h</file>
+            <file>$PROJ_DIR$\csu\csu.c</file>
+            <file>$PROJ_DIR$\csu\mtd.h</file>
+            <file>$PROJ_DIR$\csu\mtd.c</file>
+            <file>$PROJ_DIR$\csu\csu.h</file>
             <file>$PROJ_DIR$\key\key.c</file>
             <file>$PROJ_DIR$\key\key.h</file>
+            <file>$PROJ_DIR$\lcd\lcd.h</file>
             <file>$PROJ_DIR$\lcd\wh2004.h</file>
             <file>$PROJ_DIR$\net\kron\kron.c</file>
-            <file>$PROJ_DIR$\spi\spi.c</file>
-            <file>$PROJ_DIR$\pwm\pwm.h</file>
-            <file>$TOOLKIT_DIR$\inc\ina90.h</file>
-            <file>$PROJ_DIR$\pid\pid_r.c</file>
-            <file>$PROJ_DIR$\sys\stime.c</file>
-            <file>$PROJ_DIR$\pwm\pwm.c</file>
-            <file>$PROJ_DIR$\net\modbus\mbus.c</file>
-            <file>$PROJ_DIR$\net\net_imp.h</file>
-            <file>$PROJ_DIR$\net\modbus\mbus_imp.h</file>
-            <file>$PROJ_DIR$\pid\pid_r.h</file>
+            <file>$PROJ_DIR$\lcd\lcd.c</file>
             <file>$PROJ_DIR$\spi\spi.h</file>
             <file>$PROJ_DIR$\sys\config.c</file>
-            <file>$PROJ_DIR$\sys\system.h</file>
-            <file>$PROJ_DIR$\tsens\ds1820.h</file>
-            <file>$PROJ_DIR$\net\net.c</file>
-            <file>$PROJ_DIR$\Debug\Obj\lcd.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\lcd.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\csu.r90</file>
-            <file>$PROJ_DIR$\net\modbus\mbus.h</file>
-            <file>$PROJ_DIR$\spi\adc\ads1118.c</file>
-            <file>$PROJ_DIR$\net\kron\kron_imp.h</file>
-            <file>$PROJ_DIR$\spi\adc\ads1118_imp.h</file>
+            <file>$PROJ_DIR$\pwm\pwm.c</file>
+            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.__cstat.et</file>
+            <file>$PROJ_DIR$\pid\pid_r.h</file>
+            <file>$PROJ_DIR$\sys\config.h</file>
             <file>$PROJ_DIR$\sys\main.c</file>
-            <file>$PROJ_DIR$\sys\stime.h</file>
+            <file>$TOOLKIT_DIR$\inc\iom32a.h</file>
+            <file>$PROJ_DIR$\net\net.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.r90</file>
+            <file>$TOOLKIT_DIR$\inc\comp_a90.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\net.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\ads1118.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\csu.r90</file>
+            <file>$PROJ_DIR$\net\modbus\mbus_imp.h</file>
+            <file>$PROJ_DIR$\net\net_imp.h</file>
+            <file>$PROJ_DIR$\pid\pid_r.c</file>
+            <file>$PROJ_DIR$\pwm\pwm.h</file>
+            <file>$PROJ_DIR$\spi\spi_imp.h</file>
             <file>$PROJ_DIR$\spi\adc\ads1118.h</file>
             <file>$PROJ_DIR$\tsens\ds1820.c</file>
-            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
-            <file>$PROJ_DIR$\sys\config.h</file>
-            <file>$PROJ_DIR$\net\net.h</file>
-            <file>$PROJ_DIR$\spi\spi_imp.h</file>
-            <file>$TOOLKIT_DIR$\config\lnkm32as.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\key.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\csu.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\pid_r.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\main.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\ds1820.xcl</file>
-            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.r90</file>
-            <file>$PROJ_DIR$\Debug\Exe\cdu.dbg</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\pwm.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\lsd.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\ds1820.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\net.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\lcd.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\spi.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\key.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\cdu.pbd</file>
-            <file>$PROJ_DIR$\Debug\Obj\stime.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\main.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\ads1118.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\stime.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\lsd.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\ds1820.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\pid_r.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\kron.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\kron.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\config.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\csu.__cstat.et</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\ymath.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\pid_r.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\stime.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\pwm.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\mbus.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\mbus.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\wh2004.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\math.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\config.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\lsd.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\mtd.r90</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
-            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\pwm.__cstat.et</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\xtgmath.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\kron.__cstat.et</file>
-            <file>$TOOLKIT_DIR$\inc\iom32a.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\spi.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\main.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\net.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\ads1118.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\ads1118.r90</file>
-            <file>$TOOLKIT_DIR$\inc\comp_a90.h</file>
-            <file>$PROJ_DIR$\Debug\List\cdu.map</file>
-            <file>$TOOLKIT_DIR$\inc\inavr.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\wh2004.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\mbus.xcl</file>
-            <file>$PROJ_DIR$\Debug\Obj\mtd.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\bitdefinitions\iom32a.inc</file>
-            <file>$PROJ_DIR$\lcd\lsd.c</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
-            <file>$PROJ_DIR$\Debug\Obj\config.r90</file>
-            <file>$PROJ_DIR$\Debug\Obj\spi.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\mtd.__cstat.et</file>
-            <file>$PROJ_DIR$\Debug\Obj\wh2004.r90</file>
-            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$PROJ_DIR$\tsens\ds1820.h</file>
+            <file>$PROJ_DIR$\spi\adc\ads1118_imp.h</file>
+            <file>$PROJ_DIR$\sys\system.h</file>
+            <file>$PROJ_DIR$\net\net.c</file>
+            <file>$PROJ_DIR$\spi\spi.c</file>
+            <file>$PROJ_DIR$\sys\stime.h</file>
+            <file>$PROJ_DIR$\sys\stime.c</file>
             <file>$PROJ_DIR$\Debug\Obj\key.xcl</file>
+            <file>$PROJ_DIR$\spi\adc\ads1118.c</file>
+            <file>$PROJ_DIR$\Debug\Obj\lcd.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\ina90.h</file>
+            <file>$TOOLKIT_DIR$\inc\inavr.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
             <file>$PROJ_DIR$\Debug\Obj\net.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\pwm.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lsd.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\ds1820.__cstat.et</file>
             <file>$PROJ_DIR$\Debug\Exe\cdu.d90</file>
-            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
-            <file>$PROJ_DIR$\Debug\Exe\cdu.a90</file>
+            <file>$PROJ_DIR$\Debug\Obj\pid_r.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\mbus.r90</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xtgmath.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\mtd.xcl</file>
+            <file>$PROJ_DIR$\Debug\Exe\cdu.dbg</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\spi.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\ds1820.r90</file>
+            <file>$PROJ_DIR$\Debug\List\cdu.map</file>
+            <file>$PROJ_DIR$\Debug\Obj\key.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\lsd.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\wh2004.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\bitdefinitions\iom32a.inc</file>
+            <file>$PROJ_DIR$\Debug\Obj\pwm.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\lcd.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\mtd.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\math.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\mbus.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\mtd.r90</file>
+            <file>$TOOLKIT_DIR$\config\lnkm32as.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\cdu.pbd</file>
+            <file>$PROJ_DIR$\Debug\Obj\ads1118.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\csu.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
+            <file>$PROJ_DIR$\lcd\lsd.c</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ymath.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\key.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\csu.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\kron.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\kron.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\stime.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\lcd.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\pid_r.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\stime.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\spi.xcl</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\pwm.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\net.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\kron.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\spi.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\wh2004.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\config.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\ads1118.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\ds1820.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\wh2004.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\lsd.r90</file>
+            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\stime.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\mbus.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\pid_r.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
         </outputs>
         <file>
             <name>[ROOT_NODE]</name>
             <outputs>
                 <tool>
                     <name>XLINK</name>
-                    <file> 51 100</file>
+                    <file> 60 65</file>
                 </tool>
             </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\net\modbus\mbus.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 57</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 75</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 115</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 30</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\lcd\wh2004.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 111</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 69</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 105</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 12</file>
+                </tool>
+            </inputs>
         </file>
         <file>
             <name>$PROJ_DIR$\csu\csu.c</name>
@@ -143,17 +188,17 @@
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 45</file>
+                    <file> 81</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 72</file>
+                    <file> 87</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 4 10 25 13 36 21 9</file>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 11 12 37 33 35 20 10</file>
                 </tool>
             </inputs>
         </file>
@@ -162,57 +207,57 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 84</file>
+                    <file> 76</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 104</file>
+                    <file> 59</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 111</file>
+                    <file> 73</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 40 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 35 41 19 30 7 1 5 4 10 25 36 13</file>
+                    <file> 21 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 42 24 31 4 0 8 6 11 12 37 35 33</file>
                 </tool>
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\lcd\lcd.c</name>
+            <name>$PROJ_DIR$\key\key.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 57</file>
+                    <file> 86</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 28</file>
+                    <file> 44</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 27</file>
+                    <file> 66</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 36 13 4 10 25</file>
+                    <file> 21 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 42 24 31 4 0 8 6 11 12 37 33 10</file>
                 </tool>
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\lcd\wh2004.c</name>
+            <name>$PROJ_DIR$\net\kron\kron.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 112</file>
+                    <file> 88</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 80</file>
+                    <file> 89</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
@@ -222,85 +267,16 @@
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 10</file>
+                    <file> 21 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 42 24 31 4 0 8 6 10 11 12 37 33 1</file>
                 </tool>
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\key\key.c</name>
+            <name>$PROJ_DIR$\lcd\lcd.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 59</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 114</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 44</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 40 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 35 41 19 30 7 1 5 4 10 25 13 9</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\kron\kron.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 70</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 69</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 91</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 40 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 35 41 19 30 7 1 5 9 4 10 25 13 32</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\spi\spi.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 58</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
                     <file> 93</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 110</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 22 42</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\pid\pid_r.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 68</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
@@ -308,36 +284,36 @@
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 75</file>
+                    <file> 72</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 52 85 47 107 38 90 39 73 62 81 74 89 21</file>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 35 33 11 12 37</file>
                 </tool>
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\sys\stime.c</name>
+            <name>$PROJ_DIR$\sys\config.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 76</file>
+                    <file> 25</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 61</file>
+                    <file> 107</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 65</file>
+                    <file> 19</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5</file>
+                    <file> 21 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 42 24 31 4 0 8 6</file>
                 </tool>
             </inputs>
         </file>
@@ -346,34 +322,172 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 77</file>
+                    <file> 99</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 53</file>
+                    <file> 71</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 88</file>
+                    <file> 52</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 10 36 13</file>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 12 35 33</file>
                 </tool>
             </inputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\net\modbus\mbus.c</name>
+            <name>$PROJ_DIR$\sys\main.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 78</file>
+                    <file> 101</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 103</file>
+                    <file> 90</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 80</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 37 11 12 35</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\pid\pid_r.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 56</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 116</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 94</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 50 82 91 61 97 108 117 98 84 74 85 58 20</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\tsens\ds1820.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 64</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 110</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 54</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 37</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\net\net.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 100</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 27</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 51</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\spi\spi.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 104</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 96</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 62</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 15 34</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\sys\stime.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 114</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 95</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 92</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\spi\adc\ads1118.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 109</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
@@ -383,160 +497,7 @@
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 20</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\sys\config.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 109</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 71</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 82</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 40 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 35 41 19 30 7 1 5</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\net.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 56</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 96</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 115</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\spi\adc\ads1118.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 98</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 97</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 64</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 22 36 33</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\sys\main.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 63</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 94</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 48</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 25 4 10 36</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\tsens\ds1820.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 67</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 49</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 55</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 25</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\Debug\Exe\cdu.dbg</name>
-            <outputs>
-                <tool>
-                    <name>XLINK</name>
-                    <file> 100</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>XLINK</name>
-                    <file> 43 98 109 29 67 59 70 57 63 78 84 56 68 77 58 76 112 50</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\lcd\lsd.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 54</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 66</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 83</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 24 108 85 47 107 38 90 39 73 62 52 86 95 81 74 89 14 101 113 99 117 92 87 105 40 41 19 35 30 7 1 5 36 13 4 10 25</file>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 15 35 38</file>
                 </tool>
             </inputs>
         </file>
@@ -545,7 +506,45 @@
             <inputs>
                 <tool>
                     <name>XLINK</name>
-                    <file> 43 98 109 29 67 59 70 57 63 78 84 56 68 77 58 76 112 50</file>
+                    <file> 77 28 25 29 64 86 88 93 101 57 76 100 56 99 104 114 111 106</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\cdu.dbg</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 65</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 77 28 25 29 64 86 88 93 101 57 76 100 56 99 104 114 111 106</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\lcd\lsd.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 112</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 53</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 68</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 39 103 82 91 61 97 108 117 98 84 50 67 49 74 85 58 47 48 63 26 18 23 113 70 21 24 31 42 4 0 8 6 35 33 11 12 37</file>
                 </tool>
             </inputs>
         </file>
@@ -557,153 +556,153 @@
     <configuration>
         <name>Release</name>
         <outputs>
-            <file>$PROJ_DIR$\csu\csu.h</file>
-            <file>$PROJ_DIR$\csu\mtd.c</file>
-            <file>$PROJ_DIR$\lcd\lcd.h</file>
-            <file>$PROJ_DIR$\ee\eeprom.h</file>
-            <file>$PROJ_DIR$\csu\mtd.h</file>
-            <file>$PROJ_DIR$\lcd\wh2004.c</file>
             <file>$PROJ_DIR$\net\kron\kron.h</file>
+            <file>$PROJ_DIR$\net\kron\kron_imp.h</file>
+            <file>$PROJ_DIR$\net\modbus\mbus.c</file>
+            <file>$PROJ_DIR$\lcd\wh2004.c</file>
+            <file>$PROJ_DIR$\net\modbus\mbus.h</file>
+            <file>$PROJ_DIR$\csu\mtd.h</file>
+            <file>$PROJ_DIR$\csu\mtd.c</file>
+            <file>$PROJ_DIR$\csu\csu.h</file>
             <file>$PROJ_DIR$\key\key.c</file>
             <file>$PROJ_DIR$\key\key.h</file>
+            <file>$PROJ_DIR$\lcd\lcd.h</file>
             <file>$PROJ_DIR$\lcd\wh2004.h</file>
             <file>$PROJ_DIR$\net\kron\kron.c</file>
-            <file>$PROJ_DIR$\ee\eeprom.c</file>
-            <file>$PROJ_DIR$\spi\spi.c</file>
-            <file>$PROJ_DIR$\pwm\pwm.h</file>
-            <file>$TOOLKIT_DIR$\inc\ina90.h</file>
-            <file>$PROJ_DIR$\pid\pid_r.c</file>
-            <file>$PROJ_DIR$\sys\stime.c</file>
-            <file>$PROJ_DIR$\pwm\pwm.c</file>
-            <file>$PROJ_DIR$\net\modbus\mbus.c</file>
-            <file>$PROJ_DIR$\net\net_imp.h</file>
-            <file>$PROJ_DIR$\net\modbus\mbus_imp.h</file>
-            <file>$PROJ_DIR$\pid\pid_r.h</file>
             <file>$PROJ_DIR$\spi\spi.h</file>
-            <file>$PROJ_DIR$\sys\system.h</file>
-            <file>$PROJ_DIR$\tsens\ds1820.h</file>
-            <file>$PROJ_DIR$\net\net.c</file>
-            <file>$PROJ_DIR$\net\modbus\mbus.h</file>
-            <file>$PROJ_DIR$\spi\adc\ads1118.c</file>
-            <file>$PROJ_DIR$\net\kron\kron_imp.h</file>
+            <file>$PROJ_DIR$\pwm\pwm.c</file>
+            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$PROJ_DIR$\pid\pid_r.h</file>
             <file>$PROJ_DIR$\sys\main.c</file>
-            <file>$PROJ_DIR$\sys\stime.h</file>
+            <file>$PROJ_DIR$\net\net.h</file>
+            <file>$TOOLKIT_DIR$\inc\comp_a90.h</file>
+            <file>$PROJ_DIR$\net\modbus\mbus_imp.h</file>
+            <file>$PROJ_DIR$\net\net_imp.h</file>
+            <file>$PROJ_DIR$\pid\pid_r.c</file>
+            <file>$PROJ_DIR$\pwm\pwm.h</file>
+            <file>$PROJ_DIR$\spi\spi_imp.h</file>
             <file>$PROJ_DIR$\spi\adc\ads1118.h</file>
             <file>$PROJ_DIR$\tsens\ds1820.c</file>
-            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
-            <file>$PROJ_DIR$\net\net.h</file>
-            <file>$PROJ_DIR$\spi\spi_imp.h</file>
-            <file>$PROJ_DIR$\Release\Obj\pwm.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\net.r90</file>
-            <file>$PROJ_DIR$\net\usart.h</file>
-            <file>$PROJ_DIR$\Release\Obj\usart.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\net.xcl</file>
-            <file>$PROJ_DIR$\net\usart.c</file>
-            <file>$PROJ_DIR$\Release\Obj\key.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\eeprom.r90</file>
-            <file>$TOOLKIT_DIR$\src\template\cfgm32.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\ds1820.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\eeprom.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\mtd.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\stime.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\ads1118.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\lsd.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\pid_r.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Exe\cdu_data.hex</file>
-            <file>$PROJ_DIR$\Release\List\cdu.map</file>
-            <file>$PROJ_DIR$\Release\Obj\spi.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\ads1118.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\mbus.xcl</file>
-            <file>$PROJ_DIR$\ds1820\ds1820.c</file>
-            <file>$PROJ_DIR$\Release\Obj\main.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\kron.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\kron.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\lsd.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\kron.xcl</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
-            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\net.__cstat.et</file>
+            <file>$PROJ_DIR$\tsens\ds1820.h</file>
+            <file>$PROJ_DIR$\sys\system.h</file>
+            <file>$PROJ_DIR$\net\net.c</file>
+            <file>$PROJ_DIR$\spi\spi.c</file>
+            <file>$PROJ_DIR$\sys\stime.h</file>
+            <file>$PROJ_DIR$\sys\stime.c</file>
+            <file>$PROJ_DIR$\spi\adc\ads1118.c</file>
+            <file>$TOOLKIT_DIR$\inc\ina90.h</file>
+            <file>$TOOLKIT_DIR$\inc\inavr.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
             <file>$TOOLKIT_DIR$\inc\dlib\c\string.h</file>
-            <file>$PROJ_DIR$\Release\Obj\mtd.r90</file>
-            <file>$PROJ_DIR$\main.c</file>
-            <file>$TOOLKIT_DIR$\src\template\cfg3soim.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\ads1118.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\wh2004.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\usart.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\main.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\lsd.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\wh2004.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\mbus.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\ds1820.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\ds1820.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\spi.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\mbus.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\pid_r.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\mtd.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\stime.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\usart.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\pwm.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\key.__cstat.et</file>
-            <file>$TOOLKIT_DIR$\inc\bitdefinitions\iom32.inc</file>
-            <file>$PROJ_DIR$\Release\Obj\key.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\eeprom.xcl</file>
-            <file>$PROJ_DIR$\Release\Obj\main.xcl</file>
-            <file>$PROJ_DIR$\Release\Exe\cdu_eeprom.hex</file>
-            <file>$PROJ_DIR$\Release\Obj\stime.xcl</file>
-            <file>$PROJ_DIR$\Release\Exe\cdu.hex</file>
-            <file>$PROJ_DIR$\Release\Obj\wh2004.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\pid_r.r90</file>
-            <file>$PROJ_DIR$\Release\Obj\pwm.__cstat.et</file>
-            <file>$PROJ_DIR$\Release\Obj\spi.__cstat.et</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\ymath.h</file>
-            <file>$TOOLKIT_DIR$\inc\iom32.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xtgmath.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
             <file>$TOOLKIT_DIR$\inc\dlib\c\math.h</file>
             <file>$TOOLKIT_DIR$\inc\dlib\c\ycheck.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\stdbool.h</file>
-            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\xtgmath.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\stdint.h</file>
-            <file>$TOOLKIT_DIR$\inc\comp_a90.h</file>
-            <file>$TOOLKIT_DIR$\inc\inavr.h</file>
             <file>$PROJ_DIR$\lcd\lsd.c</file>
-            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Defaults.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ysizet.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\ymath.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\yvals.h</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.h</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Threads.h</file>
             <file>$TOOLKIT_DIR$\inc\dlib\c\stdlib.h</file>
-            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
-            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$TOOLKIT_DIR$\lib\dlib\dlAVR-3s-ec_mul-sf-n.r90</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\DLib_Product.h</file>
+            <file>$PROJ_DIR$\Release\Obj\mbus.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\net.__cstat.et</file>
+            <file>$PROJ_DIR$\ee\eeprom.c</file>
+            <file>$PROJ_DIR$\Release\Obj\wh2004.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ads1118.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ds1820.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\pid_r.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\eeprom.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\key.xcl</file>
+            <file>$PROJ_DIR$\ds1820\ds1820.c</file>
+            <file>$PROJ_DIR$\Release\Obj\ads1118.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\lsd.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
+            <file>$PROJ_DIR$\Release\Obj\kron.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\pwm.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\usart.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\main.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\spi.r90</file>
+            <file>$PROJ_DIR$\main.c</file>
+            <file>$TOOLKIT_DIR$\inc\dlib\c\xencoding_limits.h</file>
+            <file>$PROJ_DIR$\Release\Obj\kron.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\eeprom.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\net\usart.h</file>
+            <file>$PROJ_DIR$\Release\Obj\eeprom.xcl</file>
+            <file>$TOOLKIT_DIR$\src\template\cfg3soim.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\mtd.r90</file>
+            <file>$PROJ_DIR$\ee\eeprom.h</file>
+            <file>$PROJ_DIR$\Release\Obj\mbus.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\mtd.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\mtd.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\usart.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\main.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\kron.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\key.r90</file>
+            <file>$PROJ_DIR$\Release\Exe\cdu_eeprom.hex</file>
+            <file>$PROJ_DIR$\Release\Obj\stime.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\stime.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\net.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\ds1820.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\pwm.r90</file>
+            <file>$PROJ_DIR$\net\usart.c</file>
+            <file>$PROJ_DIR$\Release\Obj\key.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\spi.__cstat.et</file>
+            <file>$TOOLKIT_DIR$\src\template\cfgm32.xcl</file>
+            <file>$PROJ_DIR$\Release\Exe\cdu.hex</file>
+            <file>$PROJ_DIR$\Release\Obj\lsd.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\pwm.xcl</file>
+            <file>$PROJ_DIR$\Release\List\cdu.map</file>
+            <file>$PROJ_DIR$\Release\Obj\mbus.__cstat.et</file>
+            <file>$PROJ_DIR$\Release\Obj\ads1118.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\ds1820.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\wh2004.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\bitdefinitions\iom32.inc</file>
+            <file>$PROJ_DIR$\Release\Exe\cdu_data.hex</file>
+            <file>$PROJ_DIR$\Release\Obj\usart.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\wh2004.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\pid_r.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\pid_r.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\stime.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\net.xcl</file>
+            <file>$PROJ_DIR$\Release\Obj\lsd.r90</file>
+            <file>$PROJ_DIR$\Release\Obj\spi.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\iom32.h</file>
         </outputs>
         <file>
             <name>[ROOT_NODE]</name>
             <outputs>
                 <tool>
                     <name>XLINK</name>
-                    <file> 54 53 92 94</file>
+                    <file> 101 107 88 98</file>
                 </tool>
             </outputs>
         </file>
         <file>
-            <name>$PROJ_DIR$\csu\mtd.c</name>
+            <name>$PROJ_DIR$\net\modbus\mbus.c</name>
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 68</file>
+                    <file> 81</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 83</file>
+                    <file> 53</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 48</file>
+                    <file> 102</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 0 4 9 2 3 39 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 30 35 19 26 6</file>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 20</file>
                 </tool>
             </inputs>
         </file>
@@ -712,21 +711,44 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 95</file>
+                    <file> 109</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 72</file>
+                    <file> 105</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 76</file>
+                    <file> 56</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 9 0 39 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6</file>
+                    <file> 11 7 76 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\csu\mtd.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 79</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 83</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 82</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 7 5 11 10 80 76 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 31 18 21 4 0</file>
                 </tool>
             </inputs>
         </file>
@@ -735,21 +757,21 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 89</file>
+                    <file> 87</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 43</file>
+                    <file> 61</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 87</file>
+                    <file> 95</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 8 0 4 39 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 9 2 13</file>
+                    <file> 9 7 5 76 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 11 10 23</file>
                 </tool>
             </inputs>
         </file>
@@ -758,113 +780,21 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 60</file>
+                    <file> 86</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 63</file>
+                    <file> 66</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 61</file>
+                    <file> 73</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 28</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\ee\eeprom.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 44</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 90</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 47</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 3 0 4 39 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 30 35 19 26 6 24</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\spi\spi.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 80</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 55</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 98</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 22 36</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\pid\pid_r.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 96</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 82</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 52</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 67 104 64 113 33 108 34 100 99 103 101 107 21</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\sys\stime.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 49</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 93</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 84</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6</file>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 1</file>
                 </tool>
             </inputs>
         </file>
@@ -873,90 +803,21 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 86</file>
+                    <file> 93</file>
                 </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 37</file>
+                    <file> 100</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
-                    <file> 97</file>
+                    <file> 67</file>
                 </tool>
             </outputs>
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 0 9 31 13</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\modbus\mbus.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 77</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 57</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 81</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 20</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\net.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 38</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 41</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 66</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\spi\adc\ads1118.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 71</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 56</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 50</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 39 0 31</file>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 7 11 25 23</file>
                 </tool>
             </inputs>
         </file>
@@ -965,121 +826,11 @@
             <outputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 59</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 91</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 74</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 21 39 13 0 4 24 9 2 8 31</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\tsens\ds1820.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 78</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 79</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
-                    <file> 46</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 39 24</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\net\usart.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 73</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 40</file>
-                </tool>
-                <tool>
-                    <name>__cstat</name>
                     <file> 85</file>
                 </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 0 4 9 2 8 13 24 39</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\ds1820\ds1820.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 78</file>
-                </tool>
                 <tool>
                     <name>BICOMP</name>
-                    <file> 79</file>
-                </tool>
-            </outputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\main.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 59</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 91</file>
-                </tool>
-            </outputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\Release\Exe\cdu.hex</name>
-            <outputs>
-                <tool>
-                    <name>XLINK</name>
-                    <file> 54 53 92</file>
-                </tool>
-            </outputs>
-            <inputs>
-                <tool>
-                    <name>XLINK</name>
-                    <file> 45 70 71 78 44 89 60 51 59 77 68 38 96 86 80 49 95 65</file>
-                </tool>
-            </inputs>
-        </file>
-        <file>
-            <name>$PROJ_DIR$\lcd\lsd.c</name>
-            <outputs>
-                <tool>
-                    <name>ICCAVR</name>
-                    <file> 51</file>
-                </tool>
-                <tool>
-                    <name>BICOMP</name>
-                    <file> 62</file>
+                    <file> 69</file>
                 </tool>
                 <tool>
                     <name>__cstat</name>
@@ -1089,7 +840,255 @@
             <inputs>
                 <tool>
                     <name>ICCAVR</name>
-                    <file> 23 114 104 64 113 33 108 34 100 99 67 105 109 103 101 107 14 111 115 110 116 102 106 88 3 30 35 19 26 6 9 2 24 0 4</file>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 16 76 23 7 5 27 11 10 9 25</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\pid\pid_r.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 111</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 110</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 59</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 37 43 47 39 48 52 72 49 45 42 46 38 16</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\tsens\ds1820.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 104</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 58</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 92</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 76 27</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\net\net.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 91</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 113</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 54</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\spi\spi.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 70</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 115</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 96</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 13 24</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\sys\stime.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 112</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 89</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 90</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\spi\adc\ads1118.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 63</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 103</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 57</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 76 7 25</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\lcd\lsd.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 114</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 99</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 64</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 11 10 27 7 5</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\ee\eeprom.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 60</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 77</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 74</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 80 7 5 76 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 31 18 21 4 0 27</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\ds1820\ds1820.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 104</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 58</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\main.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 85</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 69</file>
+                </tool>
+            </outputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\net\usart.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 108</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 84</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 68</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 28 50 43 47 39 48 52 72 49 45 37 41 36 42 46 38 34 35 40 19 15 116 65 106 80 31 18 21 4 0 7 5 11 10 9 23 27 76</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Release\Exe\cdu.hex</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 101 107 88</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 97 78 63 104 60 87 86 114 85 81 79 91 111 93 70 112 109 51</file>
                 </tool>
             </inputs>
         </file>

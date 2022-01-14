@@ -7,12 +7,12 @@ extern "C" {
 #endif
 
 /*
- * Драйвер RS485
+ * Р”СЂР°Р№РІРµСЂ RS485
  */
 
 #include <net/net_imp.h>
 
-/* тип машины сотояния према кадра */
+/* С‚РёРї РјР°С€РёРЅС‹ СЃРѕС‚РѕСЏРЅРёСЏ РїСЂРµРјР° РєР°РґСЂР° */
 typedef enum {
     BUS_IDLE  = 0,
     BUS_STOP  = 1,
@@ -58,16 +58,16 @@ typedef enum {
     ADDRBITS_11 = 1
 } ADDR_BITS;
 
-/* размер кольцевого буфера приема */
+/* СЂР°Р·РјРµСЂ РєРѕР»СЊС†РµРІРѕРіРѕ Р±СѓС„РµСЂР° РїСЂРёРµРјР° */
 #define RX_BUFF_LEN        32
 
-extern unsigned char *BuffPtr; /* указатель на буфер приема/передачи */
-extern unsigned char TxIpBuff; /* указатель данных в буфере передачи */
-extern unsigned char BuffLen; /* размер буфера при передаче кадра */
-extern unsigned char RsError; /* регистр ошибки сети RS232/RS485 */
-extern unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
-extern signed char RxIpNew; /* указатель хвоста буфера приема */
-extern signed char RxIpOld; /* указатель головы буфера приема */
+extern unsigned char *BuffPtr; /* СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р±СѓС„РµСЂ РїСЂРёРµРјР°/РїРµСЂРµРґР°С‡Рё */
+extern unsigned char TxIpBuff; /* СѓРєР°Р·Р°С‚РµР»СЊ РґР°РЅРЅС‹С… РІ Р±СѓС„РµСЂРµ РїРµСЂРµРґР°С‡Рё */
+extern unsigned char BuffLen; /* СЂР°Р·РјРµСЂ Р±СѓС„РµСЂР° РїСЂРё РїРµСЂРµРґР°С‡Рµ РєР°РґСЂР° */
+extern unsigned char RsError; /* СЂРµРіРёСЃС‚СЂ РѕС€РёР±РєРё СЃРµС‚Рё RS232/RS485 */
+extern unsigned char RxBuff[RX_BUFF_LEN]; /* РєРѕР»СЊС†РµРІРѕР№ Р±СѓС„РµСЂ РїСЂРёРµРјР° */
+extern signed char RxIpNew; /* СѓРєР°Р·Р°С‚РµР»СЊ С…РІРѕСЃС‚Р° Р±СѓС„РµСЂР° РїСЂРёРµРјР° */
+extern signed char RxIpOld; /* СѓРєР°Р·Р°С‚РµР»СЊ РіРѕР»РѕРІС‹ Р±СѓС„РµСЂР° РїСЂРёРµРјР° */
 
 
 void init_rs (void);
