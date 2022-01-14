@@ -64,7 +64,6 @@ typedef enum {
 extern unsigned char *BuffPtr; /* указатель на буфер приема/передачи */
 extern unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 extern unsigned char BuffLen; /* размер буфера при передаче кадра */
-extern unsigned char RsError; /* регистр ошибки сети RS232/RS485 */
 extern unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 extern signed char RxIpNew; /* указатель хвоста буфера приема */
 extern signed char RxIpOld; /* указатель головы буфера приема */

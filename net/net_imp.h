@@ -125,6 +125,8 @@ extern "C" {
 #define NOT_ACTIVE          2000
 /* Установка скорости UART и регистра сравнения таймера тайм-аута */
 #define SET_BAUD(baud) {BRG_SET(baud); RX_TRM(OCR,) = T_VAL_RTU;}
+/* FERR/OERR/PARITY */
+#define ERROR_BITS (SHL(UART(FE,)) | SHL(UART(DOR,)) | SHL(UART(PE,)))
 
 /* Тип функций сетевого драйвера верхнего уровня */
 typedef void NET_FUNC(unsigned char ip, unsigned char len);

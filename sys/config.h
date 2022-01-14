@@ -69,7 +69,7 @@ typedef struct {
 /* тип структуры EEPROM */
 typedef struct {
     cfg_t Cfg;
-    uint8_t Crc1; // need CRC16, if data[] == {0} -> CRC8 = 0
+    uint8_t Crc1; // ToDo: need CRC16, if data[] == {0} -> CRC8 = 0
     num_t Num;
     uint8_t Crc2;
     clb_t Clb;

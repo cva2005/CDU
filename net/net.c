@@ -9,9 +9,6 @@ stime_t TimeIdle;
 unsigned char *BuffPtr; /* указатель на буфер передачи */
 unsigned char TxIpBuff; /* указатель данных в буфере передачи */
 unsigned char BuffLen; /* размер буфера при передаче кадра */
-unsigned char RsError; /* регистр ошибки сети RS232/RS485 */
-static char RsTemp; /* регистр временного хранения */
-static bool RxError; /* признак сетевой ошибки */
 unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 signed char RxIpNew; /* указатель хвоста буфера приема */
 signed char RxIpOld; /* указатель головы буфера приема */
@@ -73,9 +70,9 @@ void start_tx(char first, unsigned char *buff)
 #pragma type_attribute=__interrupt
 void usart_tx_byte(void)
 {
-    if (TxIpBuff > BuffLen) { /* последний байт кадра регистре сдвига */
+    if (TxIpBuff == BuffLen) { /* последний байт кадра регистре сдвига */
         CLR_BIT(UART(UCSR,B), UART(UDRIE,)); /* запреть прерывание UDRE */
-        UART(UCSR,A) = SHL(UART(TXC,));   /* сбросим возможный флаг TXC */
+        UART(UCSR,A) |= SHL(UART(TXC,));   /* сбросим возможный флаг TXC */
         SET_BIT(UART(UCSR,B), UART(TXCIE,)); /* прер. по перед. байта в линию */
     } else { /* передача кадра продолжается */
         UART(UDR,) = BuffPtr[TxIpBuff++]; /* передать очередной байт */
@@ -104,22 +101,12 @@ void usart_tx_empty(void)
 #pragma type_attribute=__interrupt
 void usart_rx_byte(void)
 {
-    uint8_t st = UART(UCSR,A); /* сохранить регистр статуса */
-    RsTemp = UART(UDR,); /* сохранить принятый байт */
-    if (st & (SHL(UART(FE,)) | SHL(UART(DOR,)))) { /* апп. ошибка FERR/OERR */
-        RsError = 0x21; /* установить регистр ошибки сети RS485 */
-        RxError = true; /* установить флаг ошибки */
-    } else if (st & SHL(UART(PE,))) { /* аппаратная ошибка паритета */
-        RsError = 0x22 /*+ Cfg.RsDataBits*/; /* ошибка паритета */
-        RxError = true; /* установить флаг ошибки */
+    if (UART(UCSR,A) & ERROR_BITS) {
+        START_RX(); /* начать прием заново */
     } else { /* аппаратных ошибок не обнаружено */
         RX_TMR_ON(); /* запустить таймер тайм-аута приема кадра */
-        RxError = false; /* сбросить флаг ошибки */
         if (RxIpNew >= RX_BUFF_LEN) RxIpNew = 0;
-        RxBuff[RxIpNew++] = RsTemp;
-    }
-    if (RxError) { /* аппаратная ошибка при приеме */
-        START_RX(); /* начать прием заново */
+        RxBuff[RxIpNew++] = UART(UDR,); /* сохранить принятый байт */
     }
 }
 
