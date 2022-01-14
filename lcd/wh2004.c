@@ -7,21 +7,21 @@
 void Init_WH2004(unsigned char enable)
 {
 //DATA_OUT = 0;
-//-----------------------------Инициализация-------------------------------
+//-----------------------------РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ-------------------------------
 WH2004L_wr_inst;
 
-DATA_OUT=0x30; //Function set (без чтения флага "busy")
+DATA_OUT=0x30; //Function set (Р±РµР· С‡С‚РµРЅРёСЏ С„Р»Р°РіР° "busy")
 WH2004L_enable;
 delay_ns;
 WH2004L_disable;
 delay_us(40);
 
-DATA_OUT=0x30; //Function set (без чтения флага "busy")
+DATA_OUT=0x30; //Function set (Р±РµР· С‡С‚РµРЅРёСЏ С„Р»Р°РіР° "busy")
 WH2004L_enable;
 delay_ns;
 WH2004L_disable;
 delay_us(40);
-//----------------------------------запись начальных настроек------------
+//----------------------------------Р·Р°РїРёСЃСЊ РЅР°С‡Р°Р»СЊРЅС‹С… РЅР°СЃС‚СЂРѕРµРє------------
 if (enable)	WH2004_inst_wr(0x38);//Function set (N = 0 1-line displayl; F = 0 5x8 dot character font)
 
 WH2004_inst_wr(0x08);//Display OFF
@@ -31,7 +31,7 @@ WH2004_inst_wr(0x01);//Display Clear
 if (enable)
 	{
 	WH2004_inst_wr(0x06);//Entry Mode Set (I/D = 1 Increment by 1; S = 0; No shift)
-	//-----------------------------------вкючение ЖКИ--------------------------
+	//-----------------------------------РІРєСЋС‡РµРЅРёРµ Р–РљР--------------------------
 	WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
 	}
 }
@@ -40,21 +40,21 @@ unsigned char WH2004_wait_ready(void)
 {unsigned char BF=0; 
  unsigned int cnt=0;
 
-DATA_OUT=0;    //на выходы все 0
+DATA_OUT=0;    //РЅР° РІС‹С…РѕРґС‹ РІСЃРµ 0
 WH2004L_rd_busy;
-DDRC=0x00; //все пины D0-D7 настройить на вход;
+DDRC=0x00; //РІСЃРµ РїРёРЅС‹ D0-D7 РЅР°СЃС‚СЂРѕР№РёС‚СЊ РЅР° РІС…РѕРґ;
 do
 	{
-	cnt++;          //увеличить счётчик времени ожидания
-	WH2004L_enable; //сигнал включения
-	delay_ns; //подождать пока установится данные на шине
-	BF=DATA_IN;		//прочитать флаг "busy"
-	WH2004L_disable;//убрать сигнал включения
+	cnt++;          //СѓРІРµР»РёС‡РёС‚СЊ СЃС‡С‘С‚С‡РёРє РІСЂРµРјРµРЅРё РѕР¶РёРґР°РЅРёСЏ
+	WH2004L_enable; //СЃРёРіРЅР°Р» РІРєР»СЋС‡РµРЅРёСЏ
+	delay_ns; //РїРѕРґРѕР¶РґР°С‚СЊ РїРѕРєР° СѓСЃС‚Р°РЅРѕРІРёС‚СЃСЏ РґР°РЅРЅС‹Рµ РЅР° С€РёРЅРµ
+	BF=DATA_IN;		//РїСЂРѕС‡РёС‚Р°С‚СЊ С„Р»Р°Рі "busy"
+	WH2004L_disable;//СѓР±СЂР°С‚СЊ СЃРёРіРЅР°Р» РІРєР»СЋС‡РµРЅРёСЏ
 	}
-while ( (BF&0x80)&&(cnt<1001) ); //ожидаем готовности WH2004L
+while ( (BF&0x80)&&(cnt<1001) ); //РѕР¶РёРґР°РµРј РіРѕС‚РѕРІРЅРѕСЃС‚Рё WH2004L
 
 //WH2004L_rd_data;
-if (cnt>1000) return(0); //Если таймаут вышел, значит WH2004L неисправна*/
+if (cnt>1000) return(0); //Р•СЃР»Рё С‚Р°Р№РјР°СѓС‚ РІС‹С€РµР», Р·РЅР°С‡РёС‚ WH2004L РЅРµРёСЃРїСЂР°РІРЅР°*/
 return(1);
 }
 
@@ -63,7 +63,7 @@ unsigned char WH2004_data_wr(unsigned char data)
 if (WH2004_wait_ready())
 	{
 	DATA_OUT=data;
-	DDRC=0xFF; //порт настроить как выходы
+	DDRC=0xFF; //РїРѕСЂС‚ РЅР°СЃС‚СЂРѕРёС‚СЊ РєР°Рє РІС‹С…РѕРґС‹
 	WH2004L_wr_data;
 	WH2004L_enable;
 	delay_ns;
@@ -79,7 +79,7 @@ unsigned char WH2004_inst_wr(unsigned char inst)
 if (WH2004_wait_ready())
 	{
 	DATA_OUT=inst;
-	DDRC=0xFF; //порт настроить как выходы
+	DDRC=0xFF; //РїРѕСЂС‚ РЅР°СЃС‚СЂРѕРёС‚СЊ РєР°Рє РІС‹С…РѕРґС‹
 	WH2004L_wr_inst;
 //delay_ns;
 	WH2004L_enable;
@@ -95,9 +95,9 @@ return(0);
 void WH2004_string_wr(char *string, unsigned char adr, unsigned char nsym)
 {unsigned char cnt=0;
 
-if (WH2004_inst_wr(adr)) //установить курсор в нужную позицию
+if (WH2004_inst_wr(adr)) //СѓСЃС‚Р°РЅРѕРІРёС‚СЊ РєСѓСЂСЃРѕСЂ РІ РЅСѓР¶РЅСѓСЋ РїРѕР·РёС†РёСЋ
 	{
-	for (cnt=0; cnt<nsym; cnt++) WH2004_data_wr(string[cnt]); //записать последовательно все символы
+	for (cnt=0; cnt<nsym; cnt++) WH2004_data_wr(string[cnt]); //Р·Р°РїРёСЃР°С‚СЊ РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ РІСЃРµ СЃРёРјРІРѕР»С‹
 	}	
 }
 #endif

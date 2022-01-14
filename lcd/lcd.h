@@ -34,7 +34,7 @@ typedef enum {
 #define C_P         14
 //#define Time_pos  17
 
-#define PR_NUM      5 //число параметров для редактирования
+#define PR_NUM      5 //С‡РёСЃР»Рѕ РїР°СЂР°РјРµС‚СЂРѕРІ РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ
 
 //#define pr_I 0x80
 //#define pr_U 0x8A

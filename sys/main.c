@@ -31,7 +31,7 @@ void main (void) {
         net_drv();
         adc_drv();
         csu_drv();
-	}
+    }
 }
 
 static inline void init_gpio (void) {

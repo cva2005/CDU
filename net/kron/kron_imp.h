@@ -3,17 +3,17 @@
 #pragma message	("@(#)kron_imp.h")
 
 /*
- * Драйвер сетевого протокола KRON
+ * Р”СЂР°Р№РІРµСЂ СЃРµС‚РµРІРѕРіРѕ РїСЂРѕС‚РѕРєРѕР»Р° KRON
  */
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#define KRON_RX_MIN         4 /* минимальная длина кадра */
-#define KRON_RX_MAX         250 /* максимальная длина кадра */
-#define CHAR_TS             0x5A /* символ начала кадра */
-#define CHAR_RS             0xA5 /* символ начала кадра */
+#define KRON_RX_MIN         4 /* РјРёРЅРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РєР°РґСЂР° */
+#define KRON_RX_MAX         250 /* РјР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° РєР°РґСЂР° */
+#define CHAR_TS             0x5A /* СЃРёРјРІРѕР» РЅР°С‡Р°Р»Р° РєР°РґСЂР° */
+#define CHAR_RS             0xA5 /* СЃРёРјРІРѕР» РЅР°С‡Р°Р»Р° РєР°РґСЂР° */
 #define KRON_BUFF_LEN       KRON_RX_MAX
 #define RX_LEN              KRON_BUFF_LEN
 #define TX_LEN             50
@@ -186,7 +186,7 @@ typedef	struct
 	unsigned char soft_mode;
 	char number[8];
 }tx_ver_type;
-//---------------------------------пакет для загрузки алгоритмов
+//---------------------------------РїР°РєРµС‚ РґР»СЏ Р·Р°РіСЂСѓР·РєРё Р°Р»РіРѕСЂРёС‚РјРѕРІ
 typedef	struct {
 	unsigned char cmd;	
 	unsigned char size;
