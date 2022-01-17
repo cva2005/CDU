@@ -51,16 +51,16 @@ typedef union {
 } adc_t;
 
 typedef struct {
-    unsigned resv      :1; //low
-    unsigned nop       :2;
-    unsigned pull      :1;
-    unsigned ts_m      :1;
-    unsigned dr        :3;
     unsigned mode      :1;
     unsigned pga       :3;
     unsigned mux       :2;
     unsigned pol       :1;
     unsigned ss        :1; //high
+    unsigned resv      :1; //low
+    unsigned nop       :2;
+    unsigned pull      :1;
+    unsigned ts_m      :1;
+    unsigned dr        :3;
 } cfg_reg_t;
 
 typedef enum {
@@ -130,12 +130,12 @@ typedef enum {
 } rdy_t;
 
 /* ADC Max Clock Frequency = 4000 kHz */
-#define SCK_FREQ        4000000UL
+#define SCK_FREQ        4000001UL
 #define CS_PORT         A
 #define CS_PIN          2
 #define CS_ON()         CLR_PIN(CS_PORT, CS_PIN)
 #define CS_OFF()        SET_PIN(CS_PORT, CS_PIN)
-#define ADC_SEL(x)      !x ? (CS_ON()) : (CS_OFF())
+#define ADC_SEL(x)      !x ? (CS_OFF()) : (CS_ON())
 /* линия RYD (она же MISO) */
 #define RDY_PORT        B
 #define RDY_PIN         6

@@ -35,7 +35,7 @@ void main (void) {
 }
 
 static inline void init_gpio (void) {
-    DDRA = 0x07;
+    DDRA = 0x03;
     DDRB = 0xB8;
 #if !JTAG_DBGU
     DDRC = 0xFF;
