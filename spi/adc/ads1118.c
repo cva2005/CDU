@@ -7,20 +7,24 @@
 static bool AdcBusy;
 static stime_t AdcTime;
 static void adc_cs(cs_t cs);
-static uint8_t ChCnt = CH_0;
+static mux_t ChCnt = CH_0;
 static uint16_t AdcRes[ADC_CH];
 static cfg_reg_t CfgReg = {
-    SIGNLE_SHOT,
-    PGA_2048,
-    CH_0,
-    UNIPOLAR,
-    SINGLE_CONV,
     BIT_RESV,
     DATA_VALID,
     PULL_UP_DIS,
     ADC_MODE,
-    DR_16_SPS
+    DR_16_SPS,
+    SIGNLE_SHOT,
+    PGA_2048,
+    CH_0,
+    UNIPOLAR,
+    SINGLE_CONV
 };
+#define ADC_DEBUG   1
+#if ADC_DEBUG
+static cfg_reg_t CfgRd;
+#endif
 
 /*
  * Создание структуры - описателя SPI ADC ADS1118.
@@ -37,8 +41,8 @@ MAKE_SPI_CNTR(
 
 void adc_init (void) {
     spi_init();
-    CS_ON(); // 32-Bit Data Transmission Cycle (CS -> ON)
-    SET_AS_OUT(CS_PORT, CS_PIN);
+    //CS_ON(); // 32-Bit Data Transmission Cycle (CS -> ON)
+    //SET_AS_OUT(CS_PORT, CS_PIN);
     spi_start_io((char *)&CfgReg, sizeof(uint16_t), sizeof(uint32_t), &adc_cntr);
 }
 
@@ -48,9 +52,21 @@ static void adc_cs (cs_t cs) {
     //ADC_SEL(cs);
 }
 
+// ToDo: Reset function sequence need!!!
+//void adc_reset (void) {
+
 void adc_drv (void) {
     if (IS_RDY() && !AdcBusy) { // conversion complette
-        spi_get_data((char *)&AdcRes[ChCnt], sizeof(uint16_t));
+        int16_t res; uint16_t b = Cfg.B[ChCnt];
+        spi_get_data((char *)&res, 0, sizeof(uint16_t));
+        if (res < 0) res = 0;
+        ADC_O[ChCnt] = res;
+        if (res > b) res -= b;
+        else res = 0;
+        AdcRes[ChCnt] = res;
+#if ADC_DEBUG
+        spi_get_data((char *)&CfgRd, sizeof(uint16_t), sizeof(uint16_t));
+#endif
         ChCnt++;
         if (ChCnt == ADC_CH) ChCnt = CH_0;
         CfgReg.mux = ChCnt;

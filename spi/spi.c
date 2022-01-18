@@ -29,7 +29,7 @@ void spi_start_io (char *msg, uint8_t wlen,
     if (wr_len = wlen) { /* write operation */
         wr_ptr = 1;
         while (wlen--) { /* copy data */
-            spi_buf[wlen] = msg[wlen];
+            spi_buf[wlen] = *msg++;
          }
     } else if (!rlen) {
         return; /* empty spi task */
@@ -44,10 +44,10 @@ void spi_start_io (char *msg, uint8_t wlen,
     SPDR = spi_buf[0]; /* start spi task */
 }
 
-void spi_get_data (char *msg, uint8_t len) {
+void spi_get_data (char *msg, uint8_t first, uint8_t len) {
     while (spi_busy());
     while (len--) { /* copy data from buffer */
-        *msg++ = spi_buf[len];
+        *msg++ = spi_buf[len + first];
     }
 }
 

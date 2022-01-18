@@ -72,10 +72,10 @@ void lcd_wr_set (void) {
     ConMsg = false;
     lcd_clear();
     memcpy(&Lcd[0][0], "P:", 2);
-    decd_cpy(&Lcd[0][15], "Ц= /", 4);
+    decd_cpy(&Lcd[0][15], "Р¦= /", 4);
     memcpy(&Lcd[1][0], "I=", 2);
     memcpy(&Lcd[1][7], "A(", 2);
-    decd_cpy(&Lcd[1][13], "A)  Э:", 6);
+    decd_cpy(&Lcd[1][13], "A)  Р­:", 6);
     memcpy(&Lcd[2][0], "U=+", 3);
     memcpy(&Lcd[2][7], "B(", 2);
     memcpy(&Lcd[2][13], "B)", 2);
@@ -87,9 +87,9 @@ void lcd_wr_connect (bool pc) {
     lcd_clear();
     memcpy(&Lcd[0][5], "KRON GROUP", 10);
     ConMsg = pc;
-    if (pc) decd_cpy(Lcd[1], "ПК подключен...", 15);
-    else decd_cpy(Lcd[1], "Инициализация...", 16);
-    decd_cpy(Lcd[3], "ЗавN", 4);
+    if (pc) decd_cpy(Lcd[1], "РџРљ РїРѕРґРєР»СЋС‡РµРЅ...", 15);
+    else decd_cpy(Lcd[1], "РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ...", 16);
+    decd_cpy(Lcd[3], "Р—Р°РІN", 4);
     read_num(&Lcd[3][4]);
     memcpy(&Lcd[3][14], SOFTW_VER, 2);
     for (uint8_t i = 0; i < LN; i++)
@@ -102,17 +102,17 @@ void lcd_update_set (void) {
     uint8_t i;
     if (!Cfg.bf1.LCD_ON) return;	
     if (LcdMode == TEMP_MODE) lcd_mode_ch();
-    /* отображение названия метода */
+    /* РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РЅР°Р·РІР°РЅРёСЏ РјРµС‚РѕРґР° */
     memcpy(&Lcd[0][2], Mtd.fld.name, sizeof(Mtd.fld.name));
-    /* отображение номера цикла */
+    /* РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РЅРѕРјРµСЂР° С†РёРєР»Р° */
     Lcd[0][19] = dprn(Mtd.fld.Cnt);
     Lcd[1][19] = dprn(Mtd.fld.NStg);
-    /* отображение времени */
+    /* РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ РІСЂРµРјРµРЅРё */
     calc_time(&mt, &Lcd[3][T_P]);
-    /* отображение ёмкости */
+    /* РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ С‘РјРєРѕСЃС‚Рё */
     Cap.C = Cap.dC = 0;
     calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &Lcd[3][C_P]);
-    /* отображение тока и напряжения */
+    /* РѕС‚РѕР±СЂР°Р¶РµРЅРёРµ С‚РѕРєР° Рё РЅР°РїСЂСЏР¶РµРЅРёСЏ */
     if (SetMode == DISCHARGE) calc_prm(TaskId, Cfg.K_Id, &Lcd[1][Is_P]);
     else calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
     calc_prm(TaskU, Cfg.K_U, &Lcd[2][Us_P]);
@@ -125,47 +125,47 @@ void lcd_update_set (void) {
 }
 
 void lcd_stop_msg (void) {
-    decd_cpy(&Lcd[0][2], "Завершено    ", 13);
+    decd_cpy(&Lcd[0][2], "Р—Р°РІРµСЂС€РµРЅРѕ    ", 13);
     WH2004_string_wr(&Lcd[0][2], LA_0 + 2, 13); // refrash
 }
 
 void lcd_update_work (void) {
     if (Cfg.bf1.LCD_ON == 0) return;
-    WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
-    /* ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА */
+    WH2004_inst_wr(0x0C);//РѕС‚РєР»СЋС‡РёС‚СЊ РєСѓСЂСЃРѕСЂ: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
+    /* РћРўРћР‘Р РђР–Р•РќРР• Р’Р«РҐРћР”РќРћР“Рћ РўРћРљРђ */
     int16_t adc_res;
-    if (PwmStatus == DISCHARGE) { //если мы в режиме разряда, значит ток надо расчитывать по другому
+    if (PwmStatus == DISCHARGE) { //РµСЃР»Рё РјС‹ РІ СЂРµР¶РёРјРµ СЂР°Р·СЂСЏРґР°, Р·РЅР°С‡РёС‚ С‚РѕРє РЅР°РґРѕ СЂР°СЃС‡РёС‚С‹РІР°С‚СЊ РїРѕ РґСЂСѓРіРѕРјСѓ
         adc_res = get_adc_res(ADC_DI);
         if (adc_res != AdcOld[ADC_MI]) {
             Lcd[1][I_P]='-';
             AdcOld[ADC_MI] = adc_res;
             calc_prm(adc_res, Cfg.K_Id, &Lcd[1][I_P+1]);
-            WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
+            WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
             calc_prm(TaskId , Cfg.K_Id , &Lcd[1][Is_P]);
-            WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить
+            WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
         }		
     } else {
         adc_res = get_adc_res(ADC_MI);
-        if (adc_res !=AdcOld[ADC_MI]) { //если значение тока изменилось
+        if (adc_res !=AdcOld[ADC_MI]) { //РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ С‚РѕРєР° РёР·РјРµРЅРёР»РѕСЃСЊ
             Lcd[1][I_P]='+';
             AdcOld[ADC_MI] = adc_res;
             calc_prm(adc_res, Cfg.K_I, &Lcd[1][I_P+1]);
-            WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
-            if (PwmStatus != STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в lcd_wr_set
+            WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
+            if (PwmStatus != STOP) { //Р•СЃР»Рё Р±Р»РѕРє РЅРµ Р·Р°РїСѓС‰РµРЅ, С‚Рѕ РЅРµ РѕР±РЅРѕР»РІСЏС‚СЊ Р·Р°РґР°РЅРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ, С‚.Рє. РѕРЅРё Р·Р°РІРёСЃСЏС‚ РѕС‚ РІС‹Р±СЂР°РЅРЅРѕРіРѕ СЂРµР¶РёРјР° Рё РѕР±РЅРѕРІР»СЏСЋС‚СЃСЏ РІ lcd_wr_set
                 calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
-                WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить	
+                WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ	
             }
         }
     }
-    /* ОТОБРАЖЕНИЕ НОМЕРА ЭТАПА */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РќРћРњР•Р Рђ Р­РўРђРџРђ */
     if (CsuState != STOP) {
-        if (sOld != sCnt) { //на последнем методе проверяется 
-            Lcd[1][19] = dprn(sCnt + 1); //отображать значения на 1 больше, т.к. нумерация этапов начинается с 0
-            WH2004_string_wr(&Lcd[1][19], LA_1 + 19, 1); //отобразить
+        if (sOld != sCnt) { //РЅР° РїРѕСЃР»РµРґРЅРµРј РјРµС‚РѕРґРµ РїСЂРѕРІРµСЂСЏРµС‚СЃСЏ 
+            Lcd[1][19] = dprn(sCnt + 1); //РѕС‚РѕР±СЂР°Р¶Р°С‚СЊ Р·РЅР°С‡РµРЅРёСЏ РЅР° 1 Р±РѕР»СЊС€Рµ, С‚.Рє. РЅСѓРјРµСЂР°С†РёСЏ СЌС‚Р°РїРѕРІ РЅР°С‡РёРЅР°РµС‚СЃСЏ СЃ 0
+            WH2004_string_wr(&Lcd[1][19], LA_1 + 19, 1); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
             sOld = sCnt;
         }
     }
-    /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ & CAPACITY */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РўР•РљРЈР©Р•Р“Рћ Р’Р Р•РњР•РќР & CAPACITY */
     if (PwmStatus != STOP) {
         if (TickSec == true) {		
             if (PwmStatus == DISCHARGE)
@@ -179,32 +179,32 @@ void lcd_update_work (void) {
             TickSec = false;
         }
     }	
-    /* ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РўР•РњРџР•Р РђРўРЈР Р« */
     if (LcdMode == TEMP_MODE) {
-        if (TmpOld[0] != Tmp[0]) { //если значение изменилось, то отобразить его на дисплее
-            calc_tmp(Tmp[0], &Lcd[3][T1_P]); //преобразовать значение в цифры дисплея
-            WH2004_string_wr(&Lcd[3][T1_P],LA_3+T1_P, 5); //отобразить
+        if (TmpOld[0] != Tmp[0]) { //РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РёР·РјРµРЅРёР»РѕСЃСЊ, С‚Рѕ РѕС‚РѕР±СЂР°Р·РёС‚СЊ РµРіРѕ РЅР° РґРёСЃРїР»РµРµ
+            calc_tmp(Tmp[0], &Lcd[3][T1_P]); //РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ Р·РЅР°С‡РµРЅРёРµ РІ С†РёС„СЂС‹ РґРёСЃРїР»РµСЏ
+            WH2004_string_wr(&Lcd[3][T1_P],LA_3+T1_P, 5); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
             TmpOld[0] = Tmp[0];
         }
-        if (TmpOld[1] != Tmp[1]) { //если значение изменилось, то отобразить его на дисплее
-            calc_tmp(Tmp[1], &Lcd[3][T2_P]); //преобразовать значение в цифры дисплея
-            WH2004_string_wr(&Lcd[3][T2_P],LA_3+T2_P, 5); //отобразить
+        if (TmpOld[1] != Tmp[1]) { //РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РёР·РјРµРЅРёР»РѕСЃСЊ, С‚Рѕ РѕС‚РѕР±СЂР°Р·РёС‚СЊ РµРіРѕ РЅР° РґРёСЃРїР»РµРµ
+            calc_tmp(Tmp[1], &Lcd[3][T2_P]); //РїСЂРµРѕР±СЂР°Р·РѕРІР°С‚СЊ Р·РЅР°С‡РµРЅРёРµ РІ С†РёС„СЂС‹ РґРёСЃРїР»РµСЏ
+            WH2004_string_wr(&Lcd[3][T2_P],LA_3+T2_P, 5); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
             TmpOld[1] = Tmp[1];
         }
     }
-    /* ОТОБРАЖЕНИЕ НАПРЯЖЕНИЯ */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РќРђРџР РЇР–Р•РќРРЇ */
     adc_res = get_adc_res(ADC_MU);
-    if (adc_res != AdcOld[ADC_MU]) { //если значение напряжения изменилось
+    if (adc_res != AdcOld[ADC_MU]) { //РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅР°РїСЂСЏР¶РµРЅРёСЏ РёР·РјРµРЅРёР»РѕСЃСЊ
         AdcOld[ADC_MU] = adc_res;
         calc_prm(adc_res, Cfg.K_U, &Lcd[2][U_P]);
-        WH2004_string_wr(&Lcd[2][U_P],LA_2+U_P, 5); //отобразить
+        WH2004_string_wr(&Lcd[2][U_P],LA_2+U_P, 5); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
         calc_prm(TaskU , Cfg.K_U , &Lcd[2][Us_P]);
-        WH2004_string_wr(&Lcd[2][Us_P],LA_2+Us_P, 4); //отобразить
+        WH2004_string_wr(&Lcd[2][Us_P],LA_2+Us_P, 4); //РѕС‚РѕР±СЂР°Р·РёС‚СЊ
     }
-    /* ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РџРћР”РљР›Р®Р§Р•РќРРЇ РџРљ */
     if (rs_active()) {
         if (Lcd[2][16] != P_rus) {
-            decd_cpy(&Lcd[3][16], "ПК", 2);
+            decd_cpy(&Lcd[3][16], "РџРљ", 2);
             goto refr_pc_msg;
         }
     } else {
@@ -214,13 +214,13 @@ void lcd_update_work (void) {
             WH2004_string_wr(&Lcd[2][16], LA_2 + 16, 2);
         }
     }
-    /* ОТОБРАЖЕНИЕ НОМЕРА ЦИКЛА */
+    /* РћРўРћР‘Р РђР–Р•РќРР• РќРћРњР•Р Рђ Р¦РРљР›Рђ */
     if (cOld != cCnt) {
         uint_to_str(cCnt, &Lcd[0][S_P], 1);
         WH2004_string_wr(&Lcd[0][S_P], LA_0 + S_P, 1);
         cOld = cCnt;
     }
-    /* -ОТОБРАЖЕНИЕ ОШИБОК */
+    /* -РћРўРћР‘Р РђР–Р•РќРР• РћРЁРР‘РћРљ */
     if (Error) {
         memcpy(&Lcd[0][2], "Error", 5);
         uint_to_str(Error, &Lcd[0][7], 2);
@@ -229,19 +229,19 @@ void lcd_update_work (void) {
         memset(Lcd[3], ' ', 20);
         switch (Error) {
         case ERR_OVERLOAD:
-            decd_cpy(&Lcd[3][11], "заряда", 6);
+            decd_cpy(&Lcd[3][11], "Р·Р°СЂСЏРґР°", 6);
             goto overl_msg;
         case ERR_DISCH_PWR:
-            decd_cpy(&Lcd[3][11], "разряда", 7);
+            decd_cpy(&Lcd[3][11], "СЂР°Р·СЂСЏРґР°", 7);
         overl_msg:
-            decd_cpy(Lcd[3], "Перегрузка", 10);
+            decd_cpy(Lcd[3], "РџРµСЂРµРіСЂСѓР·РєР°", 10);
             break;
         case ERR_CONNECTION:
         case ERR_CONNECTION1:
-            decd_cpy(Lcd[3], "Переполюсовка", 13);
+            decd_cpy(Lcd[3], "РџРµСЂРµРїРѕР»СЋСЃРѕРІРєР°", 13);
             break;
         case ERR_NO_AKB:
-            decd_cpy(Lcd[3], "Нет АКБ!!!", 10);
+            decd_cpy(Lcd[3], "РќРµС‚ РђРљР‘!!!", 10);
             break;
         case ERR_OVERTEMP1:
             Lcd[3][16] = '1';
@@ -250,29 +250,29 @@ void lcd_update_work (void) {
             Lcd[3][16] = '2';
             goto overt_msg;
         case ERR_OVERTEMP3:
-            decd_cpy(&Lcd[3][16], "внеш", 4);
+            decd_cpy(&Lcd[3][16], "РІРЅРµС€", 4);
         overt_msg:
-            decd_cpy(Lcd[3], "Перегрев датчик", 15);
+            decd_cpy(Lcd[3], "РџРµСЂРµРіСЂРµРІ РґР°С‚С‡РёРє", 15);
             break;
         case ERR_SET:
-            decd_cpy(Lcd[3], "Задано неверное U", 17);
+            decd_cpy(Lcd[3], "Р—Р°РґР°РЅРѕ РЅРµРІРµСЂРЅРѕРµ U", 17);
             break;
         case ERR_STG:
-            decd_cpy(Lcd[3], "Этап поврежден", 14);
+            decd_cpy(Lcd[3], "Р­С‚Р°Рї РїРѕРІСЂРµР¶РґРµРЅ", 14);
             break;
         case ERR_OUT:
-            decd_cpy(Lcd[3], "КЗ выпрямителя", 14);
+            decd_cpy(Lcd[3], "РљР— РІС‹РїСЂСЏРјРёС‚РµР»СЏ", 14);
             break;
         case ERR_ADC:
-            decd_cpy(Lcd[3], "Ошибка АЦП", 10);
+            decd_cpy(Lcd[3], "РћС€РёР±РєР° РђР¦Рџ", 10);
             break;
         case ERR_DM_LOSS:
-            decd_cpy(Lcd[3], "Обрыв разряд. модуля", 20);
+            decd_cpy(Lcd[3], "РћР±СЂС‹РІ СЂР°Р·СЂСЏРґ. РјРѕРґСѓР»СЏ", 20);
         }
         WH2004_string_wr(&Lcd[3][0], LA_3, 20);
     } else {
         if ((Lcd[3][0] != 'T') && (Lcd[3][0] != 't')) lcd_wr_set();
-        /* ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ */
+        /* РћРўРћР‘Р РђР–Р•РќРР• Р‘РРўРћР’ РЎРћРЎРўРћРЇРќРРЇ */
         bool change = false;
         char sc;
         if (PwmStatus == STOP) {
@@ -311,7 +311,7 @@ void lcd_update_work (void) {
             WH2004_string_wr(&sc, LA_2 + 19, 1);
         }
     }
-    /* вернуть курсор на место */
+    /* РІРµСЂРЅСѓС‚СЊ РєСѓСЂСЃРѕСЂ РЅР° РјРµСЃС‚Рѕ */
     WH2004_inst_wr(cursor_pos());
     if (CsuState == STOP) WH2004_inst_wr(0x0F);
     /* Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on) */
@@ -374,7 +374,7 @@ static void calc_prm (uint16_t val, uint16_t k, char *p) {
     p[3] = p[2];
     p[2] = ',';
 }
-/* Temperature range default 0.0625°C / bit */
+/* Temperature range default 0.0625В°C / bit */
 static void calc_tmp (int16_t t, char *p) {
     if (t == ERR_WCODE) {
         memcpy(p, "Error", 5);
@@ -384,7 +384,7 @@ static void calc_tmp (int16_t t, char *p) {
         p[0]='-';
         t *= -1;
     }
-    uint16_t d = t * 5 / 8; // T[°C] * 10
+    uint16_t d = t * 5 / 8; // T[В°C] * 10
     if (d > 999) {
         p[0] = '+';
         uint_to_str(d, &p[1], 3);

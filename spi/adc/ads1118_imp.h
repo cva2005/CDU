@@ -30,9 +30,6 @@
 
 #define SAMPLECOUNTER		9
 #define LEN                 2
-#define CH_0                0
-#define CH_1                1
-#define BIT_RESV            0
 
 typedef union {
     struct {
@@ -50,33 +47,16 @@ typedef union {
     volatile uint8_t byte[2];
 } adc_t;
 
-typedef struct {
-    unsigned mode      :1;
-    unsigned pga       :3;
-    unsigned mux       :2;
-    unsigned pol       :1;
-    unsigned ss        :1; //high
-    unsigned resv      :1; //low
-    unsigned nop       :2;
-    unsigned pull      :1;
-    unsigned ts_m      :1;
-    unsigned dr        :3;
-} cfg_reg_t;
-
 typedef enum {
     CONVERING   = 0x1, //for read
     SINGLE_CONV = 0x1  //for write
 } ss_t;
 
 typedef enum {
-    AINPN_0_1 	= 	0x0,
-    AINPN_0_3 	=   0x1,
-    AINPN_1_3 	=   0x2,
-    AINPN_2_3 	=   0x3,
-    AINPN_0_GND	=  	0x4,
-    AINPN_1_GND	=  	0x5,
-    AINPN_2_GND	=  	0x6,
-    AINPN_3_GND	=  	0x7
+    CH_0 	= 	0x0,
+    CH_1 	=   0x1,
+    CH_2 	=   0x2,
+    CH_3 	=   0x3
 } mux_t;
 
 typedef enum {
@@ -128,6 +108,23 @@ typedef enum {
     DATA_READY 	= 0x0,
     DATA_NREADY = 0x1
 } rdy_t;
+
+typedef enum {
+    BIT_RESV 	= 0x0
+} rsv_t;
+
+typedef struct {
+    rsv_t resv  :1; //low
+    nop_t nop   :2;
+    pull_t pull :1;
+    ts_t ts_m   :1;
+    rate_t dr   :3;
+    mode_t mode :1;
+    pga_t pga   :3;
+    mux_t mux   :2;
+    pol_t pol   :1;
+    ss_t ss     :1; //high
+} cfg_reg_t;
 
 /* ADC Max Clock Frequency = 4000 kHz */
 #define SCK_FREQ        4000001UL

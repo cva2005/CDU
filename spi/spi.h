@@ -70,7 +70,7 @@ static const cntr_t name = {\
 
 void spi_init (void);
 bool spi_busy (void);
-void spi_get_data (char *msg, uint8_t len);
+void spi_get_data (char *msg, uint8_t first, uint8_t len);
 void spi_start_io (char *msg, uint8_t wlen,
                   uint8_t rlen, cntr_t const *cntr);
 
