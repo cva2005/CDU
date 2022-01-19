@@ -7,7 +7,7 @@
 static bool AdcBusy;
 static stime_t AdcTime;
 static void adc_cs(cs_t cs);
-static mux_t ChCnt = CH_0;
+static mux_t ChCnt = CH_3;
 static uint16_t AdcRes[ADC_CH];
 static cfg_reg_t CfgReg = {
     BIT_RESV,
@@ -53,6 +53,13 @@ static void adc_cs (cs_t cs) {
 }
 
 // ToDo: Reset function sequence need!!!
+/*
+ * If SCLK is held low for 28 ms,
+ * the serial interface resets and the next SCLK pulse starts a new
+ * communication cycle. This time-out feature can be used to
+ * recover communication when a serial interface transmission
+ * is interrupted. When the serial interface is idle, hold SCLK low.
+ */
 //void adc_reset (void) {
 
 void adc_drv (void) {
@@ -68,8 +75,12 @@ void adc_drv (void) {
         spi_get_data((char *)&CfgRd, sizeof(uint16_t), sizeof(uint16_t));
 #endif
         ChCnt++;
-        if (ChCnt == ADC_CH) ChCnt = CH_0;
-        CfgReg.mux = ChCnt;
+        if (ChCnt == CH_3) {
+            CfgReg.mux = CH_0;
+        } else {
+            if (ChCnt == ADC_CH) ChCnt = CH_0;
+            CfgReg.mux = (mux_t)(ChCnt + 1);
+        }
         spi_start_io((char *)&CfgReg, sizeof(uint16_t), sizeof(uint32_t), &adc_cntr);
         AdcTime = get_fin_time(ADC_TIME);
     }

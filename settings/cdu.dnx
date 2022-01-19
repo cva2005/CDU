@@ -16,7 +16,7 @@
         <ShowSource>1</ShowSource>
     </Trace1>
     <DebugChecksum>
-        <Checksum>2883718261</Checksum>
+        <Checksum>3597532219</Checksum>
     </DebugChecksum>
     <SfrWindow>
         <Show>1 1</Show>
@@ -81,8 +81,7 @@
         <Category>_ 0</Category>
     </LogFile>
     <Breakpoints>
-        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\spi\adc\ads1118.c}.70.9" 1 0 0 0 "" 0 ""</Bp0>
-        <Count>1</Count>
+        <Count>0</Count>
     </Breakpoints>
     <Aliases>
         <Count>0</Count>
