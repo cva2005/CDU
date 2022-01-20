@@ -1,6 +1,7 @@
 #ifndef CSU_H
 #define CSU_H
 #pragma message	("@(#)csu.h")
+#include "tsens/ds1820.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -96,6 +97,7 @@ typedef enum {
 } err_t;
 
 //----------------------------------------------------------------------
+#define T_ERR_CNT           8
 #define TVAL(x)             (x * 16)
 #define MAX_T1              TVAL(86)
 #define MAX_T2ch            TVAL(95)
@@ -234,7 +236,6 @@ typedef enum {
 #define PWR_TIME        MS(160) // led power time
 #define CNTRL_T         MS(300) // control dicrete time
 //#define DOWN_LIM    100.0f
-#define TCH             2
 
 unsigned char U_align_st (void);
 uint16_t i_pwr_lim (uint16_t p, uint16_t i);
@@ -252,7 +253,7 @@ extern uint16_t id_dw_Clb, id_up_Clb;
 extern csu_st CsuState, SetMode;
 extern stime_t AlarmDel;
 extern uint16_t ADC_O[];
-extern int16_t Tmp[TCH];
+extern int16_t Tmp[T_N];
 
 #ifdef __cplusplus
 }

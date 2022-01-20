@@ -128,7 +128,7 @@ bool run_time(uint32_t start, uint32_t delta);
  * Задержка с микросекундным интервалом.
  * Зависит от количества операций в ассемблерном цикле!
  */
-#define ASM_CYCLE_LEN   7
+#define ASM_CYCLE_LEN   6
 #define delay_us(t_us)\
 {\
     uint16_t i = ((t_us * F_CPU_HZ) / MICROSEC) / ASM_CYCLE_LEN;\

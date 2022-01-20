@@ -5,7 +5,6 @@
 #include "spi/adc/ads1118.h"
 #include "csu/mtd.h"
 #include "pid/pid_r.h"
-#include "tsens/ds1820.h"
 #include "key/key.h"
 #include "csu/csu.h"
 
@@ -18,10 +17,10 @@ static inline void read_tmp (void);
 static void out_off (void);
 
 stime_t LcdRefr, AlarmDel, FanTime;
-static uint8_t ErrT[TCH] = {0, 0}; /* error count for T sensors */
+static uint8_t ErrT[T_N] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
-int16_t Tmp[TCH];
+int16_t Tmp[T_N];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
 static float Uerr, Ierr;
@@ -479,15 +478,12 @@ static void out_off (void) {
 
 static inline void read_tmp (void) {
     uint8_t err = get_tmp_res(Tmp);
-    uint8_t mask = T1_ERROR;
-    for (uint8_t i = 0; i < TCH; i++) {
-        if (err & mask) {
-            if (ErrT[i] < READ_ERR_CNT) ErrT[i]++;
+    for (uint8_t i = 0; i < T_N; i++) {
+        if (err & (i << T_ERROR)) {
+            if (ErrT[i] < T_ERR_CNT) ErrT[i]++;
             else Tmp[i] = ERR_WCODE;
         } else ErrT[i] = 0;
-        mask <<= 1;
     }
-    tmp_convert();
 }
 
 #pragma vector=INT1_vect

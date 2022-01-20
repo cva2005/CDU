@@ -81,8 +81,8 @@ extern "C" {
 #define PINS(port) __pins(port)
 #define __lats(port) PORT##port
 #define LATS(port) __lats(port)
-#define __lats(port) PORT##port
-#define DDRS(port) __lats(port)
+#define __ddrs(port) DDR##port
+#define DDRS(port) __ddrs(port)
 
 /* линия порта джампера "Юстировка" */
 #define JS_TSK_PORT     A
