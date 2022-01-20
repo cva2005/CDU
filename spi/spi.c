@@ -12,9 +12,14 @@ static uint8_t wr_len, rd_len;
 static cs_func_t cs_func; /* функция выбора ведомого */
 
 void spi_init(void) {
-    SET_PIN(SPI_PORT, SCK);
+    //SET_PIN(SPI_PORT, SCK);
     SET_AS_OUTS(SPI_PORT, SHL(SCK) | SHL(MOSI) | SHL(_SS));
     SPCR = SPI_OFF;
+}
+
+void spi_reset (void) {
+    SPCR = SPI_OFF;
+    CLR_PIN(SPI_PORT, SCK);
 }
 
 /* If SPI Interrupt is enabled then the Transceiver is busy */

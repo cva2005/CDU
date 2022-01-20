@@ -16,7 +16,7 @@
         <ShowSource>1</ShowSource>
     </Trace1>
     <DebugChecksum>
-        <Checksum>3597532219</Checksum>
+        <Checksum>2333755213</Checksum>
     </DebugChecksum>
     <SfrWindow>
         <Show>1 1</Show>
@@ -71,6 +71,9 @@
         <Fmt9>{W}1:UCSRB	4	0</Fmt9>
         <Fmt10>{W}2:AdcRes	4	4</Fmt10>
     </watch_formats>
+    <Breakpoints>
+        <Count>0</Count>
+    </Breakpoints>
     <TermIOLog>
         <LoggingEnabled>_ 0</LoggingEnabled>
         <LogFile>_ ""</LogFile>
@@ -80,9 +83,6 @@
         <LogFile>_ ""</LogFile>
         <Category>_ 0</Category>
     </LogFile>
-    <Breakpoints>
-        <Count>0</Count>
-    </Breakpoints>
     <Aliases>
         <Count>0</Count>
         <SuppressDialog>0</SuppressDialog>

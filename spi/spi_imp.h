@@ -19,6 +19,7 @@ extern "C" {
 
 #define BLEN        4
 #define SPI_OFF     0
+#define SPI_ON      SHL(SPE) | SHL(MSTR)
 
 #ifdef __cplusplus
 }

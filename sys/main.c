@@ -28,15 +28,15 @@ void main (void) {
         FAN(0);
     }
     while (true) {	  	
-        net_drv();
         adc_drv();
+        net_drv();
         csu_drv();
     }
 }
 
 static inline void init_gpio (void) {
     DDRA = 0x03;
-    DDRB = 0xB8;
+    DDRB = 0x18;
 #if !JTAG_DBGU
     DDRC = 0xFF;
     PORTC = 0xFF;

@@ -5,7 +5,8 @@
 #include "ads1118_imp.h"
 
 static bool AdcBusy;
-static stime_t AdcTime;
+static bool AdcReset = false;
+static stime_t AdcTime, ResTime;
 static void adc_cs(cs_t cs);
 static mux_t ChCnt = CH_3;
 static uint16_t AdcRes[ADC_CH];
@@ -14,14 +15,14 @@ static cfg_reg_t CfgReg = {
     DATA_VALID,
     PULL_UP_DIS,
     ADC_MODE,
-    DR_16_SPS,
+    DR_64_SPS,
     SIGNLE_SHOT,
     PGA_2048,
     CH_0,
     UNIPOLAR,
     SINGLE_CONV
 };
-#define ADC_DEBUG   1
+#define ADC_DEBUG   0
 #if ADC_DEBUG
 static cfg_reg_t CfgRd;
 #endif
@@ -52,7 +53,6 @@ static void adc_cs (cs_t cs) {
     //ADC_SEL(cs);
 }
 
-// ToDo: Reset function sequence need!!!
 /*
  * If SCLK is held low for 28 ms,
  * the serial interface resets and the next SCLK pulse starts a new
@@ -60,7 +60,6 @@ static void adc_cs (cs_t cs) {
  * recover communication when a serial interface transmission
  * is interrupted. When the serial interface is idle, hold SCLK low.
  */
-//void adc_reset (void) {
 
 void adc_drv (void) {
     if (IS_RDY() && !AdcBusy) { // conversion complette
@@ -82,14 +81,27 @@ void adc_drv (void) {
             CfgReg.mux = (mux_t)(ChCnt + 1);
         }
         spi_start_io((char *)&CfgReg, sizeof(uint16_t), sizeof(uint32_t), &adc_cntr);
-        AdcTime = get_fin_time(ADC_TIME);
+        goto adc_start;
+    } else if (adc_error()) {
+        if (AdcReset) {
+            if (!get_time_left(ResTime)) {
+                AdcReset = false;
+                adc_init();
+            adc_start:
+                AdcTime = get_fin_time(ADC_TIME);
+           }
+        } else {
+            AdcReset = true;
+            spi_reset();
+            ResTime =  get_fin_time(RES_TIME);
+        }
     }
 }
 
 uint16_t get_adc_res (uint8_t ch) {
-    return AdcRes[ch]; // ToDo: swap bytes
+    return AdcRes[ch];
 }
 
 bool adc_error (void) {
-    return get_time_left(AdcTime);
+    return (!get_time_left(AdcTime));
 }

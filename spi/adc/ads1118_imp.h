@@ -31,22 +31,6 @@
 #define SAMPLECOUNTER		9
 #define LEN                 2
 
-typedef union {
-    struct {
-        volatile unsigned RESV      :1; //low
-        volatile unsigned NOP       :2;
-        volatile unsigned PULLUP    :1;
-        volatile unsigned TS_MODE   :1;
-        volatile unsigned DR        :3;
-        volatile unsigned MODE      :1;
-        volatile unsigned PGA       :3;
-        volatile unsigned MUX       :3;
-        volatile unsigned OS        :1; //high
-    } bf_t;
-    volatile uint16_t word;
-    volatile uint8_t byte[2];
-} adc_t;
-
 typedef enum {
     CONVERING   = 0x1, //for read
     SINGLE_CONV = 0x1  //for write
@@ -139,5 +123,6 @@ typedef struct {
 #define IS_RDY()        IS_PIN_CLR(RDY_PORT, RDY_PIN)
 //#define DRDY            PINB & (1 << 6)
 #define ADC_TIME        MS(200)
+#define RES_TIME        MS(30)
 
 #endif /* ADS1118_IMP_H */
