@@ -55,7 +55,7 @@ typedef enum {
 typedef enum {
     CONTIOUS    =  0x0,
     SIGNLE_SHOT =  0x1
-} mode_t;
+} md_t;
 
 typedef enum {
     DR_8_SPS   =   0x0,
@@ -103,7 +103,7 @@ typedef struct {
     pull_t pull :1;
     ts_t ts_m   :1;
     rate_t dr   :3;
-    mode_t mode :1;
+    md_t mode   :1;
     pga_t pga   :3;
     mux_t mux   :2;
     pol_t pol   :1;

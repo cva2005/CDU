@@ -215,7 +215,7 @@ void start_mtd (unsigned char num) {
 void stop_mtd (void) {
     lcd_update_work();
     csu_stop(STOP);
-    if (Cfg.bf1.LCD_ON) {
+    if (Cfg.mode.lcd) {
         CsuState = CHARGE;
         lcd_stop_msg();
 	}

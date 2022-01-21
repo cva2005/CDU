@@ -24,7 +24,7 @@ uint8_t cursor_pos (void) {
 
 void check_key (void) {
     uint8_t key, mask;
-    if (Cfg.bf1.EXT_Id) mask = 0x08; // no scan K1
+    if (Cfg.mode.ext_id) mask = 0x08; // no scan K1
     else mask = 0;
     key = KEY_MASK | mask; // scan keys
     if (key != ALL_OFF) { // key press!
@@ -32,7 +32,7 @@ void check_key (void) {
             if (key != (KEY_MASK | mask)) goto no_press;
         }
         if (!get_time_left(KeyDel)) { //если разрешена обработка кнопок
-            if (Cfg.bf1.LCD_ON) {
+            if (Cfg.mode.lcd) {
                 if (!get_time_left(KeyPress)) { // клавишу удерживали нажатой
                     KeyPress = get_fin_time(MS(3200));
                     if (Step == 1) Step = 10;
@@ -43,7 +43,7 @@ void check_key (void) {
                 if (key == K3) key_up_dw(UP_PRESS); // кнопка вверх
                 if (key == K2) key_up_dw(DOWN_PRESS); // кнопка вниз
             }
-            if (Cfg.bf1.LED_ON) {
+            if (Cfg.mode.led) {
                 if (!get_time_left(KeyPress)) { // клавишу удерживали нажатой
                     KeyPress = get_fin_time(MS(1600));
                     if (Step == 1) Step = 5;

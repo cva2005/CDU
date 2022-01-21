@@ -14,55 +14,6 @@ extern "C" {
 #define SOFTW_VER       "v.9.00"
 #define HARDW_VER       "v.8.40"
 
-//---------------------НАСТРОЙКИ ПО УМОЛЧАНИЮ---------------------------
-#define AUTOSTART 0
-#define AUTOSTART_CNT 100
-#define AUTOSTART_TIME 1600
-#define AUTOSTART_U	0
-//-------------------адрес блока---------------------
-#define addr_const 1
-//-------------------биты настроек-------------------
-#define IN_DATA_bit 0
-#define OUT_DATA_bit 0
-
-#define DIAG_WIDE_bit 1
-#define I0_SENSE_bit 1
-#define LCD_ON_bit 1
-#define LED_ON_bit 0
-#define PCC_ON_bit 1
-#define DEBUG_ON_bit 0
-#define GroupM_bit 0
-#define EXT_Id_bit 0
-#define RELAY_MODE_bit 1
-//-------------------кол-во дополнительных РМ-------------------
-#define DM_ext 0
-//----------------------------------------------------------------------
-#define MTD_DEF 1 // - количество методов по умолчанию (0 - 1 метод, 1 - 2 метода)
-
-//-------------------параметры тока и напряжения------
-#define maxU_const  4000		//ограничение напряжения		xx00
-#define maxI_const  4500		//ограничение тока				xx00
-#define maxId_const 1800		//ограничение тока разряда		xx00
-#define maxPd_const 2000		//ограничение мощности разряда	xxx0
-
-#define maxId_EXT0	2000		//максимальны16226й ток разряда если нет разрядных модулей
-#define maxId_EXT12	5000		//максимальный ток разряда если есть разрядные модули
-//-------------------коэффициенты---------------------
-#define K_U_const 12730//12615//12650  //R1=26700+1500 R2=1500 Uadc=2,048 Umax=40,55V (K=405500000/(32768-1147)=12375)
-#define	K_Up_const 12620//12465//12532  //
-#define K_I_const 15516//15692//15589   //R1=10000 R2=383 Uadc=2,048 Ushunt=75.55mV Imax=75.55*50/75=50.37A (K=503666667/32768=15371)
-#define K_Id_const 16226//16256//15816  //R1=10000 R2=383 Uadc=2,048 Ushunt=78.45mV Idmax=78.45*50/75=52.3A (K=523000000/32768=15961)
-
-#define B_U_const 1147    //R1=26700; R2=383; Ushift=0.070709; B_U=Ushift*32767/2.048=1131.31
-#define B_Up_const 60	  //Смещение нулевого значения АЦП при измерении U до выходного реле
-#define B_I_const 0	  //Смещение нулевого значения АЦП по току заряда
-//#define B_I_extId 150//60 //Ток, потребляемый доп. разрядным модулем (дополнитльное смещение 0 при подключении разрядного модуля)
-#define B_I_extId_1 0//51
-#define B_I_extId_2 0//134
-#define B_Id_const 13	  //Смещение нулевого значения АЦП по току разряда
-
-//#define max_PWD_Id_const 5000 //Максимальная величина ШИМ при разряде
-
 //----------коэфициенты для запуска преобразователя--------------------------
 //-I разряд-------------------------------
 //#define K_PWD_Id 135UL//134UL
@@ -154,24 +105,27 @@ typedef union {
 	unsigned char byte[2];
 } ADC_Type;
 	
-typedef	struct {
-	unsigned EEPROM         :1;
-	unsigned ADR_SET        :1;
-	unsigned IN_DATA        :1;
-	unsigned OUT_DATA       :1;
-	unsigned TE_DATA        :1;
-	unsigned FAN_CONTROL    :1;
-	unsigned DIAG_WIDE      :1;
-	unsigned I0_SENSE       :1;	
-	unsigned LCD_ON         :1;
-	unsigned LED_ON         :1;
-	unsigned PCC_ON         :1;
-	unsigned DEBUG_ON       :1;
-	unsigned GroupM         :1;
-	unsigned EXT_Id         :1;
-	unsigned EXTt_pol       :1;
-	unsigned RELAY_MODE     :1;
-} bf1_t;
+typedef struct {
+    unsigned eepr       :1;
+    unsigned addr_set   :1;
+    unsigned in_data    :1;
+    unsigned out_data   :1;
+    unsigned te_data    :1;
+    unsigned fan_cntrl  :1;
+    unsigned diag_wide  :1;
+    unsigned io_sense   :1;
+} cmd_t;
+
+typedef struct {
+    unsigned lcd        :1;
+    unsigned led        :1;
+    unsigned pcc        :1;
+    unsigned dbg        :1;
+    unsigned group      :1;
+    unsigned ext_id     :1;
+    unsigned ext_pol    :1;
+    unsigned reley      :1;
+} mode_t;
 
 typedef	struct {
     unsigned astart     :1;
@@ -179,22 +133,21 @@ typedef	struct {
 } bf2_t;
 
 typedef struct  {
-	signed int	C;
-	signed int dC;
+    signed int	C;
+    signed int dC;
 } cap_t;
 
 typedef struct {
-	//unsigned char en; //автостарт вкл/выкл
-	unsigned char err_cnt; //счётчик перезапусков
-	stime_t rst_time; //время паузы между перезапусками
-	unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
-	unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
+    unsigned char err_cnt; //счётчик перезапусков
+    stime_t rst_time; //время паузы между перезапусками
+    unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
+    unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
 } ast_t;
 
 typedef enum {
-  RESET_ST,
-  CHARGE_ST,
-  DISCHARGE_ST
+    RESET_ST,
+    CHARGE_ST,
+    DISCHARGE_ST
 } state_t;
 
 #define ADC_MU      0 // канал измерения напряжения

@@ -11,6 +11,40 @@ extern "C" {
 #include "csu/csu.h"
 #include "csu/mtd.h"
 
+/* Default Configuration */
+#define A_START_B       OFF
+#define AST_CNT         100
+#define AST_TIME        1600
+#define AST_U           0
+#define ADDR_DEF        1
+#define IN_DATA_B       OFF
+#define OUT_DATA_B      OFF
+#define DIAG_WIDE_B     ON
+#define I0_SENSE_B      ON
+#define LCD_ON_B        ON
+#define LED_ON_B        OFF
+#define PCC_ON_B        ON
+#define DEBUG_ON_B      OFF
+#define GROUP_B         OFF
+#define EXT_ID_B        OFF
+#define RELAY_MODE_B    ON
+#define DM_EXT          0
+#define MTD_DEF         1 // - к-во методов по ум-ю (0 - 1 метод)
+#define MAX_U_DEF       4000 //ограничение напряжения		xx00
+#define MAX_I_DEF       4500 //ограничение тока				xx00
+#define MAX_ID_DEF      1800 //ограничение тока разряда		xx00
+#define MAX_PD_DEF      2000 //ограничение мощности разряда	xxx0
+#define MAX_ID_EXT0     2000 //максимальны16226й ток разряда если нет разрядных модулей
+#define MAX_ID_EXT1     5000 //максимальный ток разряда если есть разрядные модули
+#define K_U_DEF         12730 //12615//12650  //R1=26700+1500 R2=1500 Uadc=2,048 Umax=40,55V (K=405500000/(32768-1147)=12375)
+#define	K_UP_DEF        12620 //12465//12532  //
+#define K_I_DEF         15516 //15692//15589   //R1=10000 R2=383 Uadc=2,048 Ushunt=75.55mV Imax=75.55*50/75=50.37A (K=503666667/32768=15371)
+#define K_ID_DEF        16226 //16256//15816  //R1=10000 R2=383 Uadc=2,048 Ushunt=78.45mV Idmax=78.45*50/75=52.3A (K=523000000/32768=15961)
+#define B_U_DEF         1147 //R1=26700; R2=383; Ushift=0.070709; B_U=Ushift*32767/2.048=1131.31
+#define B_UP_DEF        60 //Смещение нулевого значения АЦП при измерении U до выходного реле
+#define B_I_DEF         0 //Смещение нулевого значения АЦП по току заряда
+#define B_ID_DEF        13 //Смещение нулевого значения АЦП по току разряда
+
 /* тип структуры параметров конфигураци */
 typedef struct {
     uint16_t K_U;
@@ -21,7 +55,8 @@ typedef struct {
     uint16_t maxI;
     uint16_t maxId;
     uint16_t P_maxW;
-    bf1_t bf1;
+    cmd_t cmd;
+    mode_t mode;
     uint8_t dmSlave;
     uint8_t addr;
     uint16_t B[4];

@@ -20,12 +20,12 @@ void main (void) {
     __enable_interrupt();
     adc_init();
     // ToDo: use WDT?
-    if (Cfg.bf1.FAN_CONTROL == 0) {
-        FAN(1);
+    if (Cfg.cmd.fan_cntrl == 0) {
+        FAN(ON);
         delay_ms(500);
         delay_ms(500);
         read_mtd();
-        FAN(0);
+        FAN(OFF);
     }
     while (true) {	  	
         adc_drv();

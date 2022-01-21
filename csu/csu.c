@@ -105,7 +105,7 @@ void csu_drv (void) {
         }
     }
     /* Индикация ошибок для LED */
-    if (Cfg.bf1.LED_ON && CsuState == STOP
+    if (Cfg.mode.led && CsuState == STOP
         && !get_time_left(LedPwrTime)) {
         LedPwrTime = get_fin_time(PWR_TIME);
         LED_PWR(LedPwr);
@@ -115,13 +115,13 @@ void csu_drv (void) {
     if (!get_time_left(FanTime)) {
         FanTime = get_fin_time(MS(500));
         read_tmp();
-        if (!Cfg.bf1.FAN_CONTROL) {
+        if (!Cfg.cmd.fan_cntrl) {
             int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
             if (t1 > FAN_ON_T || t2 > FAN_ON_T ||
                 (t1 >= -FAN_CND_T && t1 < FAN_CND_T) ||
                 (t2 >= -FAN_CND_T && t2 < FAN_CND_T) ||
-                t1 == ERR_WCODE || t2 == ERR_WCODE) FAN(1);
-            else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(0);
+                t1 == ERR_WCODE || t2 == ERR_WCODE) FAN(ON);
+            else if (t1 < FAN_OFF_T && t2 < FAN_OFF_T) FAN(OFF);
         }
     }
     if (Error = err_check()) {
@@ -129,7 +129,7 @@ void csu_drv (void) {
         if (PwmStatus != STOP) Stop_PWM(HARD);
         if (RELAY_EN) out_off();
     }
-    if (!Cfg.bf1.LED_ON || rs_active()) csu_control();
+    if (!Cfg.mode.led || rs_active()) csu_control();
     if (Clb.id.bit.save == 1) {
         if (!Clb.id.bit.error
             && (Clb.id.bit.dw_Fin || Clb.id.bit.up_Fin)) {
@@ -137,22 +137,22 @@ void csu_drv (void) {
             Clb.id.byte = 0;
         }
     }
-    if (Cfg.bf1.LCD_ON) {
+    if (Cfg.mode.lcd) {
         if (!rs_active()) { //если подключение прервалось, а значения дисплея не обновлены
             if (lcd_conn_msg()) {
-                if (Cfg.bf1.DIAG_WIDE) {
+                if (Cfg.cmd.diag_wide) {
                     csu_stop(STOP);
                     read_mtd();
                 }
                 lcd_wr_set();
             }				
         } else	{ //если подключение появилось, а значения дисплея не обновлены
-            if (!Cfg.bf1.DEBUG_ON && !lcd_conn_msg()) lcd_wr_connect(true);
+            if (!Cfg.mode.dbg && !lcd_conn_msg()) lcd_wr_connect(true);
         }			
     }
-    if (!rs_active() || Cfg.bf1.DEBUG_ON) {
-        if (Cfg.bf1.LED_ON)	update_led();
-        if (Cfg.bf1.LCD_ON) {
+    if (!rs_active() || Cfg.mode.dbg) {
+        if (Cfg.mode.led)	update_led();
+        if (Cfg.mode.lcd) {
             if (!get_time_left(LcdRefr)) {
                 lcd_update_work();
                 if (CsuState == STOP)
@@ -180,27 +180,27 @@ void calc_cfg (void) {
     Error = NO_ERR;
     if (Cfg.maxI > 5000) Cfg.maxI = 5000;
     MaxI = (uint32_t)Cfg.maxI * 100000UL / Cfg.K_I;
-    if (Cfg.bf1.GroupM) MaxI = MaxI + I_A(1,0);
+    if (Cfg.mode.group) MaxI = MaxI + I_A(1,0);
     if (Cfg.dmSlave == 0) {
-        if (Cfg.maxId > maxId_EXT0) Cfg.maxId = maxId_EXT0;
+        if (Cfg.maxId > MAX_ID_EXT0) Cfg.maxId = MAX_ID_EXT0;
     } else {
-        if (Cfg.maxId > maxId_EXT12) Cfg.maxId = maxId_EXT12;
+        if (Cfg.maxId > MAX_ID_EXT1) Cfg.maxId = MAX_ID_EXT1;
     }
     MaxId = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
-    if (Cfg.bf1.GroupM) MaxId = MaxId + I_A(1,0);
+    if (Cfg.mode.group) MaxId = MaxId + I_A(1,0);
     if (Cfg.maxU > 4000) Cfg.maxU = 4000;
     MaxU = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
     max_pwd_I = (uint32_t)MaxI * 100UL / K_PWD_I + B_PWD_I;
     if (max_pwd_I < 85) max_pwd_I = 85;
     max_pwd_U = (uint32_t)MaxU * 100UL / K_PWD_U + B_PWD_U;
     if (Cfg.dmSlave > 2) Cfg.dmSlave = 2;
-    if (Cfg.dmSlave > 0) Cfg.bf1.EXT_Id = 1;
-    else Cfg.bf1.EXT_Id = 0;
+    if (Cfg.dmSlave > 0) Cfg.mode.ext_id = 1;
+    else Cfg.mode.ext_id = 0;
     ADC_O[ADC_MU] = Cfg.B[ADC_MU];
     ADC_O[ADC_MI] = Cfg.B[ADC_MI];
     AutoStr.u_pwm = ((uint32_t)AutoStr.u_set*100000UL) / Cfg.K_U;
     AutoStr.err_cnt = Cfg.cnt_set;
-    if (Cfg.bf2.astart) Cfg.bf1.DEBUG_ON = 1;
+    if (Cfg.bf2.astart) Cfg.mode.dbg = 1;
     id_dw_Clb = Id_A(2,0);
     if (Cfg.dmSlave == 0) {
         id_up_Clb = HI_Id_EXT0;
@@ -238,9 +238,9 @@ void calc_cfg (void) {
 	}
     max_pwd_Id = calc_pwd((MaxId + (MaxId / 10)), 0);
     lcd_clear();
-    if (Cfg.bf1.LCD_ON) Init_WH2004(1);
+    if (Cfg.mode.lcd) Init_WH2004(1);
     else Init_WH2004(0);	
-    if (Cfg.bf1.LED_ON) {
+    if (Cfg.mode.led) {
         DDRC = 0xFF;
         PORTC = 0xFF;	
         LedPwrTime = get_fin_time(PWR_TIME);
@@ -252,8 +252,8 @@ void csu_start (csu_st mode) {
     bool task_u = false;
     if (CsuState == STOP) {
         start_cntrl();
-        if (TaskU && Cfg.bf1.DIAG_WIDE
-            && !!Cfg.bf1.GroupM) task_u = true;
+        if (TaskU && Cfg.cmd.diag_wide
+            && !!Cfg.mode.group) task_u = true;
     }
     if (PwmStatus != STOP) {
         Stop_PWM(SOFT);
@@ -309,17 +309,17 @@ uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
 
 static inline err_t err_check (void) {
     /* Проверка ошибки по внешнему входу */
-    if (Cfg.bf1.LED_ON == 0 && Cfg.bf1.EXT_Id == 1) {
+    if (!Cfg.mode.led && Cfg.mode.ext_id) {
     /* индикация не светодиодная и включено
      * управление вншним разрядным модулем */
-        if (OverTempExt != Cfg.bf1.EXTt_pol) ERR_Ext++;
+        if (OverTempExt != Cfg.mode.ext_pol) ERR_Ext++;
         /* проверка срабатывания внешнего термореле */
         else ERR_Ext = 0;
         if (ERR_Ext > EXT_ERR_VAL) return ERR_OVERTEMP3;
     }
     /* Проверка на обрыв РМ */
 	if (Cfg.dmSlave) {
-		if (Cfg.bf1.DIAG_WIDE && (PwmStatus == DISCHARGE)) {
+		if (Cfg.cmd.diag_wide && PwmStatus == DISCHARGE) {
         /* включена расширеная диагностика */
             if (dm_loss_cnt > 0 && dm_loss_cnt < 10) {
                 if (get_adc_res(ADC_DI) > Id_A(0,1)) {
@@ -337,7 +337,7 @@ static inline err_t err_check (void) {
         }
     }
     /* Проверка на обрыв нагрузки */
-    if (Cfg.bf1.I0_SENSE && !Cfg.bf1.GroupM) {
+    if (Cfg.cmd.io_sense && !Cfg.mode.group) {
          /* диагностика обрыва нагрузки и блок не в группе */
         if (PwmStatus == CHARGE && TaskI) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
@@ -364,13 +364,13 @@ static inline err_t err_check (void) {
         return ERR_OVERTEMP2;
     }
     /* Проверка полярности подключения АКБ (переполюсовка) */
-    if (!Cfg.bf1.GroupM) {
+    if (!Cfg.mode.group) {
         int16_t sub = Cfg.B[ADC_MU] - ADC_O[ADC_MU];
         if (sub > 300) return ERR_CONNECTION;
     }
     /*Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя */
-    if (Cfg.bf1.DIAG_WIDE) {
-        if ((PwmStatus==STOP)&&(Cfg.bf1.GroupM==0)) {
+    if (Cfg.cmd.diag_wide) {
+        if (PwmStatus == STOP && !Cfg.mode.group) {
         /* Если преобразователь выключен и блок работает не в группе */
             if (get_adc_res(ADC_MU) > U_V(0,8) &&
                 get_adc_res(ADC_MUp) < U_V(0,2)) {

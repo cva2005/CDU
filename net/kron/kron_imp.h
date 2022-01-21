@@ -16,7 +16,7 @@ extern "C" {
 #define CHAR_RS             0xA5 /* символ начала кадра */
 #define KRON_BUFF_LEN       KRON_RX_MAX
 #define RX_LEN              KRON_BUFF_LEN
-#define TX_LEN             50
+#define TX_LEN              50
 #define BUFF_SIZE           RX_LEN > TX_LEN ? RX_LEN : TX_LEN
 #define SYS_ADR             0xFF
 #define BROAD_ADR           0xFE
@@ -36,221 +36,119 @@ extern "C" {
 #define SAVE_CMD            3
 #define RST_CMD             4
 
-typedef union {
-	struct {
-		unsigned char FAN1_ON :1;
-		unsigned char FAN2_ON :1;
-		unsigned char FAN3_ROFF :1;
-		unsigned char FAN4_RON :1;
-		unsigned char RESERV1 :1;
-		unsigned char RESERV2 :1;
-		unsigned char RESERV3 :1;
-		unsigned char RESERV4 :1;
-	} bit;
-	unsigned char byte;
-} control_type;
-
-typedef union {
-	struct {
-		unsigned char EEPROM :1;
-		unsigned char ADR_SET :1;
-		unsigned char IN_DATA :1;
-		unsigned char OUT_DATA :1;
-		unsigned char TE_DATA :1;
-		unsigned char FAN_CONTROL :1;
-		unsigned char DIAG_WIDE :1;
-		unsigned char I0_SENSE :1;
-	} bit;
-	unsigned char byte;
-} rx_cmd_type;
-
-typedef union {
-	struct {
-		unsigned char LCD_ON :1;
-		unsigned char LED_ON :1;
-		unsigned char PCC_ON :1;
-		unsigned char DEBUG_ON :1;
-		unsigned char GroupM :1;
-		unsigned char EXT_Id :1;
-		unsigned char EXTt_pol :1;
-		unsigned char RELAY_MODE :1;
-	} bit;
-	unsigned char byte;
-} rx_mode_type;
+typedef struct {
+    unsigned fan1       :1;
+    unsigned fan2       :1;
+    unsigned rsrv       :6;
+} fcntl_t;
 
 typedef	struct {
-	unsigned char start;
-	unsigned char dest_adr;
-	unsigned char src_adr;
-	unsigned char length;
-	unsigned char number;
-	unsigned char type;
+    uint8_t start;
+    uint8_t dest_adr;
+    uint8_t src_adr;
+    uint8_t length;
+    uint8_t number;
+    uint8_t type;
 } header_type;
 
 typedef	struct {
-	unsigned char cmd;
-	control_type control;
-	unsigned int setI;
-	unsigned int setU;
-} rx_data_type;
+    uint8_t cmd;
+    fcntl_t fcntl;
+    uint16_t setI;
+    uint16_t setU;
+} rdata_t;
 	
 typedef	struct {
-	unsigned char operation;
-	unsigned char error;
-	unsigned int I;
-	unsigned int U;
-	unsigned int Ip;
-	unsigned int t1;
-	unsigned int t2;
-	unsigned char In_st;
-	unsigned char Out_st;
-} tx_data_type;
+    uint8_t operation;
+    uint8_t error;
+    uint16_t I;
+    uint16_t U;
+    uint16_t Ip;
+    uint16_t t1;
+    uint16_t t2;
+    uint8_t In_st;
+    uint8_t Out_st;
+} tdata_t;
 
 typedef	struct {
-	rx_cmd_type cmd;
-	unsigned char Adress;
-	unsigned int K_I;
-	unsigned int K_U;
-	unsigned int K_Ip;
-	unsigned int K_Id;
-	unsigned int B_I;
-	unsigned int B_U;
-	unsigned int B_Ip;
-	unsigned int B_Id;
-	unsigned char D_I;
-	unsigned char D_U;
-	unsigned char D_Ip;
-	unsigned char D_Id;
-} rx_usr_type;
+    cmd_t cmd;
+    uint8_t addr;
+    uint16_t K_I;
+    uint16_t K_U;
+    uint16_t K_Ip;
+    uint16_t K_Id;
+    uint16_t B_I;
+    uint16_t B_U;
+    uint16_t B_Ip;
+    uint16_t B_Id;
+    uint8_t D_I;
+    uint8_t D_U;
+    uint8_t D_Ip;
+    uint8_t D_Id;
+} usr_t;
 	
 typedef	struct {
-	unsigned char cmd;
-	unsigned char new_adr;
-	unsigned int K_I;
-	unsigned int K_U;
-	unsigned int K_Ip;
-	unsigned int K_Id;
-	unsigned int B_I;
-	unsigned int B_U;
-	unsigned int B_Ip;
-	unsigned int B_Id;
-	unsigned char D_I;
-	unsigned char D_U;
-	unsigned char D_Ip;
-	unsigned char D_Id;
-} tx_usr_type;
-
-typedef	struct {
-	rx_cmd_type cmd;
-	rx_mode_type mode;
-	unsigned int maxU;
-	unsigned int maxI;
-	unsigned int maxId;
-	unsigned int maxPd;
-	unsigned char dm_cnt;
-	unsigned char slave_cnt_u;
-	unsigned char slave_cnt_i;
-	unsigned int cfg;
-	unsigned char autostart_try;
-	unsigned int restart_timout;
-	unsigned int autostart_u;
-} rx_sys_type;
+    cmd_t cmd;
+    mode_t mode;
+    uint16_t maxU;
+    uint16_t maxI;
+    uint16_t maxId;
+    uint16_t maxPd;
+    uint8_t dm_cnt;
+    uint8_t slave_cnt_u;
+    uint8_t slave_cnt_i;
+    uint16_t cfg;
+    uint8_t autostart_try;
+    uint16_t restart_timout;
+    uint16_t autostart_u;
+} sys_t;
 	
 typedef	struct {
-	rx_cmd_type cmd;
-	rx_mode_type mode;
-	unsigned int maxU;
-	unsigned int maxI;
-	unsigned int maxId;
-	unsigned int maxPd;
-	unsigned char dm_cnt; //13
-	unsigned char slave_cnt_u; //14
-	unsigned char slave_cnt_i; //15
-	unsigned int cfg;  //16,17
-	unsigned char autostart_try; //18
-	unsigned int restart_timout; //19, 20
-	unsigned int autostart_u; //21, 22
-} tx_sys_type;
+    cmd_t cmd;
+    uint8_t rsrv;
+    uint8_t num[8];
+} rver_t;
 
 typedef	struct {
-	rx_cmd_type cmd;
-	unsigned char reserv;
-	unsigned char number[8];
-} rx_ver_type;
+    uint8_t hard_ver;
+    uint8_t hard_mode;
+    uint8_t soft_ver;
+    uint8_t soft_mode;
+    char number[8];
+} tver_t;
 
-typedef	struct
-{
-	unsigned char hard_ver;
-	unsigned char hard_mode;
-	unsigned char soft_ver;
-	unsigned char soft_mode;
-	char number[8];
-}tx_ver_type;
-//---------------------------------пакет для загрузки алгоритмов
 typedef	struct {
-	unsigned char cmd;	
-	unsigned char size;
-	unsigned char data[32];
-} rx_alg_type; 
+    uint8_t cmd;	
+    uint8_t size;
+    uint8_t data[32];
+} algr_t; 
 	
 typedef	struct {
-	unsigned char result;
-	unsigned int mem_point;
-} tx_alg_type;
+    uint8_t res;
+    uint16_t pmem;
+} algt_t;
 
 typedef	struct {
-	unsigned int ADR;
-	unsigned char D[32];
-} tx_EEPROM_type;
+    uint16_t adr;
+    uint8_t d[32];
+} ee_t;
 
-#if 0
 typedef union {
     struct {
-		header_type header;
-		union {
-			rx_sys_type rx_sys;
-			rx_usr_type rx_usr;
-			rx_data_type rx_data;
-			rx_ver_type rx_ver;
-			rx_alg_type rx_alg;
-		}data;	
-	} fld;
-	unsigned char byte[RX_LENGTH];
-} rx_pack_type;
-	
-typedef union {
-    struct {
-		header_type header;
-		union {
-			tx_sys_type tx_sys;
-			tx_usr_type tx_usr;
-			tx_data_type tx_data;
-			tx_ver_type tx_ver;
-			tx_alg_type tx_alg;
-			tx_EEPROM_type tx_EEPROM;
+        header_type header;
+        union {
+            sys_t sys;
+            usr_t usr;
+            rdata_t rdata;
+            tdata_t tdata;
+            rver_t rver;
+            tver_t tver;
+            algr_t algr;
+            algt_t algt;
+            ee_t eepr;
 		} data;
 	} fld;
-	unsigned char byte[TX_LENGTH];
-} tx_pack_type;
-#endif
-typedef union {
-    struct {
-		header_type header;
-		union {
-			rx_sys_type rx_sys;
-			rx_usr_type rx_usr;
-			rx_data_type rx_data;
-			rx_ver_type rx_ver;
-			rx_alg_type rx_alg;
-			tx_sys_type tx_sys;
-			tx_usr_type tx_usr;
-			tx_data_type tx_data;
-			tx_ver_type tx_ver;
-			tx_alg_type tx_alg;
-			tx_EEPROM_type tx_EEPROM;
-		} data;
-	} fld;
-	unsigned char byte[BUFF_SIZE];
+	uint8_t byte[BUFF_SIZE];
 } rs_pkt_t;
 
 #ifdef __cplusplus

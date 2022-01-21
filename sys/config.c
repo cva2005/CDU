@@ -11,41 +11,41 @@ __no_init clb_t Clb;
 
 /* Default Config Data */
 static const cfg_t DefaultCfg = {
-    K_U_const, // uint16_t K_U;
-    K_I_const, // int16_t K_I;
-    K_Id_const, // uint16_t K_Id;
-    K_Up_const, // uint16_t K_Ip;
-    maxU_const, // uint16_t maxU;
-    maxI_const, // uint16_t maxI;
-    maxId_const, // uint16_t maxId;
-    maxPd_const, // uint16_t P_maxW;
-    0, // unsigned EEPROM :1;
-	0, //unsigned ADR_SET :1;
-	IN_DATA_bit, // unsigned IN_DATA :1;
-	OUT_DATA_bit, // unsigned OUT_DATA :1;
-	0, // unsigned TE_DATA :1;
-	0, // unsigned FAN_CONTROL :1;
-	DIAG_WIDE_bit, // unsigned DIAG_WIDE :1;
-	I0_SENSE_bit, // unsigned I0_SENSE :1;
-	LCD_ON_bit, // unsigned LCD_ON :1;
-	LED_ON_bit, // unsigned LED_ON :1;
-	PCC_ON_bit, // unsigned PCC_ON :1;
-	DEBUG_ON_bit, // unsigned DEBUG_ON :1;
-	GroupM_bit, // unsigned GroupM :1;
-	EXT_Id_bit, // unsigned EXT_Id :1;
-	0, // unsigned EXTt_pol :1;
-	RELAY_MODE_bit, // unsigned RELAY_MODE :1;
-    DM_ext, // uint8_t dmSlave;
-    addr_const, // uint8_t addr;
-    B_U_const,
-    B_I_const,
-    B_Id_const,
-    B_Up_const,
-    AUTOSTART, // unsigned char autostart :1;
-    0, // unsigned char cdu_dsch_dsb :1;
-    AUTOSTART_TIME, // uint16_t time_set;
-    AUTOSTART_U, // uint16_t u_set;
-    AUTOSTART_CNT // uint8_t cnt_set;
+    K_U_DEF, // uint16_t K_U;
+    K_I_DEF, // int16_t K_I;
+    K_ID_DEF, // uint16_t K_Id;
+    K_UP_DEF, // uint16_t K_Ip;
+    MAX_U_DEF, // uint16_t maxU;
+    MAX_I_DEF, // uint16_t maxI;
+    MAX_ID_DEF, // uint16_t maxId;
+    MAX_PD_DEF, // uint16_t P_maxW;
+    OFF, // unsigned EEPROM :1;
+	OFF, //unsigned ADR_SET :1;
+	IN_DATA_B, // unsigned IN_DATA :1;
+	OUT_DATA_B, // unsigned OUT_DATA :1;
+	OFF, // unsigned TE_DATA :1;
+	OFF, // unsigned FAN_CONTROL :1;
+	DIAG_WIDE_B, // unsigned DIAG_WIDE :1;
+	I0_SENSE_B, // unsigned I0_SENSE :1;
+	LCD_ON_B, // unsigned LCD_ON :1;
+	LED_ON_B, // unsigned LED_ON :1;
+	PCC_ON_B, // unsigned PCC_ON :1;
+	DEBUG_ON_B, // unsigned DEBUG_ON :1;
+	GROUP_B, // unsigned GroupM :1;
+	EXT_ID_B, // unsigned EXT_Id :1;
+	OFF, // unsigned EXTt_pol :1;
+	RELAY_MODE_B, // unsigned RELAY_MODE :1;
+    DM_EXT, // uint8_t dmSlave;
+    ADDR_DEF, // uint8_t addr;
+    B_U_DEF,
+    B_I_DEF,
+    B_ID_DEF,
+    B_UP_DEF,
+    A_START_B, // unsigned char autostart :1;
+    OFF, // unsigned char cdu_dsch_dsb :1;
+    AST_TIME, // uint16_t time_set;
+    AST_U, // uint16_t u_set;
+    AST_CNT // uint8_t cnt_set;
 };
 
 void read_cfg (void) {

@@ -23,6 +23,10 @@ extern "C" {
 /*
  * Системные константы и определения
  */
+typedef enum {
+    OFF = 0,
+    ON  = 1
+} bit_t;
 
 /* битовые операции */
 #define SET_BIT(reg,bit) reg |= (1 << bit)
