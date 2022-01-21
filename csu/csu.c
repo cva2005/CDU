@@ -365,7 +365,8 @@ static inline err_t err_check (void) {
     }
     /* Проверка полярности подключения АКБ (переполюсовка) */
     if (!Cfg.bf1.GroupM) {
-        if ((Cfg.B[ADC_MU] - ADC_O[ADC_MU]) > 300) return ERR_CONNECTION;
+        int16_t sub = Cfg.B[ADC_MU] - ADC_O[ADC_MU];
+        if (sub > 300) return ERR_CONNECTION;
     }
     /*Проверка несиправности ЗРМ: неисправность АЦП, неисправность выпрямителя */
     if (Cfg.bf1.DIAG_WIDE) {
