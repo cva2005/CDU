@@ -31,20 +31,6 @@ static void write_byte (uint8_t data) {
     }
 }
 
-static uint8_t crc_calc (uint8_t *pd) {
-    uint8_t crc = 0;
-    for (uint8_t i = 0; i < 8; i++) {
-        crc = crc ^ pd[i];
-        for (uint8_t j = 0; j < 8; j++) {
-            if (crc & 0x01)
-                crc = (crc >> 1) ^ 0x8C;
-            else
-                crc >>= 1;
-        }
-    }
-    return crc;
-}
-
 static uint8_t start_sensor (void) {
     PORT_18B20 &= ~(T1_PIN | T2_PIN);
     DDR_18B20 |= (T1_PIN | T2_PIN);
@@ -67,8 +53,18 @@ uint8_t get_tmp_res (int16_t *tmp) {
             write_byte(0xBE); // Read RAM
             for (i = 0; i < 9; i++) read_byte(d[i]);
             for (i = 0; i < T_N; i++) {
-                if (d[8][i] == crc_calc(d[i])) {
-                    tmp[i] = *(int16_t *)d[i];
+                uint8_t k, j, crc = 0;
+                for (k = 0; k < 8; k++) {
+                    crc = crc ^ d[k][i];
+                    for (j = 0; j < 8; j++) {
+                        if (crc & 0x01)
+                            crc = (crc >> 1) ^ 0x8C;
+                        else crc >>= 1;
+                    }
+                }
+                if (d[8][i] == crc) {
+                    tmp[i] = d[0][i];
+                    tmp[i] |= d[1][i] << 8;
                 } else {
                     err |= T_ERROR << i;
                 }
