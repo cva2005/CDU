@@ -200,7 +200,7 @@ void calc_cfg (void) {
     ADC_O[ADC_MI] = Cfg.B[ADC_MI];
     AutoStr.u_pwm = ((uint32_t)AutoStr.u_set*100000UL) / Cfg.K_U;
     AutoStr.err_cnt = Cfg.cnt_set;
-    if (Cfg.bf2.astart) Cfg.mode.dbg = 1;
+    if (Cfg.bf2.bit.astart) Cfg.mode.dbg = 1;
     id_dw_Clb = Id_A(2,0);
     if (Cfg.dmSlave == 0) {
         id_up_Clb = HI_Id_EXT0;
@@ -312,7 +312,7 @@ static inline err_t err_check (void) {
     if (!Cfg.mode.led && Cfg.mode.ext_id) {
     /* индикация не светодиодная и включено
      * управление вншним разрядным модулем */
-        if (OverTempExt != Cfg.mode.ext_pol) ERR_Ext++;
+        if (OVER_T_EXT != Cfg.mode.ext_pol) ERR_Ext++;
         /* проверка срабатывания внешнего термореле */
         else ERR_Ext = 0;
         if (ERR_Ext > EXT_ERR_VAL) return ERR_OVERTEMP3;
@@ -359,7 +359,7 @@ static inline err_t err_check (void) {
             /* проверка перегрева транзисторов */
             return ERR_OVERTEMP1;
         check_over_t2:
-        if ((Tmp[1] > MAX_T2ch) && (Tmp[1] != ERR_WCODE))
+        if ((Tmp[1] > MAX_T2_CH) && (Tmp[1] != ERR_WCODE))
             /* проверка перегрева выпрямительных диодов */
         return ERR_OVERTEMP2;
     }
@@ -382,7 +382,7 @@ static inline err_t err_check (void) {
         }
         if (adc_error()) return ERR_ADC; /* не удаётся прочитать значение АЦП */
     }
-    if (Overload) return ERR_OVERLOAD; /* проверка защиты от перегрузки */
+    if (OVERLD) return ERR_OVERLOAD; /* проверка защиты от перегрузки */
     return NO_ERR;
 }
 
@@ -425,7 +425,7 @@ static inline void csu_control (void) {
 }
 
 static inline void check_auto_start (void) {
-    if (Cfg.bf2.astart) { // включён автостарт
+    if (Cfg.bf2.bit.astart) { // включён автостарт
         if (PwmStatus == STOP) { // преобразователь выключен
             if (AutoStr.err_cnt) {
             //количество перезапусков не исчерпано
@@ -449,7 +449,7 @@ static inline void update_led (void) {
     else LED_POL(0);
     if (CsuState != STOP) LED_PWR(1);
     if (PwmStatus == CHARGE) {
-        if (I_St) {
+        if (I_ST) {
             LED_STI(1);
             LED_STU(0);
         } else {

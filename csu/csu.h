@@ -47,41 +47,40 @@ typedef enum {
     ERR_DM_LOSS		  = 14 //обрыв разярдного модуля
 } err_t;
 
-//----------------------------------------------------------------------
-#define T_ERR_CNT           8
-#define TVAL(x)             (x * 16)
-#define MAX_T1              TVAL(86)
-#define MAX_T2ch            TVAL(95)
-#define MAX_T2dch           TVAL(95)
-#define FAN_OFF_T           TVAL(34)
-#define FAN_ON_T            TVAL(37)
-#define FAN_CND_T           TVAL(4)
-//----------------------------------------------------------------------
-//#define Good_Con (PINB&0x08)
-#define Overload (PIND&0x08)
-#define OverTempExt (PINA&0x08)
-#define I_St (PINB&0x04)
+#define T_ERR_CNT       8
+#define TVAL(x)         (x * 16)
+#define MAX_T1          TVAL(86)
+#define MAX_T2_CH       TVAL(95)
+#define MAX_T2_DCH      TVAL(95)
+#define FAN_OFF_T       TVAL(34)
+#define FAN_ON_T        TVAL(37)
+#define FAN_CND_T       TVAL(4)
 
-#define RELAY_ON PORTB=PINB|0x10
-#define RELAY_OFF PORTB=PINB&0xEF
-#define RELAY_EN (PINB&0x10) //<<0  ВНИМАНИЕ!!! результат всегда должен быть в 5-м бите
+#define OVERLD (PIND & 0x08)
+#define OVER_T_EXT (PINA & 0x08)
+#define I_ST (PINB & 0x04)
 
-#define FAN_ST ((PINB&0x18)>>3)
-#define FAN(x) ((x)?(PORTB|=(1<<3)):(PORTB&=~(1<<3)))
+#define RELAY_ON PORTB = PINB | 0x10
+#define RELAY_OFF PORTB = PINB & 0xEF
+#define RELAY_EN (PINB & 0x10) //<<0  ВНИМАНИЕ!!! результат всегда должен быть в 5-м бите
+
+#define FAN_ST ((PINB & 0x18) >> 3)
+#define FAN(x) x ? (PORTB |= 1 << 3) : (PORTB &= ~(1 << 3))
 
 #define LED_ERR(x) x ? (PORTC |= 1 << 7) : (PORTC &= ~(1 << 7))
 #define ALARM_OUT LED_ERR // управление реле сигнализации
 #define ALARM_ON() (PINC7)
-#define LED_ERRinv PORTC^=(1<<7);
-#define LED_PWR(x) ((x)?(PORTC&=~(1<<6)):(PORTC|=(1<<6)))
-#define LED_STI(x) ((x)?(PORTC&=~(1<<5)):(PORTC|=(1<<5)))
-#define LED_STU(x) ((x)?(PORTC&=~(1<<4)):(PORTC|=(1<<4)))
-#define LED_POL(x) ((x)?(PORTC&=~(1<<3)):(PORTC|=(1<<3)))
-#define DE(x) ((x)?(PORTD|=(1<<7)):(PORTD&=~(1<<7)))
-#define SD(x) ((x)?(PORTD|=(1<<6)):(PORTD&=~(1<<6)))
-#define PWM_ALL_STOP PORTD=PORTD&0x0F //выставить порты pwm SD, DE в 0
+#define LED_ERRinv PORTC ^= 1 << 7;
+#define LED_PWR(x) x ? (PORTC &= ~(1 << 6)) : (PORTC |= 1 << 6)
+#define LED_STI(x) x ? (PORTC &= ~(1 << 5)) : (PORTC |= 1 << 5)
+#define LED_STU(x) x ? (PORTC &= ~(1 << 4)) : (PORTC |= 1 << 4)
+#define LED_POL(x) x ? (PORTC &= ~(1 << 3)) : (PORTC |= 1 << 3)
+#define DE(x) x ? (PORTD |= 1 << 7) : (PORTD &= ~(1 << 7))
+#define SD(x) x ? (PORTD |= 1 << 6) : (PORTD &= ~(1 << 6))
+#define PWM_ALL_STOP PORTD &= 0x0F //выставить порты pwm SD, DE в 0
 
-//Состояние для переменной PwmStatus (текущий режим ШИМ), SetMode (заданный режим), CsuState (Режи в котором запущен блок)
+/* Состояние для переменной PwmStatus (текущий режим ШИМ),
+SetMode (заданный режим), CsuState (Режи в котором запущен блок) */
 typedef enum {
     STOP        = 0, //const for PwmStatus
     CHARGE      = 1, //const for PwmStatus
@@ -91,57 +90,60 @@ typedef enum {
 } csu_st;
 
 enum{
-	S_STOP,				//0 - преобразователь остановлен
-	ST_I_FALL_WAIT,		//1 - ожидание спада тока перед размыканием реле
-	S_CHARGE_CAP,		//2- заряд выходных электролитов
-	S_VOLTAGE_ALIGNING,	//3 - выравнивание зарядов до и после реле
-	S_RELAY_ON,		//4	- замыкание реле
-	S_PWM_START,	//5 - запуск предобразователя
-	S_WORK,		//6 - работа
+	S_STOP,             //0 - преобразователь остановлен
+	ST_I_FALL_WAIT,     //1 - ожидание спада тока перед размыканием реле
+	S_CHARGE_CAP,       //2- заряд выходных электролитов
+	S_VOLTAGE_ALIGNING, //3 - выравнивание зарядов до и после реле
+	S_RELAY_ON,         //4	- замыкание реле
+	S_PWM_START,        //5 - запуск предобразователя
+	S_WORK,             //6 - работа
 };
 
 typedef union {
 	unsigned int word;
 	unsigned char byte[2];
 } ADC_Type;
-	
+
 typedef struct {
-    unsigned eepr       :1;
-    unsigned addr_set   :1;
-    unsigned in_data    :1;
-    unsigned out_data   :1;
-    unsigned te_data    :1;
-    unsigned fan_cntrl  :1;
-    unsigned diag_wide  :1;
-    unsigned io_sense   :1;
+    uint8_t eepr       :1;
+    uint8_t addr_set   :1;
+    uint8_t in_data    :1;
+    uint8_t out_data   :1;
+    uint8_t te_data    :1;
+    uint8_t fan_cntrl  :1;
+    uint8_t diag_wide  :1;
+    uint8_t io_sense   :1;
 } cmd_t;
 
 typedef struct {
-    unsigned lcd        :1;
-    unsigned led        :1;
-    unsigned pcc        :1;
-    unsigned dbg        :1;
-    unsigned group      :1;
-    unsigned ext_id     :1;
-    unsigned ext_pol    :1;
-    unsigned reley      :1;
+    uint8_t lcd        :1;
+    uint8_t led        :1;
+    uint8_t pcc        :1;
+    uint8_t dbg        :1;
+    uint8_t group      :1;
+    uint8_t ext_id     :1;
+    uint8_t ext_pol    :1;
+    uint8_t reley      :1;
 } mode_t;
 
-typedef	struct {
-    unsigned astart     :1;
-    unsigned dsch_dsb   :1;
+typedef union {
+    struct {
+        uint8_t astart      :1;
+        uint8_t dsch_dsb    :1;
+    } bit;
+	uint16_t word;
 } bf2_t;
 
-typedef struct  {
-    signed int	C;
-    signed int dC;
+typedef struct {
+    int16_t	C;
+    int16_t dC;
 } cap_t;
 
 typedef struct {
-    unsigned char err_cnt; //счётчик перезапусков
+    uint8_t err_cnt; //счётчик перезапусков
     stime_t rst_time; //время паузы между перезапусками
-    unsigned int u_pwm; //минимальное напряженеи рестарта в значениях АЦП
-    unsigned int u_set; //минимальное напряженеи рестарта в вольтах*100
+    uint16_t u_pwm; //минимальное напряженеи рестарта в значениях АЦП
+    uint16_t u_set; //минимальное напряженеи рестарта в вольтах*100
 } ast_t;
 
 typedef enum {

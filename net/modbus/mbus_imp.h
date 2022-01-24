@@ -27,7 +27,7 @@ extern "C" {
 #define LCR_LEN         1 /* количество байт LRC */
 #define STOP_LEN        2 /* количество стоп байт ASCII */
 
-#define MB_DATA_MAX    ((REG_NUM * sizeof(short)) + MB_FUNC_DATA)
+#define MB_DATA_MAX    ((REG_NUM * sizeof(uint16_t)) + MB_FUNC_DATA)
 /* размер буфера приема/передачи драйвера MODBUS RTU */
 #define RTU_BUFF_LEN    (MB_DATA_MAX + CRC_LEN)
 /* размер буфера приема/передачи драйвера MODBUS ASCII */

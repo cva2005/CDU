@@ -129,7 +129,7 @@ extern "C" {
 #define ERROR_BITS (SHL(UART(FE,)) | SHL(UART(DOR,)) | SHL(UART(PE,)))
 
 /* Тип функций сетевого драйвера верхнего уровня */
-typedef void NET_FUNC(unsigned char ip, unsigned char len);
+typedef void NET_FUNC(uint8_t ip, uint8_t len);
 
 #ifdef NET_DEBUG
 #define	net_dbprintf dbprintf

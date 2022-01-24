@@ -37,9 +37,9 @@ extern "C" {
 #define RST_CMD             4
 
 typedef struct {
-    unsigned fan1       :1;
-    unsigned fan2       :1;
-    unsigned rsrv       :6;
+    uint8_t fan1    :1;
+    uint8_t fan2    :1;
+    uint8_t rsrv    :6;
 } fcntl_t;
 
 typedef	struct {

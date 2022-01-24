@@ -289,7 +289,7 @@ void lcd_update_work (void) {
                     change = true;
                 }
             } else {
-                if ((I_St && PwmStatus == CHARGE) ||
+                if ((I_ST && PwmStatus == CHARGE) ||
                     (PwmStatus == DISCHARGE
                      && (get_adc_res(ADC_MU) > TaskU + 5))) {
                     if (lcdState != CURR) {

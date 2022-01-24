@@ -5,22 +5,21 @@
 #include "mbus_imp.h"
 
 static void frame_parse(BUS_MODE mode);
-static unsigned short rtu_crc(unsigned char *buf, unsigned char len);
-static unsigned char ascii_lcr(unsigned char *buf, unsigned char len);
-static bool read_reg(unsigned char *buf, unsigned short first,
-    unsigned short len);
+static uint16_t rtu_crc(uint8_t *buf, uint8_t len);
+static uint8_t ascii_lcr(uint8_t *buf, uint8_t len);
+static bool read_reg(uint8_t *buf, uint16_t first, uint16_t len);
 
-static unsigned char RtuBuff[RTU_BUFF_LEN]; /* буфер приема/передачи RTU */
-static unsigned char AsciiBuff[ASCII_BUFF_LEN]; /* буфер приема/передачи ASCII */
+static uint8_t RtuBuff[RTU_BUFF_LEN]; /* буфер приема/передачи RTU */
+static uint8_t AsciiBuff[ASCII_BUFF_LEN]; /* буфер приема/передачи ASCII */
 BUS_STATE RtuBusState; /* машина сотояния према кадра RTU */
 BUS_STATE AsciiBusState; /* машина сотояния према кадра ASCII */
-static unsigned char RtuIpBuff; /* указатель данных в буфере приема */
-static unsigned char AsciiIpBuff; /* указатель данных в буфере приема */
-unsigned char RtuIdleCount; /* счетчик интервалов времени RTU */
-unsigned char AsciiIdleCount; /* счетчик интервалов времени ASCII */
+static uint8_t RtuIpBuff; /* указатель данных в буфере приема */
+static uint8_t AsciiIpBuff; /* указатель данных в буфере приема */
+uint8_t RtuIdleCount; /* счетчик интервалов времени RTU */
+uint8_t AsciiIdleCount; /* счетчик интервалов времени ASCII */
 
 /* Драйвер MODBUS ASCII */
-void ascii_drv(unsigned char ip, unsigned char len)
+void ascii_drv (uint8_t ip, uint8_t len)
 {
     while (len--) {
         if (ip >= RX_BUFF_LEN) ip = 0;
@@ -62,7 +61,7 @@ void ascii_drv(unsigned char ip, unsigned char len)
 }
 
 /* Драйвер MODBUS RTU */
-void rtu_drv(unsigned char ip, unsigned char len)
+void rtu_drv(uint8_t ip, uint8_t len)
 {
     if (RtuBusState != BUS_STOP) { /* активен прием кадра */
         if (RtuBusState == BUS_IDLE) {
@@ -90,11 +89,11 @@ void rtu_drv(unsigned char ip, unsigned char len)
 /* Драйвер MODBUS */
 static void frame_parse(BUS_MODE mode)
 {
-    unsigned char i, j; /* счетчики */
+    uint8_t i, j; /* счетчики */
     MODBUS_ERROR mb_error = NO_MB_ERROR; /* регистр ошибок MODBUS */
-    unsigned char *rs_buff; /* указатель на буфер приема/передачи */
-    unsigned short raddr; /* начальный адрес регистра MODBUS */
-    unsigned short rnum; /* количество регистров MODBUS */
+    uint8_t *rs_buff; /* указатель на буфер приема/передачи */
+    uint16_t raddr; /* начальный адрес регистра MODBUS */
+    uint16_t rnum; /* количество регистров MODBUS */
 
     if (mode == MODE_ASCII) {
         i = 0; /* счетчик длинного буфера */
@@ -120,17 +119,17 @@ static void frame_parse(BUS_MODE mode)
             ascii_lcr(&rs_buff[0], AsciiIpBuff - 1))
             return; /* ошибка LCR */
     } else { /* mode == MODE_RTU */
-        if (*((unsigned short *)&rs_buff[RtuIpBuff - 2]) !=
+        if (*((uint16_t *)&rs_buff[RtuIpBuff - 2]) !=
             rtu_crc(&rs_buff[0], RtuIpBuff - 2))
             return; /* ошибка CRC */
     }
     if ((rs_buff[1] == RD_HOLD_REG) || (rs_buff[1] == RD_INP_REG)) {
-        raddr = ((unsigned short)rs_buff[2] << 8);
+        raddr = ((uint16_t)rs_buff[2] << 8);
         raddr += rs_buff[3]; /* начальный адрес регистра MODBUS */
-        rnum = ((unsigned short)rs_buff[4] << 8);
+        rnum = ((uint16_t)rs_buff[4] << 8);
         rnum += rs_buff[5]; /* количество регистров для чтения */
         if (read_reg(&rs_buff[3], raddr, rnum) != false) {
-            BuffLen = rs_buff[2] = (unsigned char)rnum * 2; /* счетчик байт */
+            BuffLen = rs_buff[2] = (uint8_t)rnum * 2; /* счетчик байт */
             BuffLen += 3; /* размер буфера без контрольной суммы */
         } else { /* обнаружена ошибка */
             mb_error = ILLEGAL_DATA_ADDRESS;
@@ -175,15 +174,14 @@ static void frame_parse(BUS_MODE mode)
 }
 
 /* заполнение буфера содержимым регистров */
-static bool read_reg(unsigned char *buf, unsigned short first,
-                     unsigned short len)
+static bool read_reg(uint8_t *buf, uint16_t first, uint16_t len)
 {
     if ((len == 0)  || ((first + len) > REG_NUM)) return false;
     len += first;
     for (; (char)first < (char)len; first++) {
-        signed short int_val;
+        int16_t int_val;
         float flo_val;
-        unsigned char i;
+        uint8_t i;
         //unsigned char idx = first / REG_IDX_NUM; /* индекс группы */
         switch ((char)(first % REG_IDX_NUM)) { /* номер параметра в группе */
         case DPOINT_POS:
@@ -194,10 +192,10 @@ static bool read_reg(unsigned char *buf, unsigned short first,
             flo_val = /*ch_data[idx].value*/0;
             i = /*Cfg.Dp[idx]*/0;
             while (i--) flo_val *= 10;
-            int_val = (signed short)flo_val;
+            int_val = (int16_t)flo_val;
             break;
         case MEAS_STAT:
-            i = *((unsigned char *)/*&ch_data[idx].value +*/ 3);
+            i = *((uint8_t *)/*&ch_data[idx].value +*/ 3);
             if (i <= /*emErrValue*/1) { /* значение не содержит ошибку */
                 int_val = 0x0000;
             } else { /* ошибка измерения*/
@@ -214,17 +212,17 @@ static bool read_reg(unsigned char *buf, unsigned short first,
             int_val = *((short *)/*&ch_data[idx].value +*/ 1);
         }
         *buf++ = int_val >> 8;
-        *buf++ = (unsigned char)int_val;
+        *buf++ = (uint8_t)int_val;
     }
     return true;
 }
 
 /* вычисление контрольной суммы кадра MODBUS RTU CRC */
-static unsigned short rtu_crc(unsigned char *buf, unsigned char len)
+static uint16_t rtu_crc (uint8_t *buf, uint8_t len)
 {
-    unsigned char bit_cnt;
-    unsigned char buf_cnt;
-    unsigned short crc = 0xffff;
+    uint8_t bit_cnt;
+    uint8_t buf_cnt;
+    uint16_t crc = 0xffff;
     bool poly_xor;
 
     for (buf_cnt = 0; buf_cnt < len; buf_cnt++) {
@@ -240,9 +238,9 @@ static unsigned short rtu_crc(unsigned char *buf, unsigned char len)
 }
 
 /* Вычисление контрольной суммы кадра MODBUS ASCII LCR */
-static unsigned char ascii_lcr(unsigned char *buf, unsigned char len)
+static uint8_t ascii_lcr (uint8_t *buf, uint8_t len)
 {
-    unsigned char lrc = 0;
+    uint8_t lrc = 0;
 
     while (len--) lrc += buf[len];
     return -lrc;

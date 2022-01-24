@@ -17,15 +17,15 @@
 static bool LongTx = false;
 static rs_pkt_t Buff; /* буфер приема/передачи */
 BUS_STATE KronBusState; /* машина сотояния приема кадра */
-static unsigned char IpBuff; /* указатель данных в буфере приема */
-unsigned char KronIdleCount; /* счетчик интервалов времени */
-static unsigned int preTaskI,  preTaskId, preTaskU;
+static uint8_t IpBuff; /* указатель данных в буфере приема */
+uint8_t KronIdleCount; /* счетчик интервалов времени */
+static uint16_t preTaskI,  preTaskId, preTaskU;
 
 static void tx_reply (void);
 static void frame_parse (void);
 
 /* драйвер KRON SLAVE устройства */
-void kron_drv (unsigned char ip, unsigned char len)
+void kron_drv (uint8_t ip, uint8_t len)
 {
     if (KronBusState != BUS_STOP) { /* активен прием кадра */
         if (LongTx) {
@@ -35,7 +35,7 @@ void kron_drv (unsigned char ip, unsigned char len)
         }
         while (len--) {
             if (ip >= RX_BUFF_LEN) ip = 0;
-            unsigned char tmp = RxBuff[ip++];
+            uint8_t tmp = RxBuff[ip++];
             if (tmp == CHAR_RS) { /* обнаружен стартовый байт KRON */
                 IpBuff = 0; /* указатель на начало буфера */
                 KronBusState = BUS_START; /* первый байт кадра принят */
@@ -165,7 +165,7 @@ static void frame_parse (void) {
                         if (rx.length >= 13) //Если есть данные о количестве РМ
                             Cfg.dmSlave = rd.sys.dm_cnt;
                         if (rx.length >= 17) //если есть поле дополнительной конфигурации
-                            *((uint16_t *)&Cfg.bf2) = rd.sys.cfg;	
+                            Cfg.bf2.word = rd.sys.cfg;	
                         if (rx.length >= 22) { //если есть информация об автозапуске
                             Cfg.cnt_set = rd.sys.autostart_try;
                             Cfg.u_set = rd.sys.autostart_u;
@@ -274,7 +274,7 @@ static void tx_reply (void) {
         td.sys.dm_cnt = Cfg.dmSlave;
         td.sys.slave_cnt_u=0;
         td.sys.slave_cnt_i=0;
-        td.sys.cfg = Cfg.bf2.astart;
+        td.sys.cfg = Cfg.bf2.bit.astart;
         td.sys.autostart_try = Cfg.cnt_set;//AST_CNT;
         td.sys.restart_timout = Cfg.time_set;
         td.sys.autostart_u = Cfg.u_set;

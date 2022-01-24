@@ -4,7 +4,7 @@
 #include "csu/csu.h"
 
 #if !JTAG_DBGU
-void Init_WH2004(unsigned char enable)
+void Init_WH2004(uint8_t enable)
 {
 //DATA_OUT = 0;
 //-----------------------------Инициализация-------------------------------
@@ -36,9 +36,10 @@ if (enable)
 	}
 }
 
-unsigned char WH2004_wait_ready(void)
-{unsigned char BF=0; 
- unsigned int cnt=0;
+uint8_t WH2004_wait_ready(void)
+{
+    uint8_t BF=0; 
+    uint16_t cnt=0;
 
 DATA_OUT=0;    //на выходы все 0
 WH2004L_rd_busy;
@@ -58,7 +59,7 @@ if (cnt>1000) return(0); //Если таймаут вышел, значит WH20
 return(1);
 }
 
-unsigned char WH2004_data_wr(unsigned char data)
+uint8_t WH2004_data_wr(uint8_t data)
 {
 if (WH2004_wait_ready())
 	{
@@ -74,7 +75,7 @@ if (WH2004_wait_ready())
 return(0);
 }
 
-unsigned char WH2004_inst_wr(unsigned char inst)
+uint8_t WH2004_inst_wr(uint8_t inst)
 {
 if (WH2004_wait_ready())
 	{
@@ -92,8 +93,9 @@ delay_ns;
 return(0);
 }
 
-void WH2004_string_wr(char *string, unsigned char adr, unsigned char nsym)
-{unsigned char cnt=0;
+void WH2004_string_wr(char *string, uint8_t adr, uint8_tr nsym)
+{
+    uint8_t cnt=0;
 
 if (WH2004_inst_wr(adr)) //установить курсор в нужную позицию
 	{

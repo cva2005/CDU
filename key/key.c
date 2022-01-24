@@ -145,7 +145,7 @@ static void key_up_dw (up_dw_t up_dw) {
             if (TaskId > MaxId) TaskId = Id_A(0,2);
             else if (TaskId < Id_A(0,2)) TaskId = MaxId;
         } else {
-            if (I_St) {
+            if (I_ST) {
                 TaskI += (int8_t)up_dw;
                 if (TaskI > MaxI) TaskI = I_A(0,2);
                 else if (TaskI < I_A(0,2)) TaskI = MaxI;

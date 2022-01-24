@@ -2,16 +2,13 @@
 #define KRON_H
 #pragma message	("@(#)kron.h")
 
-/*
- * Драйвер сетевого протокола DCON
- */
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
-void kron_drv (unsigned char ip, unsigned char len);
+
+void kron_drv (uint8_t ip, uint8_t len);
 extern BUS_STATE KronBusState; /* машина сотояния према кадра */
-extern unsigned char KronIdleCount; /* счетчик интервалов времени */
+extern uint8_t KronIdleCount; /* счетчик интервалов времени */
 #define FRAME_KRON_SYNC     10 /* interval of idle */
 
 #ifdef __cplusplus

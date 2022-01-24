@@ -18,19 +18,18 @@ extern "C" {
 #define DATA_IN PINC
 
 #if JTAG_DBGU
-  #define Init_WH2004(...)
-  #define WH2004_wait_ready(...)
-  #define WH2004_inst_wr(...)
-  #define WH2004_data_wr(...)
-  #define WH2004_string_wr(...)
+#define Init_WH2004(...)
+#define WH2004_wait_ready(...)
+#define WH2004_inst_wr(...)
+#define WH2004_data_wr(...)
+#define WH2004_string_wr(...)
 #else
-  void Init_WH2004(unsigned char enable);
-  unsigned char WH2004_wait_ready(void);
-  unsigned char WH2004_inst_wr(unsigned char inst);
-  unsigned char WH2004_data_wr(unsigned char data);
-  void WH2004_string_wr(char *string, unsigned char adr, unsigned char nsym);
+void Init_WH2004 (uint8_t enable);
+uint8_t WH2004_wait_ready (void);
+uint8_t WH2004_inst_wr (uint8_t inst);
+uint8_t WH2004_data_wr (uint8_t data);
+void WH2004_string_wr(char *string, uint8_t adr, uint8_t nsym);
 #endif
-
 
 #define LA_0    0x80
 #define LA_1    0xC0

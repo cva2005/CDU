@@ -13,8 +13,8 @@ uint8_t fCnt;
 uint8_t StgNum[MTD_N] = {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint16_t msNum = 0;
 bool SaveMtd = false;
-unsigned int TaskI, TaskId, TaskU, TaskUmemC, TaskUmemD;
-unsigned int MaxU, MaxI, MaxId;
+uint16_t TaskI, TaskId, TaskU, TaskUmemC, TaskUmemD;
+uint16_t MaxU, MaxI, MaxId;
 hms_t Tm = {0,0,0}, Ts;
 stime_t PulseStep; //время импульса заряд/разряд при импульсном режиме
 stime_t dUtime; // Время когда не увеличивается U при заряде щелочного АКБ
@@ -171,7 +171,7 @@ void read_mtd (void) {
     cCnt = 0; //установить первый цикл
 }
 
-void read_stg (unsigned char num) {
+void read_stg (uint8_t num) {
     uint8_t i, n = mCnt;
     for (i = 0; i < mCnt; i++) {
         n += StgNum[i];
@@ -180,7 +180,7 @@ void read_stg (unsigned char num) {
     if (eeread_stg(n, &Stg) == false) Error = ERR_STG;
 }
 
-void start_mtd (unsigned char num) {
+void start_mtd (uint8_t num) {
     uint32_t s, error_calc;
     memset(&Tm, 0, sizeof(Tm));
 	if (num) {

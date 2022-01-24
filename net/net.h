@@ -61,17 +61,17 @@ typedef enum {
 /* размер кольцевого буфера приема */
 #define RX_BUFF_LEN        32
 
-extern unsigned char *BuffPtr; /* указатель на буфер приема/передачи */
-extern unsigned char TxIpBuff; /* указатель данных в буфере передачи */
-extern unsigned char BuffLen; /* размер буфера при передаче кадра */
-extern unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
-extern signed char RxIpNew; /* указатель хвоста буфера приема */
-extern signed char RxIpOld; /* указатель головы буфера приема */
+extern uint8_t *BuffPtr; /* указатель на буфер приема/передачи */
+extern uint8_t TxIpBuff; /* указатель данных в буфере передачи */
+extern uint8_t BuffLen; /* размер буфера при передаче кадра */
+extern uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
+extern int8_t RxIpNew; /* указатель хвоста буфера приема */
+extern int8_t RxIpOld; /* указатель головы буфера приема */
 
 
 void init_rs (void);
 void net_drv (void);
-void start_tx (char first, unsigned char *buff);
+void start_tx (char first, uint8_t *buff);
 bool rs_active (void);
 void set_active (void);
 

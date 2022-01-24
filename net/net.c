@@ -6,12 +6,12 @@
 
 static bool RsActive = false;
 stime_t TimeIdle;
-unsigned char *BuffPtr; /* указатель на буфер передачи */
-unsigned char TxIpBuff; /* указатель данных в буфере передачи */
-unsigned char BuffLen; /* размер буфера при передаче кадра */
-unsigned char RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
-signed char RxIpNew; /* указатель хвоста буфера приема */
-signed char RxIpOld; /* указатель головы буфера приема */
+uint8_t *BuffPtr; /* указатель на буфер передачи */
+uint8_t TxIpBuff; /* указатель данных в буфере передачи */
+uint8_t BuffLen; /* размер буфера при передаче кадра */
+uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
+int8_t RxIpNew; /* указатель хвоста буфера приема */
+int8_t RxIpOld; /* указатель головы буфера приема */
 static NET_FUNC *net_func[] = { /* сетевые функции */
     rtu_drv,
     ascii_drv,
@@ -21,7 +21,7 @@ static NET_FUNC *net_func[] = { /* сетевые функции */
 #define NET_FUNC_NUM (sizeof(net_func) / sizeof(*net_func))
 
 /* Настройка драйвера RS */
-void init_rs(void)
+void init_rs (void)
 {
     RS_DIR_INIT();
     UART(UCSR,C) = /*SHL(UART(URSEL,)) |*/ SHL(UART(UCSZ,1)) | SHL(UART(UCSZ,0)); // Data Bits: 8
@@ -35,13 +35,13 @@ void init_rs(void)
 void net_drv(void)
 {
     if (!get_time_left(TimeIdle)) RsActive = false;
-    unsigned char new_ip = RxIpNew;
-    unsigned char old_ip = RxIpOld;
-    unsigned char len;
+    uint8_t new_ip = RxIpNew;
+    uint8_t old_ip = RxIpOld;
+    uint8_t len;
     if (new_ip < old_ip) len = (RX_BUFF_LEN - old_ip) + new_ip;
     else len = new_ip - old_ip;
     RxIpOld = new_ip;
-    for (unsigned char i = 0; i < NET_FUNC_NUM; i++) {
+    for (uint8_t i = 0; i < NET_FUNC_NUM; i++) {
         if (TX_ACTIVE()) return;
         net_func[i](old_ip, len);
     }
@@ -50,7 +50,7 @@ void net_drv(void)
 /* Сетевой драйвер нижнего уровня */
 
 /* Иницирует начало передачи кадра */
-void start_tx(char first, unsigned char *buff)
+void start_tx(char first, uint8_t *buff)
 {
     STOP_RX(); /* запретить прием */
     UART(UDR,) = first; /* загрузить первый байт */

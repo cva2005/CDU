@@ -51,8 +51,10 @@ static const cfg_t DefaultCfg = {
 void read_cfg (void) {
     Cfg = eData.Cfg;
     uint8_t crc = eData.Crc1;
-    if (crc != calc_crc((uint8_t *)&Cfg, sizeof(Cfg)))
+    if (crc != calc_crc((uint8_t *)&Cfg, sizeof(Cfg))) {
         Cfg = DefaultCfg;
+        save_cfg();
+    }
     Num = eData.Num;
     crc = eData.Crc2;
     if (crc != calc_crc((uint8_t *)&Num, sizeof(Num)))

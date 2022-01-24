@@ -49,13 +49,13 @@ extern "C" {
 #define FRAME_RTU_ERROR 60 /* "режим молчания" активен > 1.5 интервала */
 #endif
 
-extern void ascii_drv(unsigned char ip, unsigned char len);
-extern void rtu_drv(unsigned char ip, unsigned char len);
+extern void ascii_drv (uint8_t ip, uint8_t len);
+extern void rtu_drv (uint8_t ip, uint8_t len);
 
 extern BUS_STATE RtuBusState; /* машина сотояния према кадра RTU */
 extern BUS_STATE AsciiBusState; /* машина сотояния према кадра ASCII */
-extern unsigned char RtuIdleCount; /* счетчик интервалов времени RTU */
-extern unsigned char AsciiIdleCount; /* счетчик интервалов времени ASCII */
+extern uint8_t RtuIdleCount; /* счетчик интервалов времени RTU */
+extern uint8_t AsciiIdleCount; /* счетчик интервалов времени ASCII */
 
 #ifdef __cplusplus
 }
