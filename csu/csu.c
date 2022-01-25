@@ -33,8 +33,8 @@ unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
-	0.0012, /* Kp; gain factor */
-	5000.0, /* Ti integration time */
+	0.003, /* Kp; gain factor */
+	2000.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	20.0,   /* Td derivative time */
 	/* i[ST_SIZE] old input states */
@@ -49,10 +49,10 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-	0.0001, /* Kp; gain factor */
-	1000.0, /* Ti integration time */
+	0.00002, /* Kp; gain factor */
+	100.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
-	2.0,    /* Td derivative time */
+	5.0,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -201,7 +201,7 @@ void calc_cfg (void) {
     AutoStr.u_pwm = ((uint32_t)AutoStr.u_set*100000UL) / Cfg.K_U;
     AutoStr.err_cnt = Cfg.cnt_set;
     if (Cfg.bf2.bit.astart) Cfg.mode.dbg = 1;
-    id_dw_Clb = Id_A(2,0);
+    id_dw_Clb = ID_A(2,0);
     if (Cfg.dmSlave == 0) {
         id_up_Clb = HI_Id_EXT0;
         if (Cfg.P_maxW > 2500) Cfg.P_maxW = 2500;
@@ -322,12 +322,12 @@ static inline err_t err_check (void) {
 		if (Cfg.cmd.diag_wide && PwmStatus == DISCHARGE) {
         /* включена расширеная диагностика */
             if (dm_loss_cnt > 0 && dm_loss_cnt < 10) {
-                if (get_adc_res(ADC_DI) > Id_A(0,1)) {
+                if (get_adc_res(ADC_DI) > ID_A(0,1)) {
                     if (TaskU < get_adc_res(ADC_MU) && !pLim
                         && TaskId > get_adc_res(ADC_DI) << 1) {
                         return ERR_DM_LOSS;
                     }
-                    if (TaskId > get_adc_res(ADC_DI) + Id_A(0,2) &&
+                    if (TaskId > get_adc_res(ADC_DI) + ID_A(0,2) &&
                         PWM_I == max_pwd_Id) {
                         /* реальный ток в 2 раза меньше заданного */
                         return ERR_DM_LOSS;
@@ -341,14 +341,14 @@ static inline err_t err_check (void) {
          /* диагностика обрыва нагрузки и блок не в группе */
         if (PwmStatus == CHARGE && TaskI) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
-            if (get_time_left(BreakTime) && PWM_I > 0) return ERR_NO_AKB;
+            if (!get_time_left(BreakTime) && PWM_I > 0) return ERR_NO_AKB;
         }
         if (PwmStatus == DISCHARGE && TaskId) {
-            if (get_adc_res(ADC_DI) >= Id_A(0,1)) {
+            if (get_adc_res(ADC_DI) >= ID_A(0,1)) {
             set_break_time:
                 BreakTime = get_fin_time(SEC(1));
             }
-            if (get_time_left(BreakTime) && (PWM_I > 0)) return ERR_NO_AKB;
+            if (!get_time_left(BreakTime) && (PWM_I > 0)) return ERR_NO_AKB;
         }
     }
     /* Проверка перегрева */

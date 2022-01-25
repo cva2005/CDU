@@ -160,19 +160,19 @@ typedef enum {
 //Рабочие значения тока и напряжения (для блокировок)
 #define U_V(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_U
 #define I_A(x,y)    (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_I
-#define Id_A(x,y)   (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_Id
-#define U_adc(x)    (uint32_t)(x * 100000UL) / Cfg.K_U
-#define I_adc(x)    (uint32_t)(x * 100000UL) / Cfg.K_I
-#define Id_adc(x)   (uint32_t)(x * 100000UL) / Cfg.K_Id
-#define U_m(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_U
-#define I_m(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_I
-#define Id_m(x,y)   (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_Id
+#define ID_A(x,y)   (uint32_t)(x * 10000000UL + y * 1000000UL) / Cfg.K_Id
+#define U_ADC(x)    (uint32_t)(x * 100000UL) / Cfg.K_U
+#define I_ADC(x)    (uint32_t)(x * 100000UL) / Cfg.K_I
+#define ID_ADC(x)   (uint32_t)(x * 100000UL) / Cfg.K_Id
+#define U_M(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_U
+#define I_M(x,y)    (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_I
+#define ID_M(x,y)   (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_Id
 
 //----------коэфициенты для запуска РМ--------------------------
 #define HI_Id_EXT0      59000000 / Cfg.K_Id //граница тока, после которого разрешена калибровка верхнего значения
-#define SETId1_EXT0     Id_A(0,2)
+#define SETId1_EXT0     ID_A(0,2)
 #define PWM1_Id_EXT0    60//150 //
-#define SETId2_EXT0     Id_A(8,0)
+#define SETId2_EXT0     ID_A(8,0)
 #define PWM2_Id_EXT0    2391//4665 //
 //Для резисторов РМ: верх 0.51к+10к, низ 1к
 #define HI_Id_EXT1	    200000000 / Cfg.K_Id

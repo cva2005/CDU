@@ -100,8 +100,8 @@ static void key_up_dw (up_dw_t up_dw) {
         case pr_I:
             if (SetMode == DISCHARGE) {
                 TaskId += stp;
-                if (TaskId > MaxId) TaskId = Id_A(0,2);
-                else if (TaskId < Id_A(0,2)) TaskId = MaxId;
+                if (TaskId > MaxId) TaskId = ID_A(0,2);
+                else if (TaskId < ID_A(0,2)) TaskId = MaxId;
             } else {
                 TaskI += stp;
                 if (TaskI > MaxI) TaskI = I_A(0,2);
@@ -142,8 +142,8 @@ static void key_up_dw (up_dw_t up_dw) {
     } else {
         if (SetMode == DISCHARGE) {
             TaskId += (int8_t)up_dw;
-            if (TaskId > MaxId) TaskId = Id_A(0,2);
-            else if (TaskId < Id_A(0,2)) TaskId = MaxId;
+            if (TaskId > MaxId) TaskId = ID_A(0,2);
+            else if (TaskId < ID_A(0,2)) TaskId = MaxId;
         } else {
             if (I_ST) {
                 TaskI += (int8_t)up_dw;

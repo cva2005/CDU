@@ -117,34 +117,34 @@ void stg_status (void) {
 /* расчёт параметров метода */
 void calc_mtd (void) {
     SetMode = Stg.fld.type;
-    TaskU = (uint16_t)U_adc(Mtd.fld.Um);
-    TaskId = (uint16_t)Id_adc(Mtd.fld.Im);
-    TaskI = (uint16_t)I_adc(Mtd.fld.Im);
+    TaskU = (uint16_t)U_ADC(Mtd.fld.Um);
+    TaskId = (uint16_t)ID_ADC(Mtd.fld.Im);
+    TaskI = (uint16_t)I_ADC(Mtd.fld.Im);
     /* Если в методе больше 10 циклов, то ограничить их 10-ю */
     if (Mtd.fld.Cnt > 10) Mtd.fld.Cnt = 10;
 }
 
 /* расчёт параметров этапа */
 void calc_stg(void) {
-    TaskI = (uint16_t)I_m(Mtd.fld.Im, Stg.fld.I_ch);
+    TaskI = (uint16_t)I_M(Mtd.fld.Im, Stg.fld.I_ch);
     if (TaskI > MaxI) TaskI = MaxI;
-    TaskId = (uint16_t)Id_m(Mtd.fld.Im, Stg.fld.I_dch);
+    TaskId = (uint16_t)ID_M(Mtd.fld.Im, Stg.fld.I_dch);
     if (TaskId > MaxId) TaskId = MaxId;
-    TaskUmemC = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_ch);
+    TaskUmemC = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.U_ch);
     if (TaskUmemC > MaxU) TaskUmemC = MaxU;
-    TaskUmemD = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.U_dch);
+    TaskUmemD = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.U_dch);
     if (TaskUmemD > MaxU) TaskUmemD = MaxU;
     if (Stg.fld.type == DISCHARGE) TaskU = TaskUmemD;
     else TaskU = TaskUmemC;
     if (Stg.fld.stop_flag.U)
-        Fin.U = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.end_U);
+        Fin.U = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.end_U);
     if (Stg.fld.stop_flag.dU)
-        Fin.dU = (uint16_t)U_m(Mtd.fld.Um, Stg.fld.end_dU);
+        Fin.dU = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.end_dU);
     if (Stg.fld.stop_flag.I) {
         if (Stg.fld.type==DISCHARGE)
-            Fin.I = (uint16_t)Id_m(Mtd.fld.Im, Stg.fld.end_I);
+            Fin.I = (uint16_t)ID_M(Mtd.fld.Im, Stg.fld.end_I);
         else
-            Fin.I = (uint16_t)I_m(Mtd.fld.Im, Stg.fld.end_I);
+            Fin.I = (uint16_t)I_M(Mtd.fld.Im, Stg.fld.end_I);
 	}
     if (Stg.fld.type==STOP) Stg.fld.type = PAUSE;
     Fin.max_U=0;
