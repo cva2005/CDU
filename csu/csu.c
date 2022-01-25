@@ -151,7 +151,7 @@ void csu_drv (void) {
         }			
     }
     if (!rs_active() || Cfg.mode.dbg) {
-        if (Cfg.mode.led)	update_led();
+        if (Cfg.mode.led) update_led();
         if (Cfg.mode.lcd) {
             if (!get_time_left(LcdRefr)) {
                 lcd_update_work();

@@ -56,6 +56,7 @@ void start_tx(char first, uint8_t *buff)
     UART(UDR,) = first; /* загрузить первый байт */
     BuffPtr = buff; /* сохранить указатель на буфер передачи */
     RS485_OUT(); /* линию управления RS485 - на передачу */
+    delay_us(5);
     /* разрешить передачу и прерывание TX UART */
     UART(UCSR,B) |= (/*SHL(UART(TXEN,)) |*/ SHL(UART(UDRIE,)));
     net_dbprintf("start_tx: Done!\r\n");

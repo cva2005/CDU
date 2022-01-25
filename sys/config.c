@@ -55,6 +55,7 @@ void read_cfg (void) {
         Cfg = DefaultCfg;
         save_cfg();
     }
+    calc_cfg();
     Num = eData.Num;
     crc = eData.Crc2;
     if (crc != calc_crc((uint8_t *)&Num, sizeof(Num)))
