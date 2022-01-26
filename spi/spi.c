@@ -14,7 +14,7 @@ static cs_func_t cs_func; /* функция выбора ведомого */
 void spi_init(void) {
     //SET_PIN(SPI_PORT, SCK);
     SET_AS_OUTS(SPI_PORT, SHL(SCK) | SHL(MOSI) | SHL(_SS));
-    SPCR = SPI_OFF;
+    SPCR = /*SPI_OFF*/SPI_ON;
 }
 
 void spi_reset (void) {
@@ -29,7 +29,7 @@ bool spi_busy (void) {
 
 void spi_start_io (char *msg, uint8_t wlen,
                   uint8_t rlen, cntr_t const *cntr) {
-    while (spi_busy());
+    //while (spi_busy());
     rd_len = rlen;
     if (wr_len = wlen) { /* write operation */
         wr_ptr = 1;
@@ -50,7 +50,7 @@ void spi_start_io (char *msg, uint8_t wlen,
 }
 
 void spi_get_data (char *msg, uint8_t first, uint8_t len) {
-    while (spi_busy());
+    //while (spi_busy());
     while (len--) { /* copy data from buffer */
         *msg++ = spi_buf[len + first];
     }

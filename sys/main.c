@@ -28,7 +28,7 @@ void main (void) {
         FAN(OFF);
     }
     while (true) {	  	
-        //adc_drv();
+        adc_drv();
         net_drv();
         csu_drv();
     }
