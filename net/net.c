@@ -25,10 +25,8 @@ void init_rs (void)
 {
     RS_DIR_INIT();
     UART(UCSR,C) = /*SHL(UART(URSEL,)) |*/ SHL(UART(UCSZ,1)) | SHL(UART(UCSZ,0)); // Data Bits: 8
-    //UART(UCSR,C) &= ~(SHL(UART(UPM,0)) | SHL(UART(UPM,1))); // Parity: None
-    //UART(UCSR,C) &= ~SHL(UART(USBS,)); // Stop Bits: 1
     SET_BAUD(115200);
-    UART(UCSR,B) |= SHL(UART(TXEN,));
+    UART(UCSR,B) |= SHL(UART(RXCIE,)) | SHL(UART(RXEN,)) | SHL(UART(TXEN,));
 }
 
 /* Сетевой драйвер верхнего уровня */
@@ -57,27 +55,8 @@ void start_tx(char first, uint8_t *buff)
     BuffPtr = buff; /* сохранить указатель на буфер передачи */
     RS485_OUT(); /* линию управления RS485 - на передачу */
     delay_us(5);
-    /* разрешить передачу и прерывание TX UART */
-    UART(UCSR,B) |= (/*SHL(UART(TXEN,)) |*/ SHL(UART(UDRIE,)));
-    net_dbprintf("start_tx: Done!\r\n");
-}
-
-/*
- * Прерывание по событию: Data Register Empty.
- * Опустошение регистра данных передатчика.
- * Предыдущий байт передан в регистр сдвига передатчика.
- */
-#pragma vector=UART(USART,_UDRE_vect)
-#pragma type_attribute=__interrupt
-void usart_tx_byte(void)
-{
-    if (TxIpBuff == BuffLen) { /* последний байт кадра регистре сдвига */
-        CLR_BIT(UART(UCSR,B), UART(UDRIE,)); /* запреть прерывание UDRE */
-        UART(UCSR,A) |= SHL(UART(TXC,));   /* сбросим возможный флаг TXC */
-        SET_BIT(UART(UCSR,B), UART(TXCIE,)); /* прер. по перед. байта в линию */
-    } else { /* передача кадра продолжается */
-        UART(UDR,) = BuffPtr[TxIpBuff++]; /* передать очередной байт */
-    }
+    /* разрешить прерывание TX UART */
+    UART(UCSR,B) |= SHL(UART(TXCIE,));
 }
 
 /*
@@ -90,8 +69,13 @@ void usart_tx_byte(void)
 #pragma type_attribute=__interrupt
 void usart_tx_empty(void)
 {
-    CLR_BIT(UART(UCSR,B), UART(TXCIE,)); /* запр. прер. Data Register Empty */
-    START_RX(); /* возобновить прием */
+    if (TxIpBuff == BuffLen) { /* последний байт кадра отправлен */
+        UART(UCSR,B) &= ~SHL(UART(TXCIE,));
+        START_RX(); /* возобновить прием */
+    } else { /* передача кадра продолжается */
+        while (!(UCSRA & (1 << UDRE)));
+        UART(UDR,) = BuffPtr[TxIpBuff++]; /* передать очередной байт */
+    }
 }
 
 /*

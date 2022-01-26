@@ -50,7 +50,7 @@ static pid_t Pid_U = {
 };
 static pid_t Pid_Ic = {
 	0.00002, /* Kp; gain factor */
-	100.0, /* Ti integration time */
+	500.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	5.0,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
