@@ -15,7 +15,7 @@ static cfg_reg_t CfgReg = {
     DATA_VALID,
     PULL_UP_DIS,
     ADC_MODE,
-    DR_64_SPS,
+    DR_250_SPS,
     SIGNLE_SHOT,
     PGA_2048,
     CH_0,
@@ -45,6 +45,7 @@ void adc_init (void) {
     //CS_ON(); // 32-Bit Data Transmission Cycle (CS -> ON)
     //SET_AS_OUT(CS_PORT, CS_PIN);
     spi_start_io((char *)&CfgReg, sizeof(uint16_t), sizeof(uint32_t), &adc_cntr);
+    AdcTime = get_fin_time(ADC_TIME);
 }
 
 static void adc_cs (cs_t cs) {

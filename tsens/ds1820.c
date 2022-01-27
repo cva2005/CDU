@@ -46,7 +46,7 @@ uint8_t get_tmp_res (int16_t *tmp) {
         delay_us(422);
         write_byte(0xCC); // skip S/N
         write_byte(0x44); // temp convert
-        delay_ms(1000);
+        delay_us(1);
         if (!(err = start_sensor())) {
             delay_us(422);
             write_byte(0xCC); // Skip ROM

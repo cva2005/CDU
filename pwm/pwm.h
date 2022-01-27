@@ -8,7 +8,7 @@ extern "C" {
 
 #define PWM_U_NULL      0
 #define PWM_I_NULL      0
-#define MAX_CK          0x1FFF 
+#define MAX_CK          /*0x1FFF*/0x1000
 #define PWM_I           OCR1B
 #define PWM_U           OCR1A
 #define SOFT            true

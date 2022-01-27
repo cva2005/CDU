@@ -33,8 +33,8 @@ unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
-	0.003, /* Kp; gain factor */
-	2000.0, /* Ti integration time */
+	0.01, /* Kp; gain factor */
+	10000.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	20.0,   /* Td derivative time */
 	/* i[ST_SIZE] old input states */
@@ -49,8 +49,8 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-	0.00002, /* Kp; gain factor */
-	500.0, /* Ti integration time */
+	0.000025, /* Kp; gain factor */
+	10000.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	5.0,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
@@ -403,8 +403,8 @@ static inline void csu_control (void) {
             Uerr = (float)err_u;
             Ierr = (float)err_i;
         } else {
-            Uerr = Uerr * (1 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
-            Ierr = Ierr * (1 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
+            Uerr = Uerr * (1.0 - 1.0 / INF_TAU) + (float)err_u * (1.0 / INF_TAU);
+            Ierr = Ierr * (1.0 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
         }
         if (PwmStatus == CHARGE) {
             float tmp;

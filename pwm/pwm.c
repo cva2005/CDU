@@ -39,12 +39,12 @@ void Stop_PWM (bool soft) {
 
 static void Start_PWM_T1 (csu_st mode) {
     if (PwmStatus != STOP) Stop_PWM(HARD);
-    ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;	 
+    ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;
     PWM_U = PWM_U_NULL; //Задать ширину импульса для канала А
     PWM_I = PWM_I_NULL; //Задать ширину импульса для канала Б
     TCCR1A = 1 << COM1B1 | 1 << WGM11; // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
     if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
-    TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,режим FAST PWM:ICR1	
+    TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,режим FAST PWM:ICR1
     PwmStatus = mode; //установить признак что PWM работает в режиме заряда
 }
 
