@@ -11,11 +11,11 @@ uint8_t PWM_set = 0;
 
 static void Start_PWM_T1(csu_st mode);
 
-uint16_t PwmDuty (float out) {
+uint16_t PwmDuty (float out, uint16_t null) {
     if (out >= 1.0f) return MAX_CK;
-    if (out <= 0) return 0;
-    out *= MAX_CK;
-    return (uint16_t)out;
+    if (out <= 0) return null;
+    out *= MAX_CK - null;
+    return (uint16_t)out + null;
 }
 
 void Stop_PWM (bool soft) {
@@ -40,8 +40,8 @@ void Stop_PWM (bool soft) {
 static void Start_PWM_T1 (csu_st mode) {
     if (PwmStatus != STOP) Stop_PWM(HARD);
     ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;
-    PWM_U = PWM_U_NULL; //Задать ширину импульса для канала А
-    PWM_I = PWM_I_NULL; //Задать ширину импульса для канала Б
+    PWM_U = PWM_0U; //Задать ширину импульса для канала А
+    PWM_I = PWM_0I; //Задать ширину импульса для канала Б
     TCCR1A = 1 << COM1B1 | 1 << WGM11; // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
     if (mode == CHARGE) TCCR1A |= 1 << COM1A1; // OC1A инверсный
     TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,режим FAST PWM:ICR1

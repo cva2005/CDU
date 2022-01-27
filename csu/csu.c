@@ -33,8 +33,8 @@ unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
-	0.01, /* Kp; gain factor */
-	10000.0, /* Ti integration time */
+	0.00001, /* Kp; gain factor */
+	100.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	20.0,   /* Td derivative time */
 	/* i[ST_SIZE] old input states */
@@ -49,10 +49,10 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-	0.000025, /* Kp; gain factor */
-	10000.0, /* Ti integration time */
+	0.00002, /* Kp; gain factor */
+	500.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
-	5.0,    /* Td derivative time */
+	20.0,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -410,14 +410,14 @@ static inline void csu_control (void) {
             float tmp;
             if (Uerr <= 0) tmp = Uerr;
             else tmp = Ierr;
-            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp));
-            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr));
+            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp), PWM_0U);
+            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr), PWM_0I);
         } else { // discharge
             if (SatU) {
-                PWM_I = PwmDuty(pid_r(&Pid_Id, -Uerr));
+                PWM_I = PwmDuty(pid_r(&Pid_Id, -Uerr), PWM_0I);
             } else { // !SatU
                 if (Uerr > 0) SatU = true;
-                PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr));
+                PWM_I = PwmDuty(pid_r(&Pid_Id, Ierr), PWM_0I);
             }
         }      
         BreakTime = get_fin_time(SEC(1));

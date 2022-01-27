@@ -6,15 +6,15 @@
 extern "C" {
 #endif
 
-#define PWM_U_NULL      0
-#define PWM_I_NULL      0
-#define MAX_CK          /*0x1FFF*/0x1000
+#define PWM_0U          0x800
+#define PWM_0I          0x800
+#define MAX_CK          0x1FFF
 #define PWM_I           OCR1B
 #define PWM_U           OCR1A
 #define SOFT            true
 #define HARD            false
     
-uint16_t PwmDuty (float out);
+uint16_t PwmDuty (float out, uint16_t null);
 void Stop_PWM (bool soft);
 void soft_start (uint8_t control_out);
 uint16_t calc_pwd (uint16_t val, uint8_t limit);
