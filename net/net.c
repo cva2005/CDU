@@ -5,6 +5,7 @@
 #include "net_imp.h"
 
 static bool RsActive = false;
+static bool RsBusy = false;
 stime_t TimeIdle;
 uint8_t *BuffPtr; /* указатель на буфер передачи */
 uint8_t TxIpBuff; /* указатель данных в буфере передачи */
@@ -13,8 +14,8 @@ uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 int8_t RxIpNew; /* указатель хвоста буфера приема */
 int8_t RxIpOld; /* указатель головы буфера приема */
 static NET_FUNC *net_func[] = { /* сетевые функции */
-    rtu_drv,
-    ascii_drv,
+    //rtu_drv,
+    //ascii_drv,
     kron_drv
 };
 
@@ -55,7 +56,7 @@ void start_tx(char first, uint8_t *buff)
     STOP_RX(); /* запретить прием */
     BuffPtr = buff; /* сохранить указатель на буфер передачи */
     RS485_OUT(); /* линию управления RS485 - на передачу */
-    delay_us(10);
+    delay_us(20);
     UART(UDR,) = first; /* загрузить первый байт */
     /* разрешить передачу и прерывание TX UART */
     UART(UCSR,B) |= SHL(UART(UDRIE,));
@@ -90,6 +91,7 @@ void usart_tx_byte(void)
 #pragma type_attribute=__interrupt
 void usart_tx_empty(void)
 {
+    RsBusy = false;
     CLR_BIT(UART(UCSR,B), UART(TXCIE,)); /* запр. прер. Data Register Empty */
     START_RX(); /* возобновить прием */
 }
@@ -123,22 +125,33 @@ void rx_tick_irq(void)
     if (RtuBusState > BUS_STOP) {
         if (RtuIdleCount == FRAME_RTU_SYNC) { /* межкадровый интервал выдержан */
             RtuBusState = BUS_STOP; /* завершить прием кадра */
+            RsBusy = true;
         } else RtuIdleCount++; /* скорректировать интервал "молчания" */
     }
     if (KronBusState > BUS_STOP) {
         if (KronIdleCount == FRAME_KRON_SYNC) { /* межсимв. интервал превышен */
             KronBusState = BUS_STOP; /* завершить прием кадра */
+            RsBusy = true;
         } else KronIdleCount++; /* скорректировать интервал "молчания" */
     }
     if (AsciiBusState > BUS_STOP) {
         if (AsciiIdleCount == FRAME_ASCII_ERROR) { /* межсимв. интервал превышен */
             AsciiBusState = BUS_IDLE; /* шину в режим ожидания */
+            RsBusy = true;
         } else AsciiIdleCount++; /* скорректировать интервал "молчания" */
     }
 }
 
 bool rs_active (void) {
     return RsActive;
+}
+
+bool rs_busy (void) {
+    return RsBusy;
+}
+
+void rs_set_busy (void) {
+    RsBusy = true;
 }
 
 void set_active (void) {

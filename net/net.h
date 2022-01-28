@@ -73,6 +73,8 @@ void init_rs (void);
 void net_drv (void);
 void start_tx (char first, uint8_t *buff);
 bool rs_active (void);
+bool rs_busy (void);
+void rs_set_busy (void);
 void set_active (void);
 
 #include <net/modbus/mbus.h>

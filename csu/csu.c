@@ -16,7 +16,7 @@ static inline err_t err_check (void);
 static inline void read_tmp (void);
 static void out_off (void);
 
-stime_t LcdRefr, AlarmDel, FanTime;
+static stime_t LcdRefr, AlarmDel, FanTime;
 static uint8_t ErrT[T_N] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
@@ -33,10 +33,10 @@ unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
 static pid_t Pid_U = {
-	0.00001, /* Kp; gain factor */
-	100.0, /* Ti integration time */
+	0.00002, /* Kp; gain factor */
+	700.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
-	20.0,   /* Td derivative time */
+	10.0,   /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -49,10 +49,10 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-	0.00002, /* Kp; gain factor */
-	500.0, /* Ti integration time */
+	0.00001, /* Kp; gain factor */
+	200.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
-	20.0,    /* Td derivative time */
+	0.01,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -66,7 +66,7 @@ static pid_t Pid_Ic = {
 };
 static pid_t Pid_Id = {
 	0.0001, /* Kp; gain factor */
-	1000.0, /* Ti integration time */
+	2000.0, /* Ti integration time */
 	10.0,   /* Tf derivative filter tau */
 	2.0,    /* Td derivative time */
 	/* i[ST_SIZE] old input states */
@@ -112,8 +112,9 @@ void csu_drv (void) {
         LedPwr = !LedPwr;
     }
     /* FAN control section */
-    if (!get_time_left(FanTime)) {
-        FanTime = get_fin_time(MS(500));
+    if (!get_time_left(FanTime) && (!rs_busy() || !rs_active())) {
+        FanTime = get_fin_time(SEC(1));
+        rs_set_busy();
         read_tmp();
         if (!Cfg.cmd.fan_cntrl) {
             int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
@@ -390,8 +391,8 @@ static inline void csu_control (void) {
     if (PwmStatus == STOP) return;
     if (!get_time_left(CntrlTime)) {
         CntrlTime = get_fin_time(CNTRL_T);
-        uint16_t err_i;
-        uint16_t err_u = TaskU - get_adc_res(ADC_MU);
+        int16_t err_i;
+        int16_t err_u = TaskU - get_adc_res(ADC_MU);
         if (PwmStatus == CHARGE) {
             err_i = TaskI - get_adc_res(ADC_MI);
         } else { // discharge
@@ -407,11 +408,23 @@ static inline void csu_control (void) {
             Ierr = Ierr * (1.0 - 1.0 / INF_TAU) + (float)err_i * (1.0 / INF_TAU);
         }
         if (PwmStatus == CHARGE) {
-            float tmp;
-            if (Uerr <= 0) tmp = Uerr;
-            else tmp = Ierr;
-            PWM_I = PwmDuty(pid_r(&Pid_Ic, tmp), PWM_0U);
-            PWM_U = PwmDuty(pid_r(&Pid_U, Uerr), PWM_0I);
+            float /*tmp_i,*/ tmp_u;
+            //tmp_i = Ierr;
+            if (Ierr < 0) tmp_u = Ierr;
+            else tmp_u = Uerr;
+            /*if ((Uerr >= 0 && Ierr >= 0) || (Uerr < 0 && Ierr < 0)) {
+                tmp_i = Ierr;
+                tmp_u = Uerr;
+            } else if (Ierr < 0 && Uerr > 0) {
+                tmp_i = Ierr;
+                tmp_u = Ierr;
+            } else if (Uerr < 0 && Ierr > 0) {
+                tmp_i = Uerr;
+                tmp_u = Uerr;
+            }*/
+            //PWM_I = PwmDuty(pid_r(&Pid_Ic, /*tmp_i*/Ierr), PWM_0I);
+            PWM_I = 0x1FFF;
+            PWM_U = PwmDuty(pid_r(&Pid_U, tmp_u), PWM_0U);
         } else { // discharge
             if (SatU) {
                 PWM_I = PwmDuty(pid_r(&Pid_Id, -Uerr), PWM_0I);

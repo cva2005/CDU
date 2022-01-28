@@ -6,11 +6,11 @@
 extern "C" {
 #endif
 
-#define PWM_0U          0x800
-#define PWM_0I          0x800
+#define PWM_0U          2500
+#define PWM_0I          2500
 #define MAX_CK          0x1FFF
-#define PWM_I           OCR1B
 #define PWM_U           OCR1A
+#define PWM_I           OCR1B
 #define SOFT            true
 #define HARD            false
     

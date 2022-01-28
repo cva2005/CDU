@@ -187,7 +187,8 @@ typedef enum {
 #define PWM2_Id_EXT2    1364//*/
 
 #define EXT_ERR_VAL     100
-#define INF_TAU         10.0f
+#define INF_TAU         50.0f
+#define T_RD_TIME       SEC(1)
 #define PWR_TIME        MS(160) // led power time
 #define CNTRL_T         MS(20) // control dicrete time
 //#define DOWN_LIM    100.0f
