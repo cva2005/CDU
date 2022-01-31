@@ -86,12 +86,12 @@ void stg_status (void) {
             calc_stg();
             switch (Stg.fld.type) {
             case DISCHARGE:
-                if (PwmStatus != DISCHARGE)
+                if (pwm_state() != DISCHARGE)
                     csu_start(DISCHARGE);
                 break;
             case CHARGE:
             case PULSE:
-                if (PwmStatus != CHARGE)
+                if (pwm_state() != CHARGE)
                     csu_start(CHARGE);
                  break;
             case PAUSE:

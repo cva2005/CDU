@@ -14,16 +14,12 @@ extern "C" {
 #define SOFT            true
 #define HARD            false
     
-uint16_t PwmDuty (float out, uint16_t null);
-void Stop_PWM (bool soft);
+uint16_t pwm_duty (float out, uint16_t null);
+void stop_pwm (bool soft);
 void soft_start (uint8_t control_out);
 uint16_t calc_pwd (uint16_t val, uint8_t limit);
 void soft_start_disch (void);
-void Correct_PWM (uint8_t pr);
-
-extern uint16_t max_pwd_I, max_pwd_U, max_pwd_Id;
-extern csu_st PwmStatus;
-extern uint8_t PWM_set;
+csu_st pwm_state (void);
 
 #ifdef __cplusplus
 }

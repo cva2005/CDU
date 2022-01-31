@@ -125,7 +125,7 @@ static void frame_parse (void) {
                                 }
                             }
                         } else {
-                            if (((CsuState | RELAY_EN) != rd.rdata.cmd) || Error)
+                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error)
                                 csu_stop(state);
                         }	
                     }
@@ -227,13 +227,14 @@ static void tx_reply (void) {
     tx.start = CHAR_TS;
     tx.dest_adr = 0;
     tx.src_adr = Cfg.addr;
+    csu_st pwm_st = pwm_state();
     switch (tx.type) {
     case DATA_PKT:
-        if (PwmStatus == STOP) td.tdata.operation = PwmStatus | RELAY_EN;
+        if (pwm_st == STOP) td.tdata.operation = pwm_st | IS_RELAY_EN();
         /* Если ШИМ остановлен, то добавить сосотяние реле */
-        else td.tdata.operation = PwmStatus;
+        else td.tdata.operation = pwm_st;
         td.tdata.error = Error;
-        if (PwmStatus == DISCHARGE) td.tdata.I = ADC_O[ADC_DI];
+        if (pwm_state() == DISCHARGE) td.tdata.I = ADC_O[ADC_DI];
         else td.tdata.I = ADC_O[ADC_MI];
         td.tdata.U = ADC_O[ADC_MU];
         td.tdata.Ip = ADC_O[ADC_MUp];

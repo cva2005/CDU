@@ -11,7 +11,7 @@ static inline void init_gpio (void);
 
 void main (void) {
     init_gpio();
-    ALARM_OUT(0);
+    ALARM_OUT(OFF);
     read_cfg();
     lcd_start();
     init_rs();
@@ -31,6 +31,7 @@ void main (void) {
         adc_drv();
         net_drv();
         csu_drv();
+        net_drv();
     }
 }
 

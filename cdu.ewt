@@ -2281,6 +2281,9 @@
             <name>$PROJ_DIR$\sys\config.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\sys\filter.c</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\sys\main.c</name>
         </file>
         <file>

@@ -160,6 +160,7 @@ extern	void dbprintf(const char *fmt, ...);
 #define	DBGU_INIT(baud)
 #define	dbprintf(...)
 #endif /* DEBUG */
+float flt_exp (float out, float inp, float tau);
 
 #ifdef __cplusplus
 }

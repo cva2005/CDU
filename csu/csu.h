@@ -60,9 +60,9 @@ typedef enum {
 #define OVER_T_EXT (PINA & 0x08)
 #define I_ST (PINB & 0x04)
 
-#define RELAY_ON PORTB = PINB | 0x10
-#define RELAY_OFF PORTB = PINB & 0xEF
-#define RELAY_EN (PINB & 0x10) //<<0  ВНИМАНИЕ!!! результат всегда должен быть в 5-м бите
+#define RELAY_ON()      PORTB = PINB | 0x10
+#define RELAY_OFF()     PORTB = PINB & 0xEF
+#define IS_RELAY_EN()  (PINB & 0x10) //<<0  ВНИМАНИЕ!!! результат всегда должен быть в 5-м бите
 
 #define FAN_ST ((PINB & 0x18) >> 3)
 #define FAN(x) x ? (PORTB |= 1 << 3) : (PORTB &= ~(1 << 3))

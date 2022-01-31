@@ -1,4 +1,5 @@
 #pragma message	("@(#)pid_r.c")
+#include <system.h>
 #include <string.h>
 #include <math.h>
 #include "pid_r.h"
@@ -24,7 +25,7 @@ float pid_r (pid_t *S, float in) {
   #else
   #error "input array size not defined"
   #endif
-  if (S->Tf) Df = S->d * (1 - 1.0 / S->Tf) + D * (1.0 / S->Tf);
+  if (S->Tf) Df = flt_exp(S->d, D, S->Tf);
   else Df = D;
   S->d = Df;
   P = in - e[1];

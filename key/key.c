@@ -156,7 +156,7 @@ static void key_up_dw (up_dw_t up_dw) {
 
             }
         }
-        delay_ms(3);
+        delay_ms(3); // ToDo: remove satic delay!
     }
 }
 
@@ -167,10 +167,6 @@ static inline void key_power_led (void) {
 }
 
 static inline void key_U_up (void) {
-    if (CsuState != STOP) {
-        if (PWM_U < max_pwd_U - Step) PWM_U += Step;
-        else PWM_U = max_pwd_U;
-    }
     KeyDel = get_fin_time(MS(2));
 }
 
@@ -183,10 +179,6 @@ static inline void key_U_dw (void) {
 }
 
 static inline void key_I_up (void) {
-    if (CsuState == CHARGE) {
-        if (PWM_I < max_pwd_I - Step) PWM_I += Step;
-        else PWM_I = max_pwd_I;
-    }
     KeyDel = get_fin_time(MS(2));
 }
 
