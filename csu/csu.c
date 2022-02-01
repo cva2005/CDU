@@ -32,15 +32,11 @@ bool SelfCtrl = false; //упр-е мет. заряда самостоятель
 unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.000015f /* Kp; gain factor */
-#define T_I     100.0f  /* Ti integration time */
-#define T_F 	10.0f   /* Tf derivative filter tau */
-#define T_D	    0.1f   /* Td derivative time */
 static pid_t Pid_U = {
-	K_P,
-	T_I,
-	T_F,
-	T_D,
+    0.00001, /* Kp; gain factor */
+    100.0,  /* Ti integration time */
+    10.0,     /* Tf derivative filter tau */
+    2.0,     /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -53,10 +49,10 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-	K_P,
-	T_I,
-	T_F,
-	T_D,
+    0.00001, /* Kp; gain factor */
+    100.0,   /* Ti integration time */
+    10.0,   /* Tf derivative filter tau */
+    2.0,   /* Td derivative time */
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -404,14 +400,16 @@ static inline void csu_control (void) {
             Ierr = flt_exp(Ierr, (float)err_i, INF_TAU);
         }
         if (pwm_st == CHARGE) {
-            uint16_t pwm_out;
-            uint16_t pwm_i = pwm_duty(pid_r(&Pid_Ic, Ierr), PWM_0I);
-            uint16_t pwm_u = pwm_duty(pid_r(&Pid_U, Uerr), PWM_0U);
-            //PWM_I = pwm_duty(1.0 - pid_r(&Pid_Ic, -Ierr), PWM_0I);
-            if (Uerr > Ierr) pwm_out = pwm_i;
-            else pwm_out = pwm_u;
-            PWM_U = pwm_out;
-            PWM_I = pwm_out;
+            float err;
+            if (Uerr > 0 && Ierr > 0) {
+                if (Uerr > Ierr) err = Uerr;
+                else err = Ierr;
+                PWM_U = pwm_duty(pid_r(&Pid_U, err), PWM_0U);
+            } else {
+                if (Uerr > Ierr) err = Ierr;
+                else err = Uerr;
+            }
+            PWM_I = pwm_duty(pid_r(&Pid_Ic, err), PWM_0I);
         } else { // discharge
             if (SatU) {
                 PWM_I = pwm_duty(pid_r(&Pid_Id, -Uerr), PWM_0I);
