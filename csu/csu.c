@@ -32,11 +32,15 @@ bool SelfCtrl = false; //упр-е мет. заряда самостоятель
 unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
+#define K_P     0.00001f /* Kp; gain factor */
+#define T_I     8.0f     /* Ti integration time */
+#define T_F     10.0f     /* Tf derivative filter tau */
+#define T_D     1.0f      /* Td derivative time */
 static pid_t Pid_U = {
-    0.00001, /* Kp; gain factor */
-    100.0,  /* Ti integration time */
-    10.0,     /* Tf derivative filter tau */
-    2.0,     /* Td derivative time */
+    K_P,
+    T_I,
+    T_F,
+    T_D,
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -49,36 +53,36 @@ static pid_t Pid_U = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic = {
-    0.00001, /* Kp; gain factor */
-    100.0,   /* Ti integration time */
-    10.0,   /* Tf derivative filter tau */
-    2.0,   /* Td derivative time */
-	/* i[ST_SIZE] old input states */
+    K_P,
+    T_I,
+    T_F,
+    T_D,
+    /* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
 #else /* ST_SIZE == 4 */
     0.0, 0.0, 0.0, 0.0,
 #endif
-	0.0,    /* u old output state */
-	0.0,    /* d old derivative state */
-	0.0,    /* Xd dead zone */
-	0.0     /* Xi integral zone */
+    0.0,    /* u old output state */
+    0.0,    /* d old derivative state */
+    0.0,    /* Xd dead zone */
+    0.0     /* Xi integral zone */
 };
 static pid_t Pid_Id = {
-	0.0001, /* Kp; gain factor */
-	2000.0, /* Ti integration time */
-	10.0,   /* Tf derivative filter tau */
-	2.0,    /* Td derivative time */
-	/* i[ST_SIZE] old input states */
+    0.00008, /* Kp; gain factor */
+    10.0, /* Ti integration time */
+    10.0,   /* Tf derivative filter tau */
+    1.0,    /* Td derivative time */
+    /* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
 #else /* ST_SIZE == 4 */
     0.0, 0.0, 0.0, 0.0,
 #endif
-	0.0,    /* u old output state */
-	0.0,    /* d old derivative state */
-	0.0,    /* Xd dead zone */
-	0.0     /* Xi integral zone */
+    0.0,    /* u old output state */
+    0.0,    /* d old derivative state */
+    0.0,    /* Xd dead zone */
+    0.0     /* Xi integral zone */
 };
 
 void csu_drv (void) {
@@ -392,6 +396,7 @@ static inline void csu_control (void) {
             err_i -= get_adc_res(ADC_DI);
         }
         if (/*Stg.fld.type == PULSE ||*/ !InitF) {
+            SatU = false;
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
@@ -402,8 +407,7 @@ static inline void csu_control (void) {
         if (pwm_st == CHARGE) {
             float err;
             if (Uerr > 0 && Ierr > 0) {
-                if (Uerr > Ierr) err = Uerr;
-                else err = Ierr;
+                err = Ierr;
                 PWM_U = pwm_duty(pid_r(&Pid_U, err), PWM_0U);
             } else {
                 if (Uerr > Ierr) err = Ierr;
@@ -412,10 +416,10 @@ static inline void csu_control (void) {
             PWM_I = pwm_duty(pid_r(&Pid_Ic, err), PWM_0I);
         } else { // discharge
             if (SatU) {
-                PWM_I = pwm_duty(pid_r(&Pid_Id, -Uerr), PWM_0I);
+                PWM_I = pwm_duty(pid_r(&Pid_Id, -Uerr), PWM_0D);
             } else { // !SatU
                 if (Uerr > 0) SatU = true;
-                PWM_I = pwm_duty(pid_r(&Pid_Id, Ierr), PWM_0I);
+                PWM_I = pwm_duty(pid_r(&Pid_Id, Ierr), PWM_0D);
             }
         }      
         BreakTime = get_fin_time(SEC(1));

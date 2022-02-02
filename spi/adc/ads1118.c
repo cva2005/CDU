@@ -15,7 +15,7 @@ static cfg_reg_t CfgReg = {
     DATA_VALID,
     PULL_UP_DIS,
     ADC_MODE,
-    DR_250_SPS,
+    DR_64_SPS,
     SIGNLE_SHOT,
     PGA_2048,
     CH_0,
