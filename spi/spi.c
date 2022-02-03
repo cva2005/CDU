@@ -12,9 +12,7 @@ static uint8_t wr_len, rd_len;
 static cs_func_t cs_func; /* функция выбора ведомого */
 
 void spi_init(void) {
-    //SET_PIN(SPI_PORT, SCK);
     SET_AS_OUTS(SPI_PORT, SHL(SCK) | SHL(MOSI) | SHL(_SS));
-    SPCR = /*SPI_OFF*/SPI_ON;
 }
 
 void spi_reset (void) {
@@ -22,14 +20,8 @@ void spi_reset (void) {
     CLR_PIN(SPI_PORT, SCK);
 }
 
-/* If SPI Interrupt is enabled then the Transceiver is busy */
-bool spi_busy (void) {
-    return ((SPCR & (1 << SPIE)) != 0);
-}
-
 void spi_start_io (char *msg, uint8_t wlen,
                   uint8_t rlen, cntr_t const *cntr) {
-    //while (spi_busy());
     rd_len = rlen;
     if (wr_len = wlen) { /* write operation */
         wr_ptr = 1;
@@ -50,14 +42,18 @@ void spi_start_io (char *msg, uint8_t wlen,
 }
 
 void spi_get_data (char *msg, uint8_t first, uint8_t len) {
-    //while (spi_busy());
     while (len--) { /* copy data from buffer */
         *msg++ = spi_buf[len + first];
     }
 }
 
+#ifdef SPI_POOL
+void spi_pool (void) {
+    if (!DATA_RD) return;
+#else
 #pragma vector=SPI_STC_vect
 __interrupt void spi_irq (void) {
+#endif
     if (rd_ptr < rd_len) { /* read operation */
         spi_buf[rd_ptr++] = SPDR;
         if (rd_ptr < rd_len) {
@@ -70,7 +66,7 @@ __interrupt void spi_irq (void) {
     if (wr_ptr < wr_len) { /* write operation */
         SPDR = spi_buf[wr_ptr++];
     } else { /* end of write operation */
-        SPCR &= ~SHL(SPIE);
+        SPCR &= ~(SHL(SPIE) | SHL(SPE));
         cs_func(CS_OFF);
     }
 }

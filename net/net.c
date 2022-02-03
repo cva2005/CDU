@@ -14,8 +14,8 @@ uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 int8_t RxIpNew; /* указатель хвоста буфера приема */
 int8_t RxIpOld; /* указатель головы буфера приема */
 static NET_FUNC *net_func[] = { /* сетевые функции */
-    //rtu_drv,
-    //ascii_drv,
+    rtu_drv,
+    ascii_drv,
     kron_drv
 };
 
@@ -25,7 +25,7 @@ static NET_FUNC *net_func[] = { /* сетевые функции */
 void init_rs (void)
 {
     RS_DIR_INIT();
-    UART(UCSR,C) = /*SHL(UART(URSEL,)) |*/ SHL(UART(UCSZ,1)) | SHL(UART(UCSZ,0)); // Data Bits: 8
+    UART(UCSR,C) = SHL(UART(URSEL,)) | SHL(UART(UCSZ,1)) | SHL(UART(UCSZ,0)); // Data Bits: 8
     //UART(UCSR,C) &= ~(SHL(UART(UPM,0)) | SHL(UART(UPM,1))); // Parity: None
     //UART(UCSR,C) &= ~SHL(UART(USBS,)); // Stop Bits: 1
     SET_BAUD(115200);
@@ -56,11 +56,10 @@ void start_tx(char first, uint8_t *buff)
     STOP_RX(); /* запретить прием */
     BuffPtr = buff; /* сохранить указатель на буфер передачи */
     RS485_OUT(); /* линию управления RS485 - на передачу */
-    delay_us(20);
-    UART(UDR,) = first; /* загрузить первый байт */
+    delay_us(30);
     /* разрешить передачу и прерывание TX UART */
     UART(UCSR,B) |= SHL(UART(UDRIE,));
-    net_dbprintf("start_tx: Done!\r\n");
+    UART(UDR,) = first; /* загрузить первый байт */
 }
 
 /*

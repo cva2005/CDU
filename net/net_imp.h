@@ -110,6 +110,7 @@ extern "C" {
     if (RtuIdleCount >= FRAME_RTU_ERROR) RtuBusState = BUS_IDLE;\
     RtuIdleCount = 0; /* очистить счетчик интервалов MODBUS RTU */\
     AsciiIdleCount = 0; /* очистить счетчик интервалов ASCII */\
+    KronIdleCount = 0; /* очистить счетчик интервалов KRON */\
     RX_TRM(TCNT,) = 0; /* очистить счетный регистр таймера */\
     RX_TRM(TCCR,) = RX_TO_MODE; /* установить режим */\
     SET_RX_OCIE(); /* разрешить прерывание таймера приема */\

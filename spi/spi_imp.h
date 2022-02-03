@@ -20,7 +20,7 @@ extern "C" {
 #define BLEN        4
 #define SPI_OFF     0
 #define SPI_ON      SHL(SPE) | SHL(MSTR)
-
+#define DATA_RD     (SPSR | SHL(SPIF))
 #ifdef __cplusplus
 }
 #endif

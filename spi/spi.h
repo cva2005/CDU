@@ -52,6 +52,11 @@ typedef struct {
     freq > (F_CPU_HZ / 64) ? 2 : 3\
     ))))
 
+#ifdef SPI_POOL
+#define IRQ_BIT     0
+#else
+#define IRQ_BIT     SHL(SPIE)
+#endif
 /* макроподстановка создания структуры SPI_CNTR в ПЗУ для устройства SPI */
 #define MAKE_SPI_CNTR(\
     name, /* имя управляющей структуры */\
@@ -61,7 +66,7 @@ typedef struct {
     sck_phase, /* фаза тактового сигнала */\
     func_cs) /* функция выбора ведомого */\
 static const cntr_t name = {\
-    (SHL(SPIE) | SHL(SPE) | SHL(MSTR) |\
+    (IRQ_BIT | SHL(SPE) | SHL(MSTR) |\
     (SCL_FREQ_SEL(sck_freq) << SPR0) | (data_order << DORD) |\
     (sck_polar << CPOL) | (sck_phase << CPHA)),\
     ((F_CPU_HZ / 2) < sck_freq) ? SHL(SPI2X) : 0,\
@@ -70,10 +75,12 @@ static const cntr_t name = {\
 
 void spi_init (void);
 void spi_reset (void);
-bool spi_busy (void);
 void spi_get_data (char *msg, uint8_t first, uint8_t len);
 void spi_start_io (char *msg, uint8_t wlen,
                   uint8_t rlen, cntr_t const *cntr);
+#ifdef SPI_POOL
+void spi_pool (void);
+#endif
 
 #ifdef __cplusplus
 }

@@ -9,7 +9,7 @@ extern "C" {
 void kron_drv (uint8_t ip, uint8_t len);
 extern BUS_STATE KronBusState; /* машина сотояния према кадра */
 extern uint8_t KronIdleCount; /* счетчик интервалов времени */
-#define FRAME_KRON_SYNC     3 /* interval of idle */
+#define FRAME_KRON_SYNC     10 /* interval of idle */
 
 #ifdef __cplusplus
 }

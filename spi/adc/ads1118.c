@@ -63,7 +63,10 @@ static void adc_cs (cs_t cs) {
  */
 
 void adc_drv (void) {
-    if (IS_RDY() && !AdcBusy) { // conversion complette
+#ifdef SPI_POOL
+    spi_pool();
+#endif
+    if (IS_RDY() && !AdcBusy && !AdcReset) { // conversion complette
         int16_t res; uint16_t b = Cfg.B[ChCnt];
         spi_get_data((char *)&res, 0, sizeof(uint16_t));
         if (res < 0) res = 0;

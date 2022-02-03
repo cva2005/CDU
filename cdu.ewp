@@ -256,6 +256,7 @@
                     <state>SYS_UART</state>
                     <state>SYS_TRM0</state>
                     <state>UART_DS_MODE</state>
+                    <state>SPI_POOL</state>
                     <state>JTAG_DBGU</state>
                 </option>
                 <option>

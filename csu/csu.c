@@ -280,7 +280,7 @@ void csu_stop (csu_st mode) {
     stop_pwm(SOFT);
     InitF = pLim = false;
     CsuState = STOP;
-    delay_ms(10);
+    //delay_ms(10);
     if (mode == STOP) out_off();
     else RELAY_ON();
 }

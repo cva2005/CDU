@@ -78,7 +78,7 @@ static void frame_parse (void) {
 			}
 		}
 		if (rx.start == CHAR_RS && !rx.src_adr) { //если принят верный пакет
-			if (calc_crc(Buff.byte, rx.length + 4) != Buff.byte[rx.length + 4]) return;
+            if (calc_crc(Buff.byte, rx.length + 4) != Buff.byte[rx.length + 4]) return;
 			if (rx.length > 1) { //если в пакете есть поле типа пакета
                 csu_st state = (csu_st)(rd.rdata.cmd & 0x0F);
                 switch (rx.type) {
