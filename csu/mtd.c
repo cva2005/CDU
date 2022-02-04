@@ -93,7 +93,7 @@ void stg_status (void) {
             case PULSE:
                 if (pwm_state() != CHARGE)
                     csu_start(CHARGE);
-                 break;
+                break;
             case PAUSE:
                 if (CsuState != PAUSE)
                     csu_start(PAUSE);

@@ -125,8 +125,9 @@ static void frame_parse (void) {
                                 }
                             }
                         } else {
-                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error)
+                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error) {
                                 csu_stop(state);
+                            }
                         }	
                     }
                     break;
