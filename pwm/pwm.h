@@ -6,7 +6,7 @@
 extern "C" {
 #endif
 
-#define PWM_0U          2200
+#define PWM_0U          2000
 #define PWM_0I          1500
 #define PWM_0D          0
 #define MAX_CK          0x1FFF

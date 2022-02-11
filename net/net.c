@@ -154,6 +154,6 @@ void rs_set_busy (void) {
 }
 
 void set_active (void) {
-    TimeIdle = get_fin_time(SEC(10));
+    TimeIdle = get_fin_time(SEC(3));
     RsActive = true;
 }
