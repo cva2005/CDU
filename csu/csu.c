@@ -32,10 +32,10 @@ bool SelfCtrl = false; //упр-е мет. заряда самостоятель
 unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.00001f /* Kp; gain factor */
-#define T_I     8.0f     /* Ti integration time */
+#define K_P     0.000008f /* Kp; gain factor */
+#define T_I     10.0f     /* Ti integration time */
 #define T_F     10.0f     /* Tf derivative filter tau */
-#define T_D     0.01f      /* Td derivative time */
+#define T_D     0.001f      /* Td derivative time */
 static pid_t Pid_U = {
     K_P,
     T_I,
@@ -69,10 +69,10 @@ static pid_t Pid_Ic = {
     0.0     /* Xi integral zone */
 };
 static pid_t Pid_Id = {
-    0.00008, /* Kp; gain factor */
-    10.0, /* Ti integration time */
+    0.00005, /* Kp; gain factor */
+    3.0, /* Ti integration time */
     5.0,   /* Tf derivative filter tau */
-    0.2,    /* Td derivative time */
+    0.001,    /* Td derivative time */
     /* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -391,7 +391,6 @@ static inline void csu_control (void) {
         uint16_t adc_u = get_adc_res(ADC_MU);
         int16_t err_i;
         int16_t err_u = TaskU - adc_u;
-        float k_u = (float)TaskU / (float)adc_u;
         if (pwm_st == CHARGE) {
             adc_i = get_adc_res(ADC_MI);
             err_i = TaskI - adc_i;
@@ -410,28 +409,18 @@ static inline void csu_control (void) {
         }
         if (pwm_st == CHARGE) {
             float err;
-            float k_i;
             if (Uerr > 0 && Ierr > 0) {
                 err = Ierr;
-                k_i = (float)TaskI / (float)adc_i;
             } else {
-                if (Uerr > Ierr) {
-                    err = Ierr;
-                } else {
-                    err = Uerr;
-                    k_i = k_u;
+                err = Uerr;
+                if (adc_i < 2500) {
+                    err *= K_FIN;
+                    goto over_curr;
                 }
             }
-            if (k_u > 1) k_u = 1.0;
-            Pid_U.Kp = K_P * k_u;
-            Pid_U.Td = T_D / k_u;
-            PWM_U = pwm_duty(pid_r(&Pid_U, err), PWM_0U);
-                             //(uint16_t)((float)PWM_0U * fabs(1.0 - k_u)));
-            if (k_i > 1) k_i = 1.0;
-            Pid_Ic.Kp = K_P * k_i;
-            Pid_Ic.Td = T_D / k_i;
             PWM_I = pwm_duty(pid_r(&Pid_Ic, err),  PWM_0I);
-                             //(uint16_t)((float)PWM_0I * fabs(1.0 - k_i)));
+        over_curr:
+            PWM_U = pwm_duty(pid_r(&Pid_U, err), PWM_0U);
         } else { // discharge
             if (SatU) {
                 PWM_I = pwm_duty(pid_r(&Pid_Id, -Uerr), PWM_0D);

@@ -192,6 +192,7 @@ typedef enum {
 #define PWR_TIME        MS(160) // led power time
 #define CNTRL_T         MS(100) // control dicrete time
 //#define DOWN_LIM    100.0f
+#define K_FIN           0.03f
 
 unsigned char U_align_st (void);
 uint16_t i_pwr_lim (uint16_t p, uint16_t i);
