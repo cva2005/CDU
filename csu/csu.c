@@ -24,18 +24,18 @@ int16_t Tmp[T_N];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
 static float Uerr, Ierr;
-unsigned int  dm_loss_cnt = 0;
-unsigned char ERR_Ext = 0, OUT_err_cnt = 0;
-static bool InitF, SatU;
+static uint16_t  dm_loss_cnt = 0;
+static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
+static int8_t  StableCnt;
+static bool InitF, SatU, StartU;
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
-unsigned int StbCnt;
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.000008f /* Kp; gain factor */
-#define T_I     10.0f     /* Ti integration time */
-#define T_F     10.0f     /* Tf derivative filter tau */
-#define T_D     0.001f      /* Td derivative time */
+#define K_P     0.000035f /* Kp; gain factor */
+#define T_I     20.0f     /* Ti integration time */
+#define T_F     5.0f     /* Tf derivative filter tau */
+#define T_D     0.0001f      /* Td derivative time */
 static pid_t Pid_U = {
     K_P,
     T_I,
@@ -399,7 +399,10 @@ static inline void csu_control (void) {
             err_i -= get_adc_res(ADC_DI);
         }
         if (/*Stg.fld.type == PULSE ||*/ !InitF) {
+            if (err_u < err_i) StartU = true;
+            else StartU = false;
             SatU = false;
+            StableCnt = 0;
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
@@ -410,10 +413,20 @@ static inline void csu_control (void) {
         if (pwm_st == CHARGE) {
             float err;
             if (Uerr > 0 && Ierr > 0) {
+                /*if (StartU) {
+                    if (StableCnt++ > STBL_N) StartU = false;
+                }
+                if ((Uerr < Ierr && Uerr < LIM_U) || StartU) {
+                    err = Uerr;
+                    goto over_curr;
+                } else {
+                    err = Ierr;
+                }*/
                 err = Ierr;
             } else {
-                err = Uerr;
-                if (adc_i < 2500) {
+                if (Uerr < Ierr) err = Uerr;
+                else err = Ierr;
+                if (adc_i < STABLE_I) {
                     err *= K_FIN;
                     goto over_curr;
                 }

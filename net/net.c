@@ -14,8 +14,8 @@ uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 int8_t RxIpNew; /* указатель хвоста буфера приема */
 int8_t RxIpOld; /* указатель головы буфера приема */
 static NET_FUNC *net_func[] = { /* сетевые функции */
-    rtu_drv,
-    ascii_drv,
+    //rtu_drv,
+    //ascii_drv,
     kron_drv
 };
 
