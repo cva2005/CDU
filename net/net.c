@@ -14,8 +14,8 @@ uint8_t RxBuff[RX_BUFF_LEN]; /* кольцевой буфер приема */
 int8_t RxIpNew; /* указатель хвоста буфера приема */
 int8_t RxIpOld; /* указатель головы буфера приема */
 static NET_FUNC *net_func[] = { /* сетевые функции */
-    //rtu_drv,
-    //ascii_drv,
+    rtu_drv,
+    ascii_drv,
     kron_drv
 };
 
@@ -35,7 +35,10 @@ void init_rs (void)
 /* Сетевой драйвер верхнего уровня */
 void net_drv(void)
 {
-    if (!get_time_left(TimeIdle)) RsActive = false;
+    if (!get_time_left(TimeIdle)) {
+        TimeIdle = get_fin_time(SEC(5));
+        RsActive = false;
+    }
     uint8_t new_ip = RxIpNew;
     uint8_t old_ip = RxIpOld;
     uint8_t len;
@@ -104,7 +107,7 @@ void usart_tx_empty(void)
 void usart_rx_byte(void)
 {
     if (UART(UCSR,A) & ERROR_BITS) {
-        START_RX(); /* начать прием заново */
+        START_RX();
     } else { /* аппаратных ошибок не обнаружено */
         RX_TMR_ON(); /* запустить таймер тайм-аута приема кадра */
         if (RxIpNew >= RX_BUFF_LEN) RxIpNew = 0;
@@ -154,6 +157,6 @@ void rs_set_busy (void) {
 }
 
 void set_active (void) {
-    TimeIdle = get_fin_time(SEC(3));
+    TimeIdle = get_fin_time(SEC(5));
     RsActive = true;
 }

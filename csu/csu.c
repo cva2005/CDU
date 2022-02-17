@@ -23,17 +23,16 @@ ast_t AutoStr;
 int16_t Tmp[T_N];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
-static float Uerr, Ierr;
+static float Uerr, Ierr, InfTau;
 static uint16_t  dm_loss_cnt = 0;
 static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
-static int8_t  StableCnt;
-static bool InitF, SatU, StartU;
+static bool InitF, SatU, InitCsu = false;
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.000035f /* Kp; gain factor */
-#define T_I     20.0f     /* Ti integration time */
+#define K_P     0.00001f /* Kp; gain factor */
+#define T_I     10.0f     /* Ti integration time */
 #define T_F     5.0f     /* Tf derivative filter tau */
 #define T_D     0.0001f      /* Td derivative time */
 static pid_t Pid_U = {
@@ -86,6 +85,10 @@ static pid_t Pid_Id = {
 };
 
 void csu_drv (void) {
+    if (!InitCsu) {
+        FanTime = get_fin_time(TMP_PRD);
+        InitCsu = true;
+    }
     if (pwm_state() != STOP && !get_time_left(TickSec)) {
         TickSec = get_fin_time(SEC(1));
         lcd_tick_sec();
@@ -116,9 +119,13 @@ void csu_drv (void) {
         LedPwr = !LedPwr;
     }
     /* FAN control section */
+#ifdef T_LONG_READ
     if (!get_time_left(FanTime) && (!rs_busy() || !rs_active())) {
-        FanTime = get_fin_time(SEC(1));
         rs_set_busy();
+#else
+    if (tmp_drv() == COMPL && !get_time_left(FanTime)) {
+#endif
+        FanTime = get_fin_time(TMP_PRD);
         read_tmp();
         if (!Cfg.cmd.fan_cntrl) {
             int16_t t1 = Tmp[0]; int16_t t2 = Tmp[1]; 
@@ -391,47 +398,45 @@ static inline void csu_control (void) {
         uint16_t adc_u = get_adc_res(ADC_MU);
         int16_t err_i;
         int16_t err_u = TaskU - adc_u;
+        float ref_k;
         if (pwm_st == CHARGE) {
             adc_i = get_adc_res(ADC_MI);
             err_i = TaskI - adc_i;
+            ref_k = (float)TaskI / CURR_REF;
         } else { // discharge
             err_i = i_pwr_lim(Cfg.P_maxW, TaskId);
             err_i -= get_adc_res(ADC_DI);
         }
         if (/*Stg.fld.type == PULSE ||*/ !InitF) {
-            if (err_u < err_i) StartU = true;
-            else StartU = false;
             SatU = false;
-            StableCnt = 0;
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
+            InfTau = INF_TAU;
+            if (pwm_st == CHARGE) {
+                Pid_Ic.Kp = Pid_U.Kp = K_P * ref_k;
+            }
         } else {
-            Uerr = flt_exp(Uerr, (float)err_u, INF_TAU);
-            Ierr = flt_exp(Ierr, (float)err_i, INF_TAU);
+            Uerr = flt_exp(Uerr, (float)err_u, InfTau/*, ADC_BANDW*/);
+            Ierr = flt_exp(Ierr, (float)err_i, InfTau/*,  ADC_BANDW*/);
         }
         if (pwm_st == CHARGE) {
             float err;
-            if (Uerr > 0 && Ierr > 0) {
-                /*if (StartU) {
-                    if (StableCnt++ > STBL_N) StartU = false;
-                }
-                if ((Uerr < Ierr && Uerr < LIM_U) || StartU) {
-                    err = Uerr;
-                    goto over_curr;
-                } else {
-                    err = Ierr;
-                }*/
+            if (Uerr > DIFF_U && Ierr > 0) {
                 err = Ierr;
+                InfTau = INF_TAU;
             } else {
                 if (Uerr < Ierr) err = Uerr;
                 else err = Ierr;
                 if (adc_i < STABLE_I) {
+                    InfTau = INF_TAU / K_FIN;
                     err *= K_FIN;
                     goto over_curr;
+                } else {
+                    InfTau = INF_TAU;
                 }
             }
-            PWM_I = pwm_duty(pid_r(&Pid_Ic, err),  PWM_0I);
+            PWM_I = pwm_duty(pid_r(&Pid_Ic, err), PWM_0I);
         over_curr:
             PWM_U = pwm_duty(pid_r(&Pid_U, err), PWM_0U);
         } else { // discharge

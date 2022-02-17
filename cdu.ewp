@@ -258,6 +258,7 @@
                     <state>UART_DS_MODE</state>
                     <state>SPI_POOL</state>
                     <state>JTAG_DBGU</state>
+                    <state>T_LONG_READ</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>

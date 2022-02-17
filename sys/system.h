@@ -14,6 +14,7 @@ extern "C" {
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <float.h>
 #include <math.h>
 #include <ina90.h>
 #include <ioavr.h>
@@ -160,7 +161,7 @@ extern	void dbprintf(const char *fmt, ...);
 #define	DBGU_INIT(baud)
 #define	dbprintf(...)
 #endif /* DEBUG */
-float flt_exp (float out, float inp, float tau);
+float flt_exp (float out, float inp, float tau/*, float bandw*/);
 
 #ifdef __cplusplus
 }

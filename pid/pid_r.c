@@ -25,7 +25,7 @@ float pid_r (pid_t *S, float in) {
   #else
   #error "input array size not defined"
   #endif
-  if (S->Tf) Df = flt_exp(S->d, D, S->Tf);
+  if (S->Tf) Df = flt_exp(S->d, D, S->Tf/*, FLT_MAX*/);
   else Df = D;
   S->d = Df;
   P = in - e[1];
