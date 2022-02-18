@@ -121,7 +121,6 @@ typedef struct {
 #define RDY_PORT        B
 #define RDY_PIN         6
 #define IS_RDY()        IS_PIN_CLR(RDY_PORT, RDY_PIN)
-//#define DRDY            PINB & (1 << 6)
 #define ADC_SPS         DR_64_SPS
 #if ADC_SPS == DR_8_SPS
 #define ADC_TIME        MS(160)

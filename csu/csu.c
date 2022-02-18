@@ -31,10 +31,10 @@ bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.00001f /* Kp; gain factor */
-#define T_I     10.0f     /* Ti integration time */
+#define K_P     0.0000055f /* Kp; gain factor */
+#define T_I     5.0f     /* Ti integration time */
 #define T_F     5.0f     /* Tf derivative filter tau */
-#define T_D     0.0001f      /* Td derivative time */
+#define T_D     0.2f      /* Td derivative time */
 static pid_t Pid_U = {
     K_P,
     T_I,
@@ -398,11 +398,11 @@ static inline void csu_control (void) {
         uint16_t adc_u = get_adc_res(ADC_MU);
         int16_t err_i;
         int16_t err_u = TaskU - adc_u;
-        float ref_k;
+        //float ref_k;
         if (pwm_st == CHARGE) {
             adc_i = get_adc_res(ADC_MI);
             err_i = TaskI - adc_i;
-            ref_k = (float)TaskI / CURR_REF;
+            //ref_k = (float)TaskI / CURR_REF;
         } else { // discharge
             err_i = i_pwr_lim(Cfg.P_maxW, TaskId);
             err_i -= get_adc_res(ADC_DI);
@@ -413,9 +413,9 @@ static inline void csu_control (void) {
             Uerr = (float)err_u;
             Ierr = (float)err_i;
             InfTau = INF_TAU;
-            if (pwm_st == CHARGE) {
+            /*if (pwm_st == CHARGE) {
                 Pid_Ic.Kp = Pid_U.Kp = K_P * ref_k;
-            }
+            }*/
         } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau/*, ADC_BANDW*/);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau/*,  ADC_BANDW*/);
