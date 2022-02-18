@@ -92,7 +92,6 @@ tstate_t tmp_drv (void) {
     case WRITE_2:
         if (!Cnt) {
             write_byte(0x44); // temp convert
-            delay_us(1);
             Cnt++;
             goto start;
         } else {
@@ -101,8 +100,8 @@ tstate_t tmp_drv (void) {
         }
         break;
     case READ:
-        read_byte(d[Cnt++]);
-        if (Cnt < D_LEN) return READ;
+        read_byte(d[Cnt]);
+        if (++Cnt < D_LEN) return READ;
         break;
     default:
         return COMPL;
