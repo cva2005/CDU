@@ -31,11 +31,16 @@ bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP;
-#define K_P     0.0000055f /* Kp; gain factor */
-#define T_I     5.0f     /* Ti integration time */
-#define T_F     5.0f     /* Tf derivative filter tau */
-#define T_D     0.2f      /* Td derivative time */
-static pid_t Pid_U = {
+#define K_P         0.0000055f  /* Kp; gain factor */
+#define T_I         5.0f        /* Ti integration time */
+#define T_F         5.0f        /* Tf derivative filter tau */
+#define T_D         0.2f        /* Td derivative time */
+#define IMP_K_P     0.00001f
+#define IMP_T_I     10.0f
+#define IMP_T_F     5.0f
+#define IMP_T_D     0.01f
+static pid_t Pid_U;
+static const pid_t Pid_U_Def = {
     K_P,
     T_I,
     T_F,
@@ -51,7 +56,24 @@ static pid_t Pid_U = {
 	0.0,    /* Xd dead zone */
 	0.0     /* Xi integral zone */
 };
-static pid_t Pid_Ic = {
+static const pid_t Pid_U_ImpDef = {
+    IMP_K_P,
+    IMP_T_I,
+    IMP_T_F,
+    IMP_T_D,
+	/* i[ST_SIZE] old input states */
+#if ST_SIZE == 2
+    0.0, 0.0,
+#else /* ST_SIZE == 4 */
+    0.0, 0.0, 0.0, 0.0,
+#endif
+	0.0,    /* u old output state */
+	0.0,    /* d old derivative state */
+	0.0,    /* Xd dead zone */
+	0.0     /* Xi integral zone */
+};
+static pid_t Pid_Ic;
+static const pid_t Pid_Ic_Def = {
     K_P,
     T_I,
     T_F,
@@ -67,7 +89,24 @@ static pid_t Pid_Ic = {
     0.0,    /* Xd dead zone */
     0.0     /* Xi integral zone */
 };
-static pid_t Pid_Id = {
+static const pid_t Pid_Ic_ImpDef = {
+    IMP_K_P,
+    IMP_T_I,
+    IMP_T_F,
+    IMP_T_D,
+    /* i[ST_SIZE] old input states */
+#if ST_SIZE == 2
+    0.0, 0.0,
+#else /* ST_SIZE == 4 */
+    0.0, 0.0, 0.0, 0.0,
+#endif
+    0.0,    /* u old output state */
+    0.0,    /* d old derivative state */
+    0.0,    /* Xd dead zone */
+    0.0     /* Xi integral zone */
+};
+static pid_t Pid_Id;
+static const pid_t Pid_Id_Def = {
     0.00005, /* Kp; gain factor */
     3.0, /* Ti integration time */
     5.0,   /* Tf derivative filter tau */
@@ -295,7 +334,9 @@ void csu_stop (csu_st mode) {
 uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
     uint32_t u, id;
     pLim = false;
-    u = get_adc_res(ADC_MU) * Cfg.K_U / D1M;	
+    u = get_adc_res(ADC_MU);
+    u *= Cfg.K_U;
+    u /= D1M;
     if (u > 0) {
         id = (uint64_t)(p * D100M) / u / Cfg.K_Id;
         if (id < 32768 && id > 0) {
@@ -398,27 +439,31 @@ static inline void csu_control (void) {
         uint16_t adc_u = get_adc_res(ADC_MU);
         int16_t err_i;
         int16_t err_u = TaskU - adc_u;
-        //float ref_k;
         if (pwm_st == CHARGE) {
             adc_i = get_adc_res(ADC_MI);
             err_i = TaskI - adc_i;
-            //ref_k = (float)TaskI / CURR_REF;
         } else { // discharge
             err_i = i_pwr_lim(Cfg.P_maxW, TaskId);
             err_i -= get_adc_res(ADC_DI);
         }
-        if (/*Stg.fld.type == PULSE ||*/ !InitF) {
+        if (!InitF) {
             SatU = false;
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
-            InfTau = INF_TAU;
-            /*if (pwm_st == CHARGE) {
-                Pid_Ic.Kp = Pid_U.Kp = K_P * ref_k;
-            }*/
-        } else {
-            Uerr = flt_exp(Uerr, (float)err_u, InfTau/*, ADC_BANDW*/);
-            Ierr = flt_exp(Ierr, (float)err_i, InfTau/*,  ADC_BANDW*/);
+            if (Stg.fld.type == PULSE) {
+                InfTau = 0;
+                Pid_Ic = Pid_Ic_ImpDef;
+                Pid_U = Pid_U_ImpDef;
+            } else {
+                InfTau = INF_TAU;
+                Pid_Ic = Pid_Ic_Def;
+                Pid_U = Pid_U_Def;
+            }
+            Pid_Id = Pid_Id_Def;
+       } else {
+            Uerr = flt_exp(Uerr, (float)err_u, InfTau);
+            Ierr = flt_exp(Ierr, (float)err_i, InfTau);
         }
         if (pwm_st == CHARGE) {
             float err;
@@ -490,9 +535,6 @@ static inline void update_led (void) {
 }
 
 static inline void start_cntrl (void) {
-    pid_r_init(&Pid_U);
-    pid_r_init(&Pid_Ic);
-    pid_r_init(&Pid_Id);
     TickSec = get_fin_time(SEC(1));
     LedPwrTime = get_fin_time(PWR_TIME);
     CntrlTime = get_fin_time(CNTRL_T);

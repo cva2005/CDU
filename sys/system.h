@@ -161,7 +161,11 @@ extern	void dbprintf(const char *fmt, ...);
 #define	DBGU_INIT(baud)
 #define	dbprintf(...)
 #endif /* DEBUG */
-float flt_exp (float out, float inp, float tau/*, float bandw*/);
+#if BAND_WIDTH_USE
+float flt_exp (float out, float inp, float tau, float bandw);
+#else
+float flt_exp (float out, float inp, float tau);
+#endif
 
 #ifdef __cplusplus
 }
