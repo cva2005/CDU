@@ -80,55 +80,56 @@ static void frame_parse (void) {
 		if (rx.start == CHAR_RS && !rx.src_adr) { //если принят верный пакет
             if (calc_crc(Buff.byte, rx.length + 4) != Buff.byte[rx.length + 4]) return;
 			if (rx.length > 1) { //если в пакете есть поле типа пакета
-                csu_st state = (csu_st)(rd.rdata.cmd & 0x0F);
+                csu_st rcmd = (csu_st)(rd.rdata.cmd & 0x0F);
                 switch (rx.type) {
                 case DATA_PKT:
-                    if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
-                        if (state == CHARGE) { //если режим "заряд"
-                            if (rd.rdata.setI > Cfg.B[ADC_MI])
-                                preTaskI = rd.rdata.setI - Cfg.B[ADC_MI];
-                            else preTaskI = 0;
-                            if (preTaskI > MaxI) preTaskI = MaxI;
-                        }
-                        if (state == DISCHARGE) { //если режим "разряд"
-                            if (rd.rdata.setI > Cfg.B[ADC_DI])
-                                preTaskId = rd.rdata.setI - Cfg.B[ADC_DI];
-                            else preTaskId = 0;
-                            if (preTaskId > MaxId) preTaskId = MaxId;
-                        }
-                    }
-                    if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
-                        if (rd.rdata.setU > Cfg.B[ADC_MU])
-                            preTaskU = rd.rdata.setU - Cfg.B[ADC_MU];
-                        else preTaskU = 0;
-                        if (preTaskU > MaxU) preTaskU = MaxU;
-                    }
-                    if (rx.length > 3) { //если в пакете есть контрольные биты
-                        if (Cfg.cmd.fan_cntrl) { //Если разрешён контроль выходных реле и вентиляторов
-                            if (rd.rdata.fcntl.fan1) FAN(ON);
-                            else FAN(OFF);
-                        }
-                    }
                     if (rx.length > 2) { //если в пакете данных есть команда
-                        if (state) { //Если это команда запуска разряда или заряда
+                        if (rcmd) { //Если это команда запуска разряда или заряда
                             if (!(rd.rdata.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
-                                if (rd.rdata.cmd == 0x03) {
+                                if (rcmd == PULSE) {
                                     key_power();
                                 } else {
                                     TaskI = preTaskI; //установить зарядный ток
                                     TaskId = preTaskId; //установить разрядный ток
                                     TaskU = preTaskU; //установить напряжение
-                                    if (CsuState != rd.rdata.cmd) {
+                                    //если изменилась комнада, то запустить блок с новой командой
+                                    if (CsuState != rcmd) {
                                         SelfCtrl = false;
-                                        csu_start(state); //если изменилась комнада, то запустить блок с новой командой	
+                                        csu_start(rcmd);
                                     }
                                 }
                             }
                         } else {
                             if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error) {
-                                csu_stop(state);
+                                csu_stop(rcmd);
                             }
                         }	
+                        if (rx.length > 3) { //если в пакете есть контрольные биты
+                            if (Cfg.cmd.fan_cntrl) { //Если разрешён контроль выходных реле и вентиляторов
+                                if (rd.rdata.fcntl.fan1) FAN(ON);
+                                else FAN(OFF);
+                            }
+                            Cfg.bf2.bit.pulse = rd.rdata.fcntl.pulse;
+                            if (rx.length > 5) { //если в пакете есть информация о задаваемом токе
+                                if (rcmd == CHARGE) { //если режим "заряд"
+                                    if (rd.rdata.setI > Cfg.B[ADC_MI])
+                                        preTaskI = rd.rdata.setI - Cfg.B[ADC_MI];
+                                    else preTaskI = 0;
+                                    if (preTaskI > MaxI) preTaskI = MaxI;
+                                } else if (rcmd == DISCHARGE) { //если режим "разряд"
+                                    if (rd.rdata.setI > Cfg.B[ADC_DI])
+                                        preTaskId = rd.rdata.setI - Cfg.B[ADC_DI];
+                                    else preTaskId = 0;
+                                    if (preTaskId > MaxId) preTaskId = MaxId;
+                                }
+                                if (rx.length > 7) { //в пакете есть данные о задаваемом напряжении?
+                                    if (rd.rdata.setU > Cfg.B[ADC_MU])
+                                        preTaskU = rd.rdata.setU - Cfg.B[ADC_MU];
+                                    else preTaskU = 0;
+                                    if (preTaskU > MaxU) preTaskU = MaxU;
+                                }
+                            }
+                        }
                     }
                     break;
                 case USER_CFG:
@@ -163,14 +164,16 @@ static void frame_parse (void) {
                         Cfg.maxI = rd.sys.maxI;
                         Cfg.maxId = rd.sys.maxId;
                         Cfg.P_maxW = rd.sys.maxPd;
-                        if (rx.length >= 13) //Если есть данные о количестве РМ
+                        if (rx.length >= 13) { // данные о количестве РМ
                             Cfg.dmSlave = rd.sys.dm_cnt;
-                        if (rx.length >= 17) //если есть поле дополнительной конфигурации
-                            Cfg.bf2.word = rd.sys.cfg;	
-                        if (rx.length >= 22) { //если есть информация об автозапуске
-                            Cfg.cnt_set = rd.sys.autostart_try;
-                            Cfg.u_set = rd.sys.autostart_u;
-                            Cfg.time_set = rd.sys.restart_timout;
+                            if (rx.length >= 17) { //  поле дополнительной конфигурации
+                                Cfg.bf2.word = rd.sys.cfg;
+                                if (rx.length >= 22) { //если есть информация об автозапуске
+                                    Cfg.cnt_set = rd.sys.autostart_try;
+                                    Cfg.u_set = rd.sys.autostart_u;
+                                    Cfg.time_set = rd.sys.restart_timout;
+                                }
+                            }
                         }
                         calc_cfg();
                         if (rd.sys.cmd.eepr) save_cfg();
@@ -231,9 +234,9 @@ static void tx_reply (void) {
     csu_st pwm_st = pwm_state();
     switch (tx.type) {
     case DATA_PKT:
-        if (pwm_st == STOP) td.tdata.operation = pwm_st | IS_RELAY_EN();
         /* Если ШИМ остановлен, то добавить сосотяние реле */
-        else td.tdata.operation = pwm_st;
+        if (pwm_st == STOP) pwm_st |= IS_RELAY_EN();
+        td.tdata.oper = pwm_st;
         td.tdata.error = Error;
         if (pwm_state() == DISCHARGE) td.tdata.I = ADC_O[ADC_DI];
         else td.tdata.I = ADC_O[ADC_MI];

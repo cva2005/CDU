@@ -41,8 +41,9 @@ static const cfg_t DefaultCfg = {
     B_I_DEF,
     B_ID_DEF,
     B_UP_DEF,
-    A_START_B, // unsigned char autostart :1;
-    OFF, // unsigned char cdu_dsch_dsb :1;
+    A_START_B, // autostart :1;
+    OFF, // cdu_dsch_dsb :1;
+    OFF, // pulse mode :1;
     AST_TIME, // uint16_t time_set;
     AST_U, // uint16_t u_set;
     AST_CNT // uint8_t cnt_set;

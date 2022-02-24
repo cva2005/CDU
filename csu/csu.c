@@ -35,12 +35,12 @@ csu_st CsuState, SetMode = STOP;
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define IMP_K_P     0.00001f
-#define IMP_T_I     10.0f
-#define IMP_T_F     5.0f
-#define IMP_T_D     0.01f
+#define PLS_K_P     0.0002f
+#define PLS_T_I     10.0f
+#define PLS_T_F     5.0f
+#define PLS_T_D     0.01f
 static pid_t Pid_U;
-static const pid_t Pid_U_Def = {
+static const pid_t UPidDef = {
     K_P,
     T_I,
     T_F,
@@ -56,11 +56,11 @@ static const pid_t Pid_U_Def = {
 	0.0,    /* Xd dead zone */
 	0.0     /* Xi integral zone */
 };
-static const pid_t Pid_U_ImpDef = {
-    IMP_K_P,
-    IMP_T_I,
-    IMP_T_F,
-    IMP_T_D,
+static const pid_t UPidPlsDef = {
+    PLS_K_P,
+    PLS_T_I,
+    PLS_T_F,
+    PLS_T_D,
 	/* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -73,7 +73,7 @@ static const pid_t Pid_U_ImpDef = {
 	0.0     /* Xi integral zone */
 };
 static pid_t Pid_Ic;
-static const pid_t Pid_Ic_Def = {
+static const pid_t IcPidDef = {
     K_P,
     T_I,
     T_F,
@@ -89,11 +89,11 @@ static const pid_t Pid_Ic_Def = {
     0.0,    /* Xd dead zone */
     0.0     /* Xi integral zone */
 };
-static const pid_t Pid_Ic_ImpDef = {
-    IMP_K_P,
-    IMP_T_I,
-    IMP_T_F,
-    IMP_T_D,
+static const pid_t IcPidPlsDef = {
+    PLS_K_P,
+    PLS_T_I,
+    PLS_T_F,
+    PLS_T_D,
     /* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -105,12 +105,37 @@ static const pid_t Pid_Ic_ImpDef = {
     0.0,    /* Xd dead zone */
     0.0     /* Xi integral zone */
 };
+#define DK_P        0.00005f /* Kp; gain factor */
+#define DT_I        3.0f     /* Ti integration time */
+#define DT_F        5.0f     /* Tf derivative filter tau */
+#define DT_D        0.001f   /* Td derivative time */
+#define PLS_DK_P    0.00001f
+#define PLS_DT_I    3.0f
+#define PLS_DT_F    5.0f
+#define PLS_DT_D    0.001f
 static pid_t Pid_Id;
-static const pid_t Pid_Id_Def = {
-    0.00005, /* Kp; gain factor */
-    3.0, /* Ti integration time */
-    5.0,   /* Tf derivative filter tau */
-    0.001,    /* Td derivative time */
+static const pid_t IdPidDef = {
+    DK_P, /* Kp; gain factor */
+    DT_I, /* Ti integration time */
+    DT_F, /* Tf derivative filter tau */
+    DT_D, /* Td derivative time */
+    /* i[ST_SIZE] old input states */
+#if ST_SIZE == 2
+    0.0, 0.0,
+#else /* ST_SIZE == 4 */
+    0.0, 0.0, 0.0, 0.0,
+#endif
+    0.0,    /* u old output state */
+    0.0,    /* d old derivative state */
+    0.0,    /* Xd dead zone */
+    0.0     /* Xi integral zone */
+};
+
+static const pid_t IdPidPlsDef = {
+    PLS_DK_P, /* Kp; gain factor */
+    PLS_DT_I, /* Ti integration time */
+    PLS_DT_F, /* Tf derivative filter tau */
+    PLS_DT_D, /* Td derivative time */
     /* i[ST_SIZE] old input states */
 #if ST_SIZE == 2
     0.0, 0.0,
@@ -246,7 +271,7 @@ void calc_cfg (void) {
     else Cfg.mode.ext_id = 0;
     ADC_O[ADC_MU] = Cfg.B[ADC_MU];
     ADC_O[ADC_MI] = Cfg.B[ADC_MI];
-    AutoStr.u_pwm = ((uint32_t)AutoStr.u_set*100000UL) / Cfg.K_U;
+    AutoStr.u_pwm = ((uint32_t)AutoStr.u_set * 100000UL) / Cfg.K_U;
     AutoStr.err_cnt = Cfg.cnt_set;
     if (Cfg.bf2.bit.astart) Cfg.mode.dbg = 1;
     id_dw_Clb = ID_A(2,0);
@@ -451,16 +476,17 @@ static inline void csu_control (void) {
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
-            if (Stg.fld.type == PULSE) {
+            if (Cfg.bf2.bit.pulse) {
                 InfTau = 0;
-                Pid_Ic = Pid_Ic_ImpDef;
-                Pid_U = Pid_U_ImpDef;
+                Pid_Ic = IcPidPlsDef;
+                Pid_U = UPidPlsDef;
+                Pid_Id = IdPidPlsDef;
             } else {
                 InfTau = INF_TAU;
-                Pid_Ic = Pid_Ic_Def;
-                Pid_U = Pid_U_Def;
+                Pid_Ic = IcPidDef;
+                Pid_U = UPidDef;
+                Pid_Id = IdPidDef;
             }
-            Pid_Id = Pid_Id_Def;
        } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);

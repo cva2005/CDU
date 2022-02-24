@@ -39,7 +39,8 @@ extern "C" {
 typedef struct {
     uint8_t fan1    :1;
     uint8_t fan2    :1;
-    uint8_t rsrv    :6;
+    uint8_t rsrv    :5;
+    uint8_t pulse   :1; // импульсный режим
 } fcntl_t;
 
 typedef	struct {
@@ -59,7 +60,7 @@ typedef	struct {
 } rdata_t;
 	
 typedef	struct {
-    uint8_t operation;
+    uint8_t oper;
     uint8_t error;
     uint16_t I;
     uint16_t U;

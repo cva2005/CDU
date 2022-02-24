@@ -131,6 +131,7 @@ typedef union {
     struct {
         uint8_t astart      :1;
         uint8_t dsch_dsb    :1;
+        uint8_t pulse       :1;
     } bit;
 	uint16_t word;
 } bf2_t;

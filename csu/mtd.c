@@ -72,7 +72,7 @@ void stg_status (void) {
                 csu_start(CHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_ch));
             } else {
-                TaskU=TaskUmemD;
+                TaskU = TaskUmemD;
                 csu_start(DISCHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_dch));
             }
@@ -99,8 +99,8 @@ void stg_status (void) {
                     csu_start(PAUSE);
            }
         } else { // следующего этапа нет
-            if ((cCnt<Mtd.fld.Cnt)||(cCnt>9)) { //есть повотрные циклы?
-                if (cCnt<10) cCnt++;
+            if (cCnt < Mtd.fld.Cnt || cCnt > 9) { //есть повотрные циклы?
+                if (cCnt < 10) cCnt++;
                 start_mtd(0);   //если есть, то запустить метод заново
             } else { //если нет не выполненых циклов
                 stop_mtd(); //остановить метод
@@ -151,6 +151,7 @@ void calc_stg(void) {
     PulseStep = get_fin_time(SEC(Stg.fld.T_ch)); // время импульса заряда в имп. режиме
     memset(&Ts, 0, sizeof(Ts));
     fCnt = INF_TIME; //установить паузу в определении условий окончания
+    Cfg.bf2.bit.pulse = (Stg.fld.type == PULSE); // импульсный режим
 }
 
 void read_mtd (void) {
