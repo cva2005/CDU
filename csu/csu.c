@@ -30,15 +30,15 @@ static bool InitF, SatU, InitCsu = false;
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 err_t Error = NO_ERR;
-csu_st CsuState, SetMode = STOP;
+csu_st CsuState, SetMode = STOP, StateOld;
 #define K_P         0.0000055f  /* Kp; gain factor */
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define PLS_K_P     0.0002f
-#define PLS_T_I     10.0f
+#define PLS_K_P     0.00002f
+#define PLS_T_I     3.0f
 #define PLS_T_F     5.0f
-#define PLS_T_D     0.01f
+#define PLS_T_D     5.0f
 static pid_t Pid_U;
 static const pid_t UPidDef = {
     K_P,
@@ -337,10 +337,15 @@ void csu_start (csu_st mode) {
         return;
     }
     RELAY_ON();
-    if (mode == CHARGE) soft_start(task_u);
-    else if (mode == DISCHARGE) {
-        DE(1);
-        soft_start_disch();
+    if (mode == CHARGE) {
+        start_pwm(CHARGE); /* запустить преобразователь */
+        if (task_u && get_adc_res(ADC_MU) > TaskU) Error = ERR_SET;
+        if (!Error) CHARGE_EN(ON);
+    } else if (mode == DISCHARGE) {
+        DISCH_EN(ON);
+        start_pwm(DISCHARGE);
+        /* установить флаг для калибровки */
+        Clb.id.bit.control = 1;
     }
     BreakTime = get_fin_time(SEC(1));
 }
@@ -476,20 +481,30 @@ static inline void csu_control (void) {
             InitF = true;
             Uerr = (float)err_u;
             Ierr = (float)err_i;
+            InfTau = INF_TAU;
             if (Cfg.bf2.bit.pulse) {
-                InfTau = 0;
-                Pid_Ic = IcPidPlsDef;
-                Pid_U = UPidPlsDef;
-                Pid_Id = IdPidPlsDef;
+                StateOld = STOP;
+                //InfTau = 0;
             } else {
-                InfTau = INF_TAU;
+                //InfTau = INF_TAU;
                 Pid_Ic = IcPidDef;
                 Pid_U = UPidDef;
                 Pid_Id = IdPidDef;
             }
-       } else {
+        } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
+        }
+        if (Cfg.bf2.bit.pulse) {
+            if (pwm_st != StateOld) {
+                Pid_Ic = IcPidPlsDef;
+                Pid_U = UPidPlsDef;
+                Pid_Id = IdPidPlsDef;
+                StateOld = pwm_st;
+                stop_pwm(HARD);
+                start_pwm(pwm_st);
+                return;
+            }
         }
         if (pwm_st == CHARGE) {
             float err;
@@ -499,7 +514,7 @@ static inline void csu_control (void) {
             } else {
                 if (Uerr < Ierr) err = Uerr;
                 else err = Ierr;
-                if (adc_i < STABLE_I) {
+                if (adc_i < STABLE_I && !Cfg.bf2.bit.pulse) {
                     InfTau = INF_TAU / K_FIN;
                     err *= K_FIN;
                     goto over_curr;

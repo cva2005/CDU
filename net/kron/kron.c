@@ -84,26 +84,6 @@ static void frame_parse (void) {
                 switch (rx.type) {
                 case DATA_PKT:
                     if (rx.length > 2) { //если в пакете данных есть команда
-                        if (rcmd) { //Если это команда запуска разряда или заряда
-                            if (!(rd.rdata.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
-                                if (rcmd == PULSE) {
-                                    key_power();
-                                } else {
-                                    TaskI = preTaskI; //установить зарядный ток
-                                    TaskId = preTaskId; //установить разрядный ток
-                                    TaskU = preTaskU; //установить напряжение
-                                    //если изменилась комнада, то запустить блок с новой командой
-                                    if (CsuState != rcmd) {
-                                        SelfCtrl = false;
-                                        csu_start(rcmd);
-                                    }
-                                }
-                            }
-                        } else {
-                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error) {
-                                csu_stop(rcmd);
-                            }
-                        }	
                         if (rx.length > 3) { //если в пакете есть контрольные биты
                             if (Cfg.cmd.fan_cntrl) { //Если разрешён контроль выходных реле и вентиляторов
                                 if (rd.rdata.fcntl.fan1) FAN(ON);
@@ -130,6 +110,26 @@ static void frame_parse (void) {
                                 }
                             }
                         }
+                        if (rcmd) { // команда запуска разряда или заряда
+                            if (!(rd.rdata.cmd & 0xF0)) { //Если пришла команда со сброшенным флагом отсрочки выполнения (0x0x: 0x01 или 0x02)
+                                if (rcmd == PULSE) {
+                                    key_power();
+                                } else {
+                                    TaskI = preTaskI; //установить зарядный ток
+                                    TaskId = preTaskId; //установить разрядный ток
+                                    TaskU = preTaskU; //установить напряжение
+                                    //если изменилась комнада, то запустить блок с новой командой
+                                    if (CsuState != rcmd) {
+                                        SelfCtrl = false;
+                                        csu_start(rcmd);
+                                    }
+                                }
+                            }
+                        } else {
+                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error) {
+                                csu_stop(rcmd);
+                            }
+                        }	
                     }
                     break;
                 case USER_CFG:

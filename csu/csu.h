@@ -65,20 +65,20 @@ typedef enum {
 #define RELAY_OFF()     PORTB &= ~(REL_PIN)
 #define IS_RELAY_EN()  (PORTB & REL_PIN)
 
-#define FAN_ST ((PINB & 0x18) >> 3)
-#define FAN(x) x ? (PORTB |= 1 << 3) : (PORTB &= ~(1 << 3))
+#define FAN_ST          ((PINB & 0x18) >> 3)
+#define FAN(x)          x ? (PORTB |= 1 << 3) : (PORTB &= ~(1 << 3))
 
-#define LED_ERR(x) x ? (PORTC |= 1 << 7) : (PORTC &= ~(1 << 7))
-#define ALARM_OUT LED_ERR // управление реле сигнализации
-#define ALARM_ON() (PINC7)
-#define LED_ERRinv PORTC ^= 1 << 7;
-#define LED_PWR(x) x ? (PORTC &= ~(1 << 6)) : (PORTC |= 1 << 6)
-#define LED_STI(x) x ? (PORTC &= ~(1 << 5)) : (PORTC |= 1 << 5)
-#define LED_STU(x) x ? (PORTC &= ~(1 << 4)) : (PORTC |= 1 << 4)
-#define LED_POL(x) x ? (PORTC &= ~(1 << 3)) : (PORTC |= 1 << 3)
-#define DE(x) x ? (PORTD |= 1 << 7) : (PORTD &= ~(1 << 7))
-#define SD(x) x ? (PORTD |= 1 << 6) : (PORTD &= ~(1 << 6))
-#define PWM_ALL_STOP PORTD &= 0x0F //выставить порты pwm SD, DE в 0
+#define ALARM_OUT       LED_ERR // управление реле сигнализации
+#define ALARM_ON()      (PINC7)
+#define LED_ERRinv      PORTC ^= 1 << 7;
+#define LED_ERR(x)      x ? (PORTC |= 1 << 7) : (PORTC &= ~(1 << 7))
+#define LED_PWR(x)      x ? (PORTC &= ~(1 << 6)) : (PORTC |= 1 << 6)
+#define LED_STI(x)      x ? (PORTC &= ~(1 << 5)) : (PORTC |= 1 << 5)
+#define LED_STU(x)      x ? (PORTC &= ~(1 << 4)) : (PORTC |= 1 << 4)
+#define LED_POL(x)      x ? (PORTC &= ~(1 << 3)) : (PORTC |= 1 << 3)
+#define DISCH_EN(x)     x ? (PORTD |= 1 << 7) : (PORTD &= ~(1 << 7))
+#define CHARGE_EN(x)    x ? (PORTD |= 1 << 6) : (PORTD &= ~(1 << 6))
+#define PWM_STOP()      PORTD &= 0x0F //выставить порты pwm SD, DE в 0
 
 /* Состояние для переменной PwmStatus (текущий режим ШИМ),
 SetMode (заданный режим), CsuState (Режи в котором запущен блок) */

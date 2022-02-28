@@ -7,8 +7,6 @@
 
 csu_st PwmStatus = STOP;
 
-static void start_pwm (csu_st mode);
-
 csu_st pwm_state (void) {
     return PwmStatus;
 }
@@ -29,14 +27,14 @@ void stop_pwm (bool soft) {
         }
         PWM_U = PWM_I = 0;	
     }
-    PWM_ALL_STOP;
+    PWM_STOP();
     TCCR1A = TCCR1B = 0x00; //stop
     PWM_U = PWM_I = 0;
     ICR1 = TCNT1 = 0;
     PwmStatus = STOP; //установить признак что PWM не работает
 }
 
-static void start_pwm (csu_st mode) {
+void start_pwm (csu_st mode) {
     if (PwmStatus != STOP) stop_pwm(HARD);
     ICR1 = MAX_CK; //макс. значение счётчика для режима PWM Frecuency Correct:ICR1;
     TCCR1A = 1 << COM1B1 | 1 << WGM11; // OC1A отключен , OC1B инверсный, режим FAST PWM:ICR1.
@@ -51,16 +49,4 @@ static void start_pwm (csu_st mode) {
     }
     TCCR1B = 1 << WGM12 | 1 << WGM13 | 1 << CS10; //0x11; //CK=CLK ,режим FAST PWM:ICR1
     PwmStatus = mode; //установить признак что PWM работает
-}
-
-void soft_start (uint8_t control_out) {
-    start_pwm(CHARGE); /* запустить преобразователь */
-    if (control_out && get_adc_res(ADC_MU) > TaskU) Error = ERR_SET;
-    if (!Error) SD(1);
-}
-
-void soft_start_disch (void) {
-    start_pwm(DISCHARGE);
-    /* установить флаг для калибровки: проконтролировать калибровку */
-    Clb.id.bit.control = 1;
 }

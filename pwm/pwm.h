@@ -17,10 +17,9 @@ extern "C" {
     
 uint16_t pwm_duty (float out, uint16_t null);
 void stop_pwm (bool soft);
-void soft_start (uint8_t control_out);
 uint16_t calc_pwd (uint16_t val, uint8_t limit);
-void soft_start_disch (void);
 csu_st pwm_state (void);
+void start_pwm (csu_st mode);
 
 #ifdef __cplusplus
 }
