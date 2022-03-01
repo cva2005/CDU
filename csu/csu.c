@@ -36,9 +36,9 @@ csu_st CsuState, SetMode = STOP, StateOld;
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
 #define PLS_K_P     0.00002f
-#define PLS_T_I     3.0f
+#define PLS_T_I     1.0f
 #define PLS_T_F     5.0f
-#define PLS_T_D     5.0f
+#define PLS_T_D     1.0f
 static pid_t Pid_U;
 static const pid_t UPidDef = {
     K_P,
@@ -109,10 +109,10 @@ static const pid_t IcPidPlsDef = {
 #define DT_I        3.0f     /* Ti integration time */
 #define DT_F        5.0f     /* Tf derivative filter tau */
 #define DT_D        0.001f   /* Td derivative time */
-#define PLS_DK_P    0.00001f
-#define PLS_DT_I    3.0f
+#define PLS_DK_P    0.000001f
+#define PLS_DT_I    2.0f
 #define PLS_DT_F    5.0f
-#define PLS_DT_D    0.001f
+#define PLS_DT_D    2.0f
 static pid_t Pid_Id;
 static const pid_t IdPidDef = {
     DK_P, /* Kp; gain factor */
@@ -484,9 +484,7 @@ static inline void csu_control (void) {
             InfTau = INF_TAU;
             if (Cfg.bf2.bit.pulse) {
                 StateOld = STOP;
-                //InfTau = 0;
             } else {
-                //InfTau = INF_TAU;
                 Pid_Ic = IcPidDef;
                 Pid_U = UPidDef;
                 Pid_Id = IdPidDef;
@@ -502,6 +500,11 @@ static inline void csu_control (void) {
                 Pid_Id = IdPidPlsDef;
                 StateOld = pwm_st;
                 stop_pwm(HARD);
+                if (pwm_st == DISCHARGE) {
+                    DISCH_EN(ON);
+                } else { // CHARGE
+                    CHARGE_EN(ON);
+                }
                 start_pwm(pwm_st);
                 return;
             }
