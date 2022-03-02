@@ -190,9 +190,6 @@ typedef enum {
 
 #define EXT_ERR_VAL     100
 #define INF_TAU         5.0f
-#define TMP_PRD         MS(1830)
-#define PWR_TIME        MS(160) // led power time
-#define CNTRL_T         MS(100) // control dicrete time
 #define STABLE_I        2500
 #define DIFF_U          500
 #define K_FIN           0.03f
@@ -201,6 +198,10 @@ typedef enum {
 #define TD_STABLE       20.0f
 #define ADC_BANDW       3000.0 // FLT_MAX
 #define CURR_REF        12888.0f
+#define TMP_PRD         MS(1830)
+#define PWR_TIME        MS(160) // led power time
+#define CNTRL_T         MS(100) // control dicrete time
+#define BREAK_T         SEC(7)
 
 unsigned char U_align_st (void);
 uint16_t i_pwr_lim (uint16_t p, uint16_t i);

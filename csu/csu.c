@@ -16,29 +16,29 @@ static inline err_t err_check (void);
 static inline void read_tmp (void);
 static void out_off (void);
 
-static stime_t LcdRefr, AlarmDel, FanTime;
-static uint8_t ErrT[T_N] = {0, 0}; /* error count for T sensors */
-static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 ast_t AutoStr;
 int16_t Tmp[T_N];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
-static float Uerr, Ierr, InfTau;
-static uint16_t  dm_loss_cnt = 0;
-static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
-static bool InitF, SatU, InitCsu = false;
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
 err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP, StateOld;
+static stime_t LcdRefr, AlarmDel, FanTime;
+static uint8_t ErrT[T_N] = {0, 0}; /* error count for T sensors */
+static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
+static float Uerr, Ierr, InfTau;
+static uint16_t  dm_loss_cnt = 0;
+static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
+static bool InitF, SatU, InitCsu = false;
 #define K_P         0.0000055f  /* Kp; gain factor */
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define PLS_K_P     0.00002f
-#define PLS_T_I     1.0f
+#define PLS_K_P     0.000000001f
+#define PLS_T_I     5.0f
 #define PLS_T_F     5.0f
-#define PLS_T_D     1.0f
+#define PLS_T_D     0.01f
 static pid_t Pid_U;
 static const pid_t UPidDef = {
     K_P,
@@ -110,9 +110,9 @@ static const pid_t IcPidPlsDef = {
 #define DT_F        5.0f     /* Tf derivative filter tau */
 #define DT_D        0.001f   /* Td derivative time */
 #define PLS_DK_P    0.000001f
-#define PLS_DT_I    2.0f
+#define PLS_DT_I    1.0f
 #define PLS_DT_F    5.0f
-#define PLS_DT_D    2.0f
+#define PLS_DT_D    0.0f // ToDo: пересчет тока разряда ведется раньше получения реального значения тока!!!
 static pid_t Pid_Id;
 static const pid_t IdPidDef = {
     DK_P, /* Kp; gain factor */
@@ -347,7 +347,7 @@ void csu_start (csu_st mode) {
         /* установить флаг для калибровки */
         Clb.id.bit.control = 1;
     }
-    BreakTime = get_fin_time(SEC(1));
+    BreakTime = get_fin_time(BREAK_T);
 }
 
 void csu_stop (csu_st mode) {
@@ -415,14 +415,17 @@ static inline err_t err_check (void) {
          /* диагностика обрыва нагрузки и блок не в группе */
         if (pwm_st == CHARGE && TaskI) {
             if (get_adc_res(ADC_MI) >= I_A(0,1)) goto set_break_time;
-            if (!get_time_left(BreakTime) && PWM_I > 0) return ERR_NO_AKB;
+            goto check_break;
         }
         if (pwm_st == DISCHARGE && TaskId) {
             if (get_adc_res(ADC_DI) >= ID_A(0,1)) {
             set_break_time:
-                BreakTime = get_fin_time(SEC(1));
+                BreakTime = get_fin_time(BREAK_T);
             }
-            if (!get_time_left(BreakTime) && (PWM_I > 0)) return ERR_NO_AKB;
+        check_break:
+            if (!get_time_left(BreakTime) && PWM_I > 0) {
+                return ERR_NO_AKB;
+            }
         }
     }
     /* Проверка перегрева */
@@ -493,22 +496,6 @@ static inline void csu_control (void) {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
         }
-        if (Cfg.bf2.bit.pulse) {
-            if (pwm_st != StateOld) {
-                Pid_Ic = IcPidPlsDef;
-                Pid_U = UPidPlsDef;
-                Pid_Id = IdPidPlsDef;
-                StateOld = pwm_st;
-                stop_pwm(HARD);
-                if (pwm_st == DISCHARGE) {
-                    DISCH_EN(ON);
-                } else { // CHARGE
-                    CHARGE_EN(ON);
-                }
-                start_pwm(pwm_st);
-                return;
-            }
-        }
         if (pwm_st == CHARGE) {
             float err;
             if (Uerr > DIFF_U && Ierr > 0) {
@@ -536,7 +523,22 @@ static inline void csu_control (void) {
                 PWM_I = pwm_duty(pid_r(&Pid_Id, Ierr), PWM_0D);
             }
         }      
-        BreakTime = get_fin_time(SEC(1));
+        if (Cfg.bf2.bit.pulse) {
+            if (pwm_st != StateOld) {
+                Pid_Ic = IcPidPlsDef;
+                Pid_U = UPidPlsDef;
+                Pid_Id = IdPidPlsDef;
+                StateOld = pwm_st;
+                stop_pwm(HARD);
+                if (pwm_st == DISCHARGE) {
+                    DISCH_EN(ON);
+                } else { // CHARGE
+                    CHARGE_EN(ON);
+                }
+                start_pwm(pwm_st);
+                return;
+            }
+        }
     }
 }
 
