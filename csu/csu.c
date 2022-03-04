@@ -35,10 +35,12 @@ static bool InitF, SatU, InitCsu = false;
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define PLS_K_P     0.000000001f
+#define PLS_K_P     0.0002f
 #define PLS_T_I     5.0f
 #define PLS_T_F     5.0f
-#define PLS_T_D     0.01f
+#define PLS_T_D     2.0f
+#define PLS_X_D     0.1f       /* Xd dead zone */
+#define PLS_X_I     0.2f       /* Xi integral zone */
 static pid_t Pid_U;
 static const pid_t UPidDef = {
     K_P,
@@ -69,8 +71,8 @@ static const pid_t UPidPlsDef = {
 #endif
 	0.0,    /* u old output state */
 	0.0,    /* d old derivative state */
-	0.0,    /* Xd dead zone */
-	0.0     /* Xi integral zone */
+	PLS_X_D,/* Xd dead zone */
+	PLS_X_I /* Xi integral zone */
 };
 static pid_t Pid_Ic;
 static const pid_t IcPidDef = {
@@ -102,17 +104,17 @@ static const pid_t IcPidPlsDef = {
 #endif
     0.0,    /* u old output state */
     0.0,    /* d old derivative state */
-    0.0,    /* Xd dead zone */
-    0.0     /* Xi integral zone */
+	PLS_X_D,/* Xd dead zone */
+	PLS_X_I /* Xi integral zone */
 };
 #define DK_P        0.00005f /* Kp; gain factor */
 #define DT_I        3.0f     /* Ti integration time */
 #define DT_F        5.0f     /* Tf derivative filter tau */
 #define DT_D        0.001f   /* Td derivative time */
-#define PLS_DK_P    0.000001f
-#define PLS_DT_I    1.0f
+#define PLS_DK_P    0.00007f
+#define PLS_DT_I    3.0f
 #define PLS_DT_F    5.0f
-#define PLS_DT_D    0.0f // ToDo: пересчет тока разряда ведется раньше получения реального значения тока!!!
+#define PLS_DT_D    2.0f
 static pid_t Pid_Id;
 static const pid_t IdPidDef = {
     DK_P, /* Kp; gain factor */
@@ -144,8 +146,8 @@ static const pid_t IdPidPlsDef = {
 #endif
     0.0,    /* u old output state */
     0.0,    /* d old derivative state */
-    0.0,    /* Xd dead zone */
-    0.0     /* Xi integral zone */
+    0.01,    /* Xd dead zone */
+    0.02     /* Xi integral zone */
 };
 
 void csu_drv (void) {
@@ -325,7 +327,7 @@ void csu_start (csu_st mode) {
     if (CsuState == STOP) {
         start_cntrl();
         if (TaskU && Cfg.cmd.diag_wide
-            && !!Cfg.mode.group) task_u = true;
+            && !Cfg.mode.group) task_u = true;
     }
     if (pwm_state() != STOP) {
         stop_pwm(SOFT);
@@ -342,8 +344,8 @@ void csu_start (csu_st mode) {
         if (task_u && get_adc_res(ADC_MU) > TaskU) Error = ERR_SET;
         if (!Error) CHARGE_EN(ON);
     } else if (mode == DISCHARGE) {
-        DISCH_EN(ON);
         start_pwm(DISCHARGE);
+        DISCH_EN(ON);
         /* установить флаг для калибровки */
         Clb.id.bit.control = 1;
     }
@@ -496,15 +498,42 @@ static inline void csu_control (void) {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
         }
+        if (Cfg.bf2.bit.pulse) {
+            if (pwm_st != StateOld) {
+                SatU = false;
+                Pid_Ic = IcPidPlsDef;
+                Pid_U = UPidPlsDef;
+                Pid_Id = IdPidPlsDef;
+                StateOld = pwm_st;
+            }
+        }
         if (pwm_st == CHARGE) {
             float err;
-            if (Uerr > DIFF_U && Ierr > 0) {
+            if (Uerr > DIFF_U && Ierr > 0 && !SatU) {
                 err = Ierr;
                 InfTau = INF_TAU;
             } else {
                 if (Uerr < Ierr) err = Uerr;
                 else err = Ierr;
-                if (adc_i < STABLE_I && !Cfg.bf2.bit.pulse) {
+                if (Cfg.bf2.bit.pulse) {
+                    SatU = true;
+                    int8_t dx;
+                    if (err > 0.05) {
+                        dx = 1;
+                    } else if (err < -0.05) {
+                        dx = -1;
+                    } else {
+                        dx = 0;
+                    }
+                    if (adc_i > STABLE_I) PWM_I += dx;
+                    PWM_U += dx;
+                    if (PWM_I < PWM_0I) PWM_I = PWM_0I;
+                    else if (PWM_I > MAX_CK) PWM_I = MAX_CK;
+                    if (PWM_U < PWM_0U) PWM_U = PWM_0U;
+                    else if (PWM_U > MAX_CK) PWM_U = MAX_CK;
+                    return;
+                }
+                if (adc_i < STABLE_I/* && !Cfg.bf2.bit.pulse*/) {
                     InfTau = INF_TAU / K_FIN;
                     err *= K_FIN;
                     goto over_curr;
@@ -523,22 +552,6 @@ static inline void csu_control (void) {
                 PWM_I = pwm_duty(pid_r(&Pid_Id, Ierr), PWM_0D);
             }
         }      
-        if (Cfg.bf2.bit.pulse) {
-            if (pwm_st != StateOld) {
-                Pid_Ic = IcPidPlsDef;
-                Pid_U = UPidPlsDef;
-                Pid_Id = IdPidPlsDef;
-                StateOld = pwm_st;
-                stop_pwm(HARD);
-                if (pwm_st == DISCHARGE) {
-                    DISCH_EN(ON);
-                } else { // CHARGE
-                    CHARGE_EN(ON);
-                }
-                start_pwm(pwm_st);
-                return;
-            }
-        }
     }
 }
 

@@ -201,7 +201,7 @@ typedef enum {
 #define TMP_PRD         MS(1830)
 #define PWR_TIME        MS(160) // led power time
 #define CNTRL_T         MS(100) // control dicrete time
-#define BREAK_T         SEC(7)
+#define BREAK_T         SEC(30) // ToDo: вернуть на 5-7 сек!
 
 unsigned char U_align_st (void);
 uint16_t i_pwr_lim (uint16_t p, uint16_t i);

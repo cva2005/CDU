@@ -29,6 +29,7 @@ void main (void) {
     }
     while (true) {	  	
         adc_drv();
+        net_drv();
         csu_drv();
         net_drv();
     }
