@@ -31,18 +31,32 @@ static float Uerr, Ierr, InfTau;
 static uint16_t  dm_loss_cnt = 0;
 static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
 static bool InitF, SatU, InitCsu = false;
+static pid_t Pid_U;
+static pid_t Pid_Ic;
+static pid_t Pid_Id;
 #define K_P         0.0000055f  /* Kp; gain factor */
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define PLS_K_P     0.0002f
-#define PLS_T_I     5.0f
+#define PLS_K_P     0.00004f
+#define PLS_T_I     150.0f
 #define PLS_T_F     5.0f
-#define PLS_T_D     2.0f
-#define PLS_X_D     0.1f       /* Xd dead zone */
-#define PLS_X_I     0.2f       /* Xi integral zone */
-static pid_t Pid_U;
-static const pid_t UPidDef = {
+#define PLS_T_D     (PLS_T_I / 4.0)
+#define PLS_X_D     0.1f        /* Xd dead zone */
+#define PLS_X_I     0.1f        /* Xi integral zone */
+#define DK_P        0.00005f    /* Kp; gain factor */
+#define DT_I        3.0f        /* Ti integration time */
+#define DT_F        5.0f        /* Tf derivative filter tau */
+#define DT_D        0.001f      /* Td derivative time */
+#define DX_D        0.00f       /* Xd dead zone */
+#define DX_I        0.00f       /* Xi integral zone */
+#define PLS_DK_P    0.00007f
+#define PLS_DT_I    3.0f
+#define PLS_DT_F    5.0f
+#define PLS_DT_D    2.0f
+#define PLS_DX_D    0.01f       /* Xd dead zone */
+#define PLS_DX_I    0.02f       /* Xi integral zone */
+static const pid_t IcPidDef = {
     K_P,
     T_I,
     T_F,
@@ -57,39 +71,6 @@ static const pid_t UPidDef = {
 	0.0,    /* d old derivative state */
 	0.0,    /* Xd dead zone */
 	0.0     /* Xi integral zone */
-};
-static const pid_t UPidPlsDef = {
-    PLS_K_P,
-    PLS_T_I,
-    PLS_T_F,
-    PLS_T_D,
-	/* i[ST_SIZE] old input states */
-#if ST_SIZE == 2
-    0.0, 0.0,
-#else /* ST_SIZE == 4 */
-    0.0, 0.0, 0.0, 0.0,
-#endif
-	0.0,    /* u old output state */
-	0.0,    /* d old derivative state */
-	PLS_X_D,/* Xd dead zone */
-	PLS_X_I /* Xi integral zone */
-};
-static pid_t Pid_Ic;
-static const pid_t IcPidDef = {
-    K_P,
-    T_I,
-    T_F,
-    T_D,
-    /* i[ST_SIZE] old input states */
-#if ST_SIZE == 2
-    0.0, 0.0,
-#else /* ST_SIZE == 4 */
-    0.0, 0.0, 0.0, 0.0,
-#endif
-    0.0,    /* u old output state */
-    0.0,    /* d old derivative state */
-    0.0,    /* Xd dead zone */
-    0.0     /* Xi integral zone */
 };
 static const pid_t IcPidPlsDef = {
     PLS_K_P,
@@ -107,15 +88,6 @@ static const pid_t IcPidPlsDef = {
 	PLS_X_D,/* Xd dead zone */
 	PLS_X_I /* Xi integral zone */
 };
-#define DK_P        0.00005f /* Kp; gain factor */
-#define DT_I        3.0f     /* Ti integration time */
-#define DT_F        5.0f     /* Tf derivative filter tau */
-#define DT_D        0.001f   /* Td derivative time */
-#define PLS_DK_P    0.00007f
-#define PLS_DT_I    3.0f
-#define PLS_DT_F    5.0f
-#define PLS_DT_D    2.0f
-static pid_t Pid_Id;
 static const pid_t IdPidDef = {
     DK_P, /* Kp; gain factor */
     DT_I, /* Ti integration time */
@@ -129,10 +101,9 @@ static const pid_t IdPidDef = {
 #endif
     0.0,    /* u old output state */
     0.0,    /* d old derivative state */
-    0.0,    /* Xd dead zone */
-    0.0     /* Xi integral zone */
+    DX_D,   /* Xd dead zone */
+    DX_I    /* Xi integral zone */
 };
-
 static const pid_t IdPidPlsDef = {
     PLS_DK_P, /* Kp; gain factor */
     PLS_DT_I, /* Ti integration time */
@@ -144,10 +115,10 @@ static const pid_t IdPidPlsDef = {
 #else /* ST_SIZE == 4 */
     0.0, 0.0, 0.0, 0.0,
 #endif
-    0.0,    /* u old output state */
-    0.0,    /* d old derivative state */
-    0.01,    /* Xd dead zone */
-    0.02     /* Xi integral zone */
+    0.0,        /* u old output state */
+    0.0,        /* d old derivative state */
+    PLS_DT_F,   /* Tf derivative filter tau */
+    PLS_DT_D,   /* Td derivative time */
 };
 
 void csu_drv (void) {
@@ -481,6 +452,12 @@ static inline void csu_control (void) {
             err_i = i_pwr_lim(Cfg.P_maxW, TaskId);
             err_i -= get_adc_res(ADC_DI);
         }
+        if (Cfg.bf2.bit.pulse) {
+            if (pwm_st != StateOld) {
+                StateOld = pwm_st;
+                InitF = false;
+            }
+        }
         if (!InitF) {
             SatU = false;
             InitF = true;
@@ -488,24 +465,15 @@ static inline void csu_control (void) {
             Ierr = (float)err_i;
             InfTau = INF_TAU;
             if (Cfg.bf2.bit.pulse) {
-                StateOld = STOP;
+                Pid_Ic = Pid_U = IcPidPlsDef;
+                Pid_Id = IdPidPlsDef;
             } else {
-                Pid_Ic = IcPidDef;
-                Pid_U = UPidDef;
+                Pid_Ic = Pid_U = IcPidDef;
                 Pid_Id = IdPidDef;
             }
         } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
-        }
-        if (Cfg.bf2.bit.pulse) {
-            if (pwm_st != StateOld) {
-                SatU = false;
-                Pid_Ic = IcPidPlsDef;
-                Pid_U = UPidPlsDef;
-                Pid_Id = IdPidPlsDef;
-                StateOld = pwm_st;
-            }
         }
         if (pwm_st == CHARGE) {
             float err;
