@@ -34,28 +34,16 @@ static bool InitF, SatU, InitCsu = false;
 static pid_t Pid_U;
 static pid_t Pid_Ic;
 static pid_t Pid_Id;
-#define K_P         0.0000055f  /* Kp; gain factor */
+#define K_P         0.00001f    /* Kp; gain factor */
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define PLS_K_P     0.00004f
-#define PLS_T_I     150.0f
-#define PLS_T_F     5.0f
-#define PLS_T_D     (PLS_T_I / 4.0)
-#define PLS_X_D     0.1f        /* Xd dead zone */
-#define PLS_X_I     0.1f        /* Xi integral zone */
-#define DK_P        0.00005f    /* Kp; gain factor */
-#define DT_I        3.0f        /* Ti integration time */
+#define DK_P        0.00007f    /* Kp; gain factor */
+#define DT_I        5.0f        /* Ti integration time */
 #define DT_F        5.0f        /* Tf derivative filter tau */
-#define DT_D        0.001f      /* Td derivative time */
-#define DX_D        0.00f       /* Xd dead zone */
-#define DX_I        0.00f       /* Xi integral zone */
-#define PLS_DK_P    0.00007f
-#define PLS_DT_I    3.0f
-#define PLS_DT_F    5.0f
-#define PLS_DT_D    2.0f
-#define PLS_DX_D    0.01f       /* Xd dead zone */
-#define PLS_DX_I    0.02f       /* Xi integral zone */
+#define DT_D        0.2f        /* Td derivative time */
+#define XI_K        1.5f        /* Xi integral zone factor */
+#define XD          0.1f        /* Xd dead zone */
 static const pid_t IcPidDef = {
     K_P,
     T_I,
@@ -69,24 +57,8 @@ static const pid_t IcPidDef = {
 #endif
 	0.0,    /* u old output state */
 	0.0,    /* d old derivative state */
-	0.0,    /* Xd dead zone */
+	XD,    /* Xd dead zone */
 	0.0     /* Xi integral zone */
-};
-static const pid_t IcPidPlsDef = {
-    PLS_K_P,
-    PLS_T_I,
-    PLS_T_F,
-    PLS_T_D,
-    /* i[ST_SIZE] old input states */
-#if ST_SIZE == 2
-    0.0, 0.0,
-#else /* ST_SIZE == 4 */
-    0.0, 0.0, 0.0, 0.0,
-#endif
-    0.0,    /* u old output state */
-    0.0,    /* d old derivative state */
-	PLS_X_D,/* Xd dead zone */
-	PLS_X_I /* Xi integral zone */
 };
 static const pid_t IdPidDef = {
     DK_P, /* Kp; gain factor */
@@ -101,24 +73,8 @@ static const pid_t IdPidDef = {
 #endif
     0.0,    /* u old output state */
     0.0,    /* d old derivative state */
-    DX_D,   /* Xd dead zone */
-    DX_I    /* Xi integral zone */
-};
-static const pid_t IdPidPlsDef = {
-    PLS_DK_P, /* Kp; gain factor */
-    PLS_DT_I, /* Ti integration time */
-    PLS_DT_F, /* Tf derivative filter tau */
-    PLS_DT_D, /* Td derivative time */
-    /* i[ST_SIZE] old input states */
-#if ST_SIZE == 2
-    0.0, 0.0,
-#else /* ST_SIZE == 4 */
-    0.0, 0.0, 0.0, 0.0,
-#endif
-    0.0,        /* u old output state */
-    0.0,        /* d old derivative state */
-    PLS_DT_F,   /* Tf derivative filter tau */
-    PLS_DT_D,   /* Td derivative time */
+	XD,    /* Xd dead zone */
+	0.0     /* Xi integral zone */
 };
 
 void csu_drv (void) {
@@ -464,14 +420,11 @@ static inline void csu_control (void) {
             Uerr = (float)err_u;
             Ierr = (float)err_i;
             InfTau = INF_TAU;
-            if (Cfg.bf2.bit.pulse) {
-                Pid_Ic = Pid_U = IcPidPlsDef;
-                Pid_Id = IdPidPlsDef;
-            } else {
-                Pid_Ic = Pid_U = IcPidDef;
-                Pid_Id = IdPidDef;
-            }
-        } else {
+            Pid_Ic = Pid_U = IcPidDef;
+            Pid_Id = IdPidDef;
+            Pid_Id.Xi = (float)TaskId / XI_K;
+            Pid_Ic.Xi = (float)TaskI / XI_K;
+         } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
         }
@@ -483,25 +436,7 @@ static inline void csu_control (void) {
             } else {
                 if (Uerr < Ierr) err = Uerr;
                 else err = Ierr;
-                if (Cfg.bf2.bit.pulse) {
-                    SatU = true;
-                    int8_t dx;
-                    if (err > 0.05) {
-                        dx = 1;
-                    } else if (err < -0.05) {
-                        dx = -1;
-                    } else {
-                        dx = 0;
-                    }
-                    if (adc_i > STABLE_I) PWM_I += dx;
-                    PWM_U += dx;
-                    if (PWM_I < PWM_0I) PWM_I = PWM_0I;
-                    else if (PWM_I > MAX_CK) PWM_I = MAX_CK;
-                    if (PWM_U < PWM_0U) PWM_U = PWM_0U;
-                    else if (PWM_U > MAX_CK) PWM_U = MAX_CK;
-                    return;
-                }
-                if (adc_i < STABLE_I/* && !Cfg.bf2.bit.pulse*/) {
+                if (adc_i < STABLE_I) {
                     InfTau = INF_TAU / K_FIN;
                     err *= K_FIN;
                     goto over_curr;
