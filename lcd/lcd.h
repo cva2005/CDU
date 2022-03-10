@@ -20,57 +20,46 @@ typedef enum {
     VOLT    = 3
 } lcd_st;
 
-
-//#define Mode_pos  6
-//#define Dsf_pos  9
-#define T1_P        3
-#define T2_P        13
-#define I_P         2
-#define U_P         3
-#define Is_P        9
-#define Us_P        9
-#define T_P         2
-#define S_P         17
-#define C_P         14
-//#define Time_pos  17
-
-#define PR_NUM      5 //число параметров для редактирования
-
-//#define pr_I 0x80
-//#define pr_U 0x8A
-//#define pr_Set 0x93
-#define pr_mode 0x80
-#define pr_time 0xD4
-//#define pr_z_time 0xC0
-//#define pr_r_time 0xCA
-#define pr_I 0xC0 
-//#define pr_r_I 0x9E
-#define pr_U 0x94
-//#define pr_r_U 0xDE
-#define pr_cycle 0x8F
+#define SOFTW_VER       "v.9.00"
+#define T1_P            3
+#define T2_P            13
+#define T_DP            (T2_P - T1_P)
+#define I_P             2
+#define U_P             3
+#define Is_P            9
+#define Us_P            9
+#define T_P             2
+#define S_P             17
+#define C_P             14
+#define PR_NUM          5 //число параметров для редактирования
+#define pr_mode         0x80
+#define pr_time         0xD4
+#define pr_I            0xC0 
+#define pr_U            0x94
+#define pr_cycle        0x8F
 
 #ifdef JTAG_DBGU
-    #define lcd_wr_set(...)
-    #define lcd_clear(...)
-    #define lcd_update_set(...)
-    #define lcd_wr_connect(...)
-    #define lcd_stop_msg(...)
-    #define lcd_start(...)
-    #define lcd_mode_ch(...)
-    #define lcd_conn_msg(...) true
-    #define lcd_update_work(...)
-    #define lcd_tick_sec(...)
+#define lcd_wr_set(...)
+#define lcd_clear(...)
+#define lcd_update_set(...)
+#define lcd_wr_connect(...)
+#define lcd_stop_msg(...)
+#define lcd_start(...)
+#define lcd_mode_ch(...)
+#define lcd_conn_msg(...) true
+#define lcd_update_work(...)
+#define lcd_tick_sec(...)
 #else
-    void lcd_wr_set(void);
-    void lcd_clear (void);
-    void lcd_update_set (void);
-    void lcd_wr_connect (bool pc);
-    void lcd_stop_msg (void);
-    void lcd_start (void);
-    void lcd_mode_ch (void);
-    bool lcd_conn_msg (void);
-    void lcd_update_work (void);
-    void lcd_tick_sec (void);
+void lcd_wr_set(void);
+void lcd_clear (void);
+void lcd_update_set (void);
+void lcd_wr_connect (bool pc);
+void lcd_stop_msg (void);
+void lcd_start (void);
+void lcd_mode_ch (void);
+bool lcd_conn_msg (void);
+void lcd_update_work (void);
+void lcd_tick_sec (void);
 #endif
 
 #ifdef __cplusplus

@@ -13,6 +13,9 @@ static inline void key_U_up (void);
 static inline void key_U_dw (void);
 static inline void key_I_up (void);
 static inline void key_I_dw (void);
+static void change_ic (int8_t add);
+static void change_id (int8_t add);
+static void change_u (int8_t add);
 
 static stime_t KeyDel, KeyPress;
 static uint8_t Step = 1, Cursor_point = 0;
@@ -64,7 +67,7 @@ void check_key (void) {
 }
 
 void key_power (void) {
-    if (CsuState == STOP && !Error) {
+    if (CsuState == STOP && !get_csu_err()) {
         SelfCtrl = true;
         start_mtd(1);
     } else {
@@ -99,19 +102,13 @@ static void key_up_dw (up_dw_t up_dw) {
             goto set_del_320;
         case pr_I:
             if (SetMode == DISCHARGE) {
-                TaskId += stp;
-                if (TaskId > MaxId) TaskId = ID_A(0,2);
-                else if (TaskId < ID_A(0,2)) TaskId = MaxId;
+                change_id(stp);
             } else {
-                TaskI += stp;
-                if (TaskI > MaxI) TaskI = I_A(0,2);
-                else if (TaskI < I_A(0,2)) TaskI = MaxI;
+                change_ic(stp);
             }
             break;
         case pr_U:
-            TaskU += stp;
-            if (TaskU > MaxU) TaskU = U_V(0,2);
-            else if (TaskU < U_V(0,2)) TaskU = MaxU;
+            change_u(stp);
             break;
         case pr_time:
             if (up_dw == UP_PRESS) {
@@ -141,23 +138,40 @@ static void key_up_dw (up_dw_t up_dw) {
         lcd_update_set();
     } else {
         if (SetMode == DISCHARGE) {
-            TaskId += (int8_t)up_dw;
-            if (TaskId > MaxId) TaskId = ID_A(0,2);
-            else if (TaskId < ID_A(0,2)) TaskId = MaxId;
+            change_id((int8_t)up_dw);
         } else {
             if (I_ST) {
-                TaskI += (int8_t)up_dw;
-                if (TaskI > MaxI) TaskI = I_A(0,2);
-                else if (TaskI < I_A(0,2)) TaskI = MaxI;
+                change_ic((int8_t)up_dw);
             } else {
-                TaskU += (int8_t)up_dw;
-                if (TaskU > MaxU) TaskU = U_V(0,2);
-                else if (TaskU < U_V(0,2)) TaskU = MaxU;
-
+                change_u((int8_t)up_dw);
             }
         }
         delay_ms(3); // ToDo: remove satic delay!
     }
+}
+
+static void change_u (int8_t add) {
+    uint16_t task = get_task_u();
+    task += add;
+    if (task > MaxU) task = U_V(0,2);
+    else if (task < U_V(0,2)) task = MaxU;
+    set_task_u(task);
+}
+
+static void change_ic (int8_t add) {
+    uint16_t task = get_task_ic();
+    task += add;
+    if (task > MaxI) task = I_A(0,2);
+    else if (task < I_A(0,2)) task = MaxI;
+    set_task_ic(task);
+}
+
+static void change_id (int8_t add) {
+    uint16_t task = get_task_id();
+    task += add;
+    if (task > MaxId) task = ID_A(0,2);
+    else if (task < ID_A(0,2)) task = MaxId;
+    set_task_id(task);
 }
 
 static inline void key_power_led (void) {

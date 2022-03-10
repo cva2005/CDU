@@ -2164,6 +2164,9 @@
             <name>$PROJ_DIR$\csu\csu.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\csu\csu_imp.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\csu\mtd.c</name>
         </file>
         <file>
@@ -2282,6 +2285,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\sys\filter.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\sys\lnkm32as.xcl</name>
         </file>
         <file>
             <name>$PROJ_DIR$\sys\main.c</name>

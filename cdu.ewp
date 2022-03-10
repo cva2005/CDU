@@ -257,7 +257,6 @@
                     <state>SYS_TRM0</state>
                     <state>UART_DS_MODE</state>
                     <state>SPI_POOL</state>
-                    <state>JTAG_DBGU</state>
                 </option>
                 <option>
                     <name>CCPreprocFile</name>
@@ -500,7 +499,7 @@
                 <option>
                     <name>CCOptStrategy</name>
                     <version>0</version>
-                    <state>2</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCOptLevel</name>
@@ -773,11 +772,11 @@
                 </option>
                 <option>
                     <name>XclOverride</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>XclFile</name>
-                    <state>$TOOLKIT_DIR$\config\lnkm32as.xcl</state>
+                    <state>$PROJ_DIR$\sys\lnkm32as.xcl</state>
                 </option>
                 <option>
                     <name>XclFileSlave</name>
@@ -2122,6 +2121,9 @@
             <name>$PROJ_DIR$\csu\csu.h</name>
         </file>
         <file>
+            <name>$PROJ_DIR$\csu\csu_imp.h</name>
+        </file>
+        <file>
             <name>$PROJ_DIR$\csu\mtd.c</name>
         </file>
         <file>
@@ -2240,6 +2242,9 @@
         </file>
         <file>
             <name>$PROJ_DIR$\sys\filter.c</name>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\sys\lnkm32as.xcl</name>
         </file>
         <file>
             <name>$PROJ_DIR$\sys\main.c</name>

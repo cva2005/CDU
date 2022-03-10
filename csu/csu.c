@@ -7,6 +7,7 @@
 #include "pid/pid_r.h"
 #include "key/key.h"
 #include "csu/csu.h"
+#include "csu/csu_imp.h"
 
 static inline void check_auto_start (void);
 static inline void csu_control (void);
@@ -17,19 +18,20 @@ static inline void read_tmp (void);
 static void out_off (void);
 
 ast_t AutoStr;
-int16_t Tmp[T_N];
 uint16_t id_dw_Clb, id_up_Clb;
 uint16_t ADC_O[ADC_CH]; //данные АЦП без изменений (бе вычета коэфициента В)
 bool pLim = false, LedPwr;
 bool SelfCtrl = false; //упр-е мет. заряда самостоятельно или удалённо
-err_t Error = NO_ERR;
 csu_st CsuState, SetMode = STOP, StateOld;
+static int16_t Tmp[T_N];
+static uint16_t TaskI, TaskU, TaskId;
+static err_t Error = NO_ERR;
 static stime_t LcdRefr, AlarmDel, FanTime;
 static uint8_t ErrT[T_N] = {0, 0}; /* error count for T sensors */
 static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 static float Uerr, Ierr, InfTau;
 static uint16_t  dm_loss_cnt = 0;
-static uint8_t ERR_Ext = 0, OUT_err_cnt = 0;
+static uint8_t ERR_Ext = 0, OutErrCnt = 0;
 static bool InitF, SatU, InitCsu = false;
 static pid_t Pid_U;
 static pid_t Pid_Ic;
@@ -191,30 +193,30 @@ void calc_cfg (void) {
     } else {
         if (Cfg.maxId > MAX_ID_EXT1) Cfg.maxId = MAX_ID_EXT1;
     }
-    MaxId = (uint32_t)Cfg.maxId * 100000UL / Cfg.K_Id;
+    MaxId = (uint32_t)Cfg.maxId * D100K / Cfg.K_Id;
     if (Cfg.mode.group) MaxId = MaxId + I_A(1,0);
-    if (Cfg.maxU > 4000) Cfg.maxU = 4000;
-    MaxU = (uint32_t)Cfg.maxU * 100000UL / Cfg.K_U;
+    if (Cfg.maxU > U_MAX_VAL) Cfg.maxU = U_MAX_VAL;
+    MaxU = (uint32_t)Cfg.maxU * D100K / Cfg.K_U;
     if (Cfg.dmSlave > 2) Cfg.dmSlave = 2;
     if (Cfg.dmSlave > 0) Cfg.mode.ext_id = 1;
     else Cfg.mode.ext_id = 0;
     ADC_O[ADC_MU] = Cfg.B[ADC_MU];
     ADC_O[ADC_MI] = Cfg.B[ADC_MI];
-    AutoStr.u_pwm = ((uint32_t)AutoStr.u_set * 100000UL) / Cfg.K_U;
+    AutoStr.u_pwm = ((uint32_t)AutoStr.u_set * D100K) / Cfg.K_U;
     AutoStr.err_cnt = Cfg.cnt_set;
     if (Cfg.bf2.bit.astart) Cfg.mode.dbg = 1;
     id_dw_Clb = ID_A(2,0);
     if (Cfg.dmSlave == 0) {
         id_up_Clb = HI_Id_EXT0;
-        if (Cfg.P_maxW > 2500) Cfg.P_maxW = 2500;
+        if (Cfg.P_maxW > P_MAX_EXT0) Cfg.P_maxW = P_MAX_EXT0;
 	}
     if (Cfg.dmSlave == 1) {
         id_up_Clb = HI_Id_EXT1;
-        if (Cfg.P_maxW > 8000) Cfg.P_maxW = 8000;
+        if (Cfg.P_maxW > P_MAX_EXT1) Cfg.P_maxW = P_MAX_EXT1;
 	}
     if (Cfg.dmSlave > 1) {
         id_up_Clb = HI_Id_EXT2;
-        if (Cfg.P_maxW > 14000) Cfg.P_maxW = 14000;
+        if (Cfg.P_maxW > P_MAX_EXT2) Cfg.P_maxW = P_MAX_EXT2;
 	}
     if (id_up_Clb > MaxId) id_up_Clb = MaxId >> 1;
     if (read_clb() == false) {
@@ -239,11 +241,11 @@ void calc_cfg (void) {
         Clb.id.byte = 0;
 	}
     lcd_clear();
-    if (Cfg.mode.lcd) Init_WH2004(1);
-    else Init_WH2004(0);	
+    if (Cfg.mode.lcd) Init_WH2004(true);
+    else Init_WH2004(false);	
     if (Cfg.mode.led) {
-        DDRC = 0xFF;
-        PORTC = 0xFF;	
+        PORT_AS_OUT(C);
+        SET_ALL(C);	
         LedPwrTime = get_fin_time(PWR_TIME);
 	}
 }
@@ -308,6 +310,40 @@ uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
         }
     }
     return i;
+}
+
+err_t get_csu_err (void) {
+    return Error;
+}
+
+void set_csu_err (err_t err) {
+    Error = err;
+}
+
+void set_task_ic (uint16_t task) {
+    TaskI = task;
+}
+
+void set_task_id (uint16_t task) {
+    TaskId = task;
+}
+void set_task_u (uint16_t task) {
+    TaskU = task;
+}
+uint16_t get_task_ic (void) {
+    return TaskI;
+}
+
+uint16_t get_task_id (void) {
+    return TaskId;
+}
+
+uint16_t get_task_u (void) {
+    return TaskU;
+}
+
+int16_t get_csu_t (tch_t ch) {
+    return Tmp[ch];
 }
 
 static inline err_t err_check (void) {
@@ -380,11 +416,11 @@ static inline err_t err_check (void) {
         /* Если преобразователь выключен и блок работает не в группе */
             if (get_adc_res(ADC_MU) > U_V(0,8) &&
                 get_adc_res(ADC_MUp) < U_V(0,2)) {
-                if (OUT_err_cnt < 250) OUT_err_cnt++;
-            } else OUT_err_cnt = 0;
+                if (OutErrCnt < OUT_ERR_MAX) OutErrCnt++;
+            } else OutErrCnt = 0;
             /* если на выходе после реле напряжение есть,
                а до реле напряжения нет, значит КЗ выхода */
-            if (OUT_err_cnt > 2) return ERR_OUT;
+            if (OutErrCnt == OUT_ERR_MAX) return ERR_OUT;
         }
         if (adc_error()) return ERR_ADC; /* не удаётся прочитать значение АЦП */
     }

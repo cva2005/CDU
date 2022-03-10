@@ -4,7 +4,7 @@
 #include "csu/csu.h"
 
 #if !JTAG_DBGU
-void Init_WH2004(uint8_t enable)
+void Init_WH2004(bool enable)
 {
 //DATA_OUT = 0;
 //-----------------------------Инициализация-------------------------------
@@ -93,7 +93,7 @@ delay_ns;
 return(0);
 }
 
-void WH2004_string_wr(char *string, uint8_t adr, uint8_tr nsym)
+void WH2004_string_wr(char *string, uint8_t adr, uint8_t nsym)
 {
     uint8_t cnt=0;
 

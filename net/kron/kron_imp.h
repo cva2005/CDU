@@ -10,6 +10,11 @@
 extern "C" {
 #endif
 
+#define HW_VER              8
+#define HW_MODE             40
+#define SW_VER              9
+#define SW_MODE             00
+
 #define KRON_RX_MIN         4 /* минимальная длина кадра */
 #define KRON_RX_MAX         250 /* максимальная длина кадра */
 #define CHAR_TS             0x5A /* символ начала кадра */

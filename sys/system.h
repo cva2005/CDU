@@ -80,6 +80,8 @@ typedef enum {
 #define SET_AS_OUTS(port, pins) __set_as_outs(port, pins)
 #define __set_pins(port, pins) PORT##port |= pins
 #define SET_PINS(port, pins) __set_pins(port, pins)
+#define __set_all(port) PORT##port = 0xFF
+#define SET_ALL(port) __set_all(port)
 #define __clr_pins(port, pins) PORT##port &= ~pins
 #define CLR_PINS(port, pins) __clr_pins(port, pins)
 #define __pins(port) PIN##port
@@ -134,9 +136,9 @@ typedef enum {
 #define D1K     1000UL
 #define D10K    10000UL
 #define D100K   100000UL
-#define D1M     10000000UL
-#define D10M    100000000UL
-#define D100M   1000000000UL
+#define D1M     1000000UL
+#define D10M    10000000UL
+#define D100M   100000000UL
 
 #define SYS_INIT_CODE   0x00
 #define MCP_ERROR_CODE  12

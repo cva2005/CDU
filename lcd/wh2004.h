@@ -24,7 +24,7 @@ extern "C" {
 #define WH2004_data_wr(...)
 #define WH2004_string_wr(...)
 #else
-void Init_WH2004 (uint8_t enable);
+void Init_WH2004 (bool enable);
 uint8_t WH2004_wait_ready (void);
 uint8_t WH2004_inst_wr (uint8_t inst);
 uint8_t WH2004_data_wr (uint8_t data);

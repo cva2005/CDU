@@ -1,0 +1,128 @@
+/*                      - lnkm32as.xcl -
+ *
+ *   XLINK command file for the ICCAVR C-compiler using the --cpu=m32a, -ms
+ *   options. Segments are defined for an ATmega32A.
+ *
+ *   Usage: xlink your_file(s) -f lnkm32as
+ *
+ *   File version: $Revision$
+ */
+
+/*=================== CONSTANTS =============================*/
+/* 
+ * Constants used in the ranges down below, 
+ * Do not change these lines, 
+ * if it is not stated otherwise 
+ */
+
+/* Code (flash) segments */
+-D_..X_INTVEC_SIZE=54   /*  21 Interrupt vectors * 4 bytes each */
+-D_..X_FLASH_END=7FFF   /* End of flash memory */
+-D_..X_FLASH_TEND=FF    /* End of tiny flash memory */
+-D_..X_FLASH_NEND=_..X_FLASH_END  /* End of near flash memory */
+
+/* Internal data memory */
+
+-D_..X_SRAM_BASE=60   /* Start of ram memory */
+-D_..X_SRAM_END=85F    /* End of ram memory */
+
+-D_..X_SRAM_TBASE=60     /* Start of tiny ram memory */
+-D_..X_SRAM_TSIZE=A0     /* Size of the tiny ram memory */
+
+/* Internal EEPROM */
+-D_..X_EEPROM_START=0
+-D_..X_EEPROM_END=3FF   /* End of eeprom memory */
+/*==================== END OF CONSTANTS =====================*/
+
+
+/*
+ * Modify the lines below to alter the size of the RSTACK, CSTACK and HEAP
+ * segments. These need to be fine tuned to suit your specific application.
+ * The '_..X_' prefix is used by C-SPY as an indication that the label should
+ * not be displayed in the dissassembly window.
+ */
+-D_..X_CSTACK_SIZE=40       /* 64 bytes for auto variables and saved registers. */
+-D_..X_RSTACK_SIZE=20        /* 32 bytes for return addresses, equivalent to 16 */
+                             /* levels of calls, including interrupts. */
+-D_..X_HEAP_SIZE=40         /* 64 bytes of heap. */
+-D_..X_NEAR_HEAP_SIZE=40    /* 64 bytes of heap. */
+
+/* Define CPU */
+-ca90
+
+/*
+ * The following segments are located in the internal memory of
+ * the ATmega32A. Do not change these lines.
+ */
+
+/* Code memory */
+-Z(CODE)INTVEC=0-(_..X_INTVEC_SIZE-1) 
+
+/* Fill unused interrupt vector's with RETI */
+-h'1895'(CODE)0-(_..X_INTVEC_SIZE-1)
+--global_fill
+-D_..X_FLASH_BASE=_..X_INTVEC_SIZE
+
+-Z(CODE)TINY_F=_..X_FLASH_BASE-_..X_FLASH_TEND
+-Z(CODE)NEAR_F=_..X_FLASH_BASE-_..X_FLASH_NEND
+-Z(CODE)SWITCH=_..X_FLASH_BASE-_..X_FLASH_NEND
+-Z(CODE)DIFUNCT=_..X_FLASH_BASE-_..X_FLASH_NEND
+-Z(CODE)CODE=_..X_FLASH_BASE-_..X_FLASH_END
+-Z(CODE)INITTAB=_..X_FLASH_BASE-_..X_FLASH_END
+-Z(CODE)TINY_ID=_..X_FLASH_BASE-_..X_FLASH_END
+-Z(CODE)NEAR_ID=_..X_FLASH_BASE-_..X_FLASH_END
+-Z(CODE)CHECKSUM#_..X_FLASH_END
+
+/* Internal data memory */
+-Z(DATA)TINY_I,TINY_Z,TINY_N=_..X_SRAM_TBASE:+_..X_SRAM_TSIZE
+-Z(DATA)NEAR_I,NEAR_Z,NEAR_N=_..X_SRAM_BASE-_..X_SRAM_END
+
+-Z(DATA)RSTACK+_..X_RSTACK_SIZE=_..X_SRAM_BASE-_..X_SRAM_END
+-Z(DATA)CSTACK+_..X_CSTACK_SIZE=_..X_SRAM_BASE-_..X_SRAM_END
+
+-Z(DATA)HEAP+_..X_HEAP_SIZE=_..X_SRAM_BASE-_..X_SRAM_END
+-Z(DATA)IOSTREAM_N#_..X_SRAM_BASE-_..X_SRAM_END
+-Z(DATA)NEAR_HEAP+_..X_NEAR_HEAP_SIZE=_..X_SRAM_BASE-_..X_SRAM_END
+
+/* Internal eeprom memory */
+-Z(XDATA)EEPROM_I,EEPROM_N=_..X_EEPROM_START-_..X_EEPROM_END
+
+
+// The compiler and linker now automatically includes the smallest set of
+// run-time library string formatting support possible for functions such as
+// printf/scanf, based on which formatters that are actually used in the
+// application. To revert to the old behavior of specifying the level of
+// support manually, the default linker files needs to be modified. Please
+// see comments inside the linker files for more information on which
+// modifications that are needed.
+// 
+// /* Select reduced "printf" support to reduce library size.
+//    See configuration section in manual concerning printf/sprintf. */
+// 
+// /*Dlib*/
+// -e_PrintfSmall=_Printf
+// 
+// /*Clib*/
+// -e_small_write=_formatted_write
+// 
+// /*Dlib and Clib*/
+// -e_small_write_P=_formatted_write_P
+// 
+// /* Disable floating-point support in "scanf" to reduce library size.
+//    See configuration section in manual concerning scanf/sscanf */
+// 
+// /*Dlib*/
+// -e_ScanfSmall=_Scanf
+// 
+// /*Clib*/
+// -e_medium_read=_formatted_read
+// 
+// /*Dlib and Clib*/
+// -e_medium_read_P=_formatted_read_P
+
+/* Suppress one warning which is not relevant for this processor */
+-w29
+
+/* Code will now reside in file aout.a90 or aout.d90, unless -o is specified */
+/* .d90 is the default if debug system is linked (option -r) */
+/* .a90 is the default without debugging. Default format is -Fmotorola */

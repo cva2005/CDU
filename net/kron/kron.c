@@ -115,9 +115,9 @@ static void frame_parse (void) {
                                 if (rcmd == PULSE) {
                                     key_power();
                                 } else {
-                                    TaskI = preTaskI; //установить зарядный ток
-                                    TaskId = preTaskId; //установить разрядный ток
-                                    TaskU = preTaskU; //установить напряжение
+                                    set_task_ic(preTaskI); //установить зарядный ток
+                                    set_task_id(preTaskId); //установить разрядный ток
+                                    set_task_u(preTaskU); //установить напряжение
                                     //если изменилась комнада, то запустить блок с новой командой
                                     if (CsuState != rcmd) {
                                         SelfCtrl = false;
@@ -126,7 +126,7 @@ static void frame_parse (void) {
                                 }
                             }
                         } else {
-                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || Error) {
+                            if (((CsuState | IS_RELAY_EN()) != rd.rdata.cmd) || get_csu_err()) {
                                 csu_stop(rcmd);
                             }
                         }	
@@ -237,13 +237,13 @@ static void tx_reply (void) {
         /* Если ШИМ остановлен, то добавить сосотяние реле */
         if (pwm_st == STOP) pwm_st |= IS_RELAY_EN();
         td.tdata.oper = pwm_st;
-        td.tdata.error = Error;
+        td.tdata.error = get_csu_err();
         if (pwm_state() == DISCHARGE) td.tdata.I = ADC_O[ADC_DI];
         else td.tdata.I = ADC_O[ADC_MI];
         td.tdata.U = ADC_O[ADC_MU];
         td.tdata.Ip = ADC_O[ADC_MUp];
-        td.tdata.t1 = Tmp[0];
-        td.tdata.t2 = Tmp[1];
+        td.tdata.t1 = get_csu_t(TCH0);
+        td.tdata.t2 = get_csu_t(TCH1);
         len = sizeof(tdata_t);
         if (!Cfg.cmd.in_data) len--;
         else td.tdata.In_st = (KEY_MASK ^ 0xF8) >> 3;

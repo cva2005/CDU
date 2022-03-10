@@ -4,6 +4,7 @@
 #include "pwm/pwm.h"
 #include "csu/csu.h"
 #include "csu/mtd.h"
+#include "key/key.h"
 #include "lcd.h"
 
 #ifndef JTAG_DBGU
@@ -22,7 +23,7 @@ static char Lcd[LN][SL];
 static const uint8_t LADDR[LN] = {LA_0, LA_1, LA_2, LA_3};
 static lcd_st lcdState = IDLE;
 uint16_t AdcOld[4];
-int16_t TmpOld[TCH];
+int16_t TmpOld[T_N];
 static int8_t cOld, sOld;
 lcd_mode_t LcdMode = TIME_MODE;
 cap_t Cap; // Capacity of Battery
@@ -38,7 +39,7 @@ void lcd_tick_sec (void) {
 }
 
 void lcd_start (void) {
-    if (Cfg.bf1.LCD_ON) {
+    if (Cfg.mode.lcd) {
         lcd_wr_connect(false);
         lcd_wr_set();
     }
@@ -100,7 +101,7 @@ void lcd_wr_connect (bool pc) {
 #define mt Mtd.fld.end // metod time fields
 void lcd_update_set (void) {
     uint8_t i;
-    if (!Cfg.bf1.LCD_ON) return;	
+    if (!Cfg.mode.lcd) return;	
     if (LcdMode == TEMP_MODE) lcd_mode_ch();
     /* отображение названия метода */
     memcpy(&Lcd[0][2], Mtd.fld.name, sizeof(Mtd.fld.name));
@@ -113,9 +114,9 @@ void lcd_update_set (void) {
     Cap.C = Cap.dC = 0;
     calc_cap(0, get_adc_res(ADC_MI), Cfg.K_I, &Lcd[3][C_P]);
     /* отображение тока и напряжения */
-    if (SetMode == DISCHARGE) calc_prm(TaskId, Cfg.K_Id, &Lcd[1][Is_P]);
-    else calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
-    calc_prm(TaskU, Cfg.K_U, &Lcd[2][Us_P]);
+    if (SetMode == DISCHARGE) calc_prm(get_task_id(), Cfg.K_Id, &Lcd[1][Is_P]);
+    else calc_prm(get_task_ic(), Cfg.K_I , &Lcd[1][Is_P]);
+    calc_prm(get_task_u(), Cfg.K_U, &Lcd[2][Us_P]);
     for (i = 0; i < LN; i++) WH2004_string_wr(Lcd[i], LADDR[i], SL);
     WH2004_inst_wr(cursor_pos());
     WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=1 cursor on, B=1 blinking on)
@@ -130,29 +131,30 @@ void lcd_stop_msg (void) {
 }
 
 void lcd_update_work (void) {
-    if (Cfg.bf1.LCD_ON == 0) return;
+    if (!Cfg.mode.lcd) return;
     WH2004_inst_wr(0x0C);//отключить курсор: Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
+    csu_st pwm_st = pwm_state();
     /* ОТОБРАЖЕНИЕ ВЫХОДНОГО ТОКА */
     int16_t adc_res;
-    if (PwmStatus == DISCHARGE) { //если мы в режиме разряда, значит ток надо расчитывать по другому
+    if (pwm_st == DISCHARGE) { //если мы в режиме разряда, значит ток надо расчитывать по другому
         adc_res = get_adc_res(ADC_DI);
         if (adc_res != AdcOld[ADC_MI]) {
             Lcd[1][I_P]='-';
             AdcOld[ADC_MI] = adc_res;
             calc_prm(adc_res, Cfg.K_Id, &Lcd[1][I_P+1]);
             WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
-            calc_prm(TaskId , Cfg.K_Id , &Lcd[1][Is_P]);
+            calc_prm(get_task_id(), Cfg.K_Id , &Lcd[1][Is_P]);
             WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить
         }		
     } else {
         adc_res = get_adc_res(ADC_MI);
-        if (adc_res !=AdcOld[ADC_MI]) { //если значение тока изменилось
+        if (adc_res != AdcOld[ADC_MI]) { //если значение тока изменилось
             Lcd[1][I_P]='+';
             AdcOld[ADC_MI] = adc_res;
             calc_prm(adc_res, Cfg.K_I, &Lcd[1][I_P+1]);
             WH2004_string_wr(&Lcd[1][I_P],LA_1+I_P, 5); //отобразить
-            if (PwmStatus != STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в lcd_wr_set
-                calc_prm(TaskI , Cfg.K_I , &Lcd[1][Is_P]);
+            if (pwm_state() != STOP) { //Если блок не запущен, то не обнолвять заданные значения, т.к. они зависят от выбранного режима и обновляются в lcd_wr_set
+                calc_prm(get_task_ic(), Cfg.K_I , &Lcd[1][Is_P]);
                 WH2004_string_wr(&Lcd[1][Is_P],LA_1+Is_P, 4); //отобразить	
             }
         }
@@ -166,9 +168,9 @@ void lcd_update_work (void) {
         }
     }
     /* ОТОБРАЖЕНИЕ ТЕКУЩЕГО ВРЕМЕНИ & CAPACITY */
-    if (PwmStatus != STOP) {
+    if (pwm_st != STOP) {
         if (TickSec == true) {		
-            if (PwmStatus == DISCHARGE)
+            if (pwm_st == DISCHARGE)
                 calc_cap(-1, get_adc_res(ADC_DI), Cfg.K_Id, &Lcd[3][C_P]);
             else calc_cap(1, get_adc_res(ADC_MI), Cfg.K_I, &Lcd[3][C_P]);
             if (LcdMode == TIME_MODE) {
@@ -181,15 +183,14 @@ void lcd_update_work (void) {
     }	
     /* ОТОБРАЖЕНИЕ ТЕМПЕРАТУРЫ */
     if (LcdMode == TEMP_MODE) {
-        if (TmpOld[0] != Tmp[0]) { //если значение изменилось, то отобразить его на дисплее
-            calc_tmp(Tmp[0], &Lcd[3][T1_P]); //преобразовать значение в цифры дисплея
-            WH2004_string_wr(&Lcd[3][T1_P],LA_3+T1_P, 5); //отобразить
-            TmpOld[0] = Tmp[0];
-        }
-        if (TmpOld[1] != Tmp[1]) { //если значение изменилось, то отобразить его на дисплее
-            calc_tmp(Tmp[1], &Lcd[3][T2_P]); //преобразовать значение в цифры дисплея
-            WH2004_string_wr(&Lcd[3][T2_P],LA_3+T2_P, 5); //отобразить
-            TmpOld[1] = Tmp[1];
+        for (uint8_t i = 0; i < T_N; i++) {
+            int16_t tmp = get_csu_t((tch_t)i);
+            if (TmpOld[i] != tmp) { //если значение изменилось, то отобразить его на дисплее
+                uint8_t pos = i * T_DP + T1_P;
+                calc_tmp(tmp, &Lcd[3][pos]); //преобразовать значение в цифры дисплея
+                WH2004_string_wr(&Lcd[3][pos], LA_3 + pos, 5); //отобразить
+                TmpOld[0] = tmp;
+            }
         }
     }
     /* ОТОБРАЖЕНИЕ НАПРЯЖЕНИЯ */
@@ -198,7 +199,7 @@ void lcd_update_work (void) {
         AdcOld[ADC_MU] = adc_res;
         calc_prm(adc_res, Cfg.K_U, &Lcd[2][U_P]);
         WH2004_string_wr(&Lcd[2][U_P],LA_2+U_P, 5); //отобразить
-        calc_prm(TaskU , Cfg.K_U , &Lcd[2][Us_P]);
+        calc_prm(get_task_u(), Cfg.K_U , &Lcd[2][Us_P]);
         WH2004_string_wr(&Lcd[2][Us_P],LA_2+Us_P, 4); //отобразить
     }
     /* ОТОБРАЖЕНИЕ ПОДКЛЮЧЕНИЯ ПК */
@@ -221,13 +222,14 @@ void lcd_update_work (void) {
         cOld = cCnt;
     }
     /* -ОТОБРАЖЕНИЕ ОШИБОК */
-    if (Error) {
+    err_t err = get_csu_err();
+    if (err) {
         memcpy(&Lcd[0][2], "Error", 5);
-        uint_to_str(Error, &Lcd[0][7], 2);
+        uint_to_str(err, &Lcd[0][7], 2);
         memset(&Lcd[0][9], ' ', 6);
         WH2004_string_wr(&Lcd[0][2], LA_0+2, 13);
         memset(Lcd[3], ' ', 20);
-        switch (Error) {
+        switch (err) {
         case ERR_OVERLOAD:
             decd_cpy(&Lcd[3][11], "заряда", 6);
             goto overl_msg;
@@ -275,7 +277,7 @@ void lcd_update_work (void) {
         /* ОТОБРАЖЕНИЕ БИТОВ СОСТОЯНИЯ */
         bool change = false;
         char sc;
-        if (PwmStatus == STOP) {
+        if (pwm_st == STOP) {
             if (lcdState != IDLE) {
                 lcdState = IDLE;
                 sc = ' ';
@@ -289,9 +291,9 @@ void lcd_update_work (void) {
                     change = true;
                 }
             } else {
-                if ((I_ST && PwmStatus == CHARGE) ||
-                    (PwmStatus == DISCHARGE
-                     && (get_adc_res(ADC_MU) > TaskU + 5))) {
+                if ((I_ST && pwm_st == CHARGE) ||
+                    (pwm_st == DISCHARGE
+                     && (get_adc_res(ADC_MU) > get_task_u() + 5))) {
                     if (lcdState != CURR) {
                         lcdState = CURR;
                         sc = 'I';
@@ -374,7 +376,10 @@ static void calc_prm (uint16_t val, uint16_t k, char *p) {
     p[3] = p[2];
     p[2] = ',';
 }
+
 /* Temperature range default 0.0625°C / bit */
+/*signed short tmp = (T2 << 8) + T1;
+return double(tmp) * 0.0625;*/
 static void calc_tmp (int16_t t, char *p) {
     if (t == ERR_WCODE) {
         memcpy(p, "Error", 5);

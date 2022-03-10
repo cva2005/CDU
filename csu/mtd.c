@@ -13,7 +13,7 @@ uint8_t fCnt;
 uint8_t StgNum[MTD_N] = {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0};
 uint16_t msNum = 0;
 bool SaveMtd = false;
-uint16_t TaskI, TaskId, TaskU, TaskUmemC, TaskUmemD;
+uint16_t TaskUmemC, TaskUmemD;
 uint16_t MaxU, MaxI, MaxId;
 hms_t Tm = {0,0,0}, Ts;
 stime_t PulseStep; //время импульса заряд/разряд при импульсном режиме
@@ -22,7 +22,7 @@ stime_t dUtime; // Время когда не увеличивается U пр�
 static bool end_time (hms_t *tm);
 
 /* проверка условий окончания этапа */
-bool fin_cond(void) {
+bool fin_cond (void) {
     uint16_t adc_mu = get_adc_res(ADC_MU);
     if (Stg.fld.stop_flag.I) { // признак окончания по току
         if (Stg.fld.type == DISCHARGE) {
@@ -68,11 +68,11 @@ void stg_status (void) {
     if (Stg.fld.type == PULSE) { // импульсный режим
         if (!get_time_left(PulseStep)) { // истекло время импульса
             if (CsuState == DISCHARGE) { // сменить на заряд
-                TaskU = TaskUmemC; // напряжение заряда
+                set_task_u(TaskUmemC); // напряжение заряда
                 csu_start(CHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_ch));
             } else {
-                TaskU = TaskUmemD;
+                set_task_u(TaskUmemD);
                 csu_start(DISCHARGE);
                 PulseStep = get_fin_time(SEC(Stg.fld.T_dch));
             }
@@ -117,25 +117,28 @@ void stg_status (void) {
 /* расчёт параметров метода */
 void calc_mtd (void) {
     SetMode = Stg.fld.type;
-    TaskU = (uint16_t)U_ADC(Mtd.fld.Um);
-    TaskId = (uint16_t)ID_ADC(Mtd.fld.Im);
-    TaskI = (uint16_t)I_ADC(Mtd.fld.Im);
+    set_task_u((uint16_t)U_ADC(Mtd.fld.Um));
+    set_task_id((uint16_t)ID_ADC(Mtd.fld.Im));
+    set_task_ic((uint16_t)I_ADC(Mtd.fld.Im));
     /* Если в методе больше 10 циклов, то ограничить их 10-ю */
     if (Mtd.fld.Cnt > 10) Mtd.fld.Cnt = 10;
 }
 
 /* расчёт параметров этапа */
-void calc_stg(void) {
-    TaskI = (uint16_t)I_M(Mtd.fld.Im, Stg.fld.I_ch);
-    if (TaskI > MaxI) TaskI = MaxI;
-    TaskId = (uint16_t)ID_M(Mtd.fld.Im, Stg.fld.I_dch);
-    if (TaskId > MaxId) TaskId = MaxId;
+void calc_stg (void) {
+    uint16_t task = (uint16_t)I_M(Mtd.fld.Im, Stg.fld.I_ch);
+    if (task > MaxI) task = MaxI;
+    set_task_ic(task);
+    task = (uint16_t)ID_M(Mtd.fld.Im, Stg.fld.I_dch);
+    if (task > MaxId) task = MaxId;
+    set_task_id(task);
     TaskUmemC = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.U_ch);
     if (TaskUmemC > MaxU) TaskUmemC = MaxU;
     TaskUmemD = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.U_dch);
     if (TaskUmemD > MaxU) TaskUmemD = MaxU;
-    if (Stg.fld.type == DISCHARGE) TaskU = TaskUmemD;
-    else TaskU = TaskUmemC;
+    if (Stg.fld.type == DISCHARGE) task = TaskUmemD;
+    else task = TaskUmemC;
+    set_task_u(task);
     if (Stg.fld.stop_flag.U)
         Fin.U = (uint16_t)U_M(Mtd.fld.Um, Stg.fld.end_U);
     if (Stg.fld.stop_flag.dU)
@@ -178,7 +181,7 @@ void read_stg (uint8_t num) {
         n += StgNum[i];
     }
     n += num;
-    if (eeread_stg(n, &Stg) == false) Error = ERR_STG;
+    if (eeread_stg(n, &Stg) == false) set_csu_err(ERR_STG);
 }
 
 void start_mtd (uint8_t num) {
@@ -186,16 +189,16 @@ void start_mtd (uint8_t num) {
     memset(&Tm, 0, sizeof(Tm));
 	if (num) {
 		//рсчитать значения в вольтах
-		s = TaskU * Cfg.K_U;
-		error_calc = s % 1000000UL;
-		if ((error_calc / 100000UL) > 4) s += 1000000UL; //убрать погрешность
-		Mtd.fld.Um = (uint16_t)((s - error_calc) / 100000UL);
+		s = get_task_u() * Cfg.K_U;
+		error_calc = s % D1M;
+		if ((error_calc / D100K) > 4) s += D1M; //убрать погрешность
+		Mtd.fld.Um = (uint16_t)((s - error_calc) / D100K);
 		//расчитать ток в амперах
-		if (Stg.fld.type == DISCHARGE) s = TaskId * Cfg.K_Id;
-		else s = TaskI * Cfg.K_I;
-		error_calc = s % 1000000UL;
-		if ((error_calc / 100000UL) > 4) s += 1000000UL; //убрать погрешность
-		Mtd.fld.Im = (uint16_t)((s - error_calc) / 100000UL);
+		if (Stg.fld.type == DISCHARGE) s = get_task_id() * Cfg.K_Id;
+		else s = get_task_ic() * Cfg.K_I;
+		error_calc = s % D1M;
+		if ((error_calc / D100K) > 4) s += D1M; //убрать погрешность
+		Mtd.fld.Im = (uint16_t)((s - error_calc) / D100K);
 		if (SaveMtd) {
             save_alg(mCnt, &Mtd);
 			SaveMtd = false;	
