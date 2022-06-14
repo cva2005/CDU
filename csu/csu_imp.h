@@ -73,6 +73,7 @@ extern "C" {
 #define P_MAX_EXT0      2500
 #define P_MAX_EXT1      8000
 #define P_MAX_EXT2      14000
+#define STABLE_DEL      10
 
 #ifdef __cplusplus
 }

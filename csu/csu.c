@@ -32,6 +32,9 @@ static stime_t BreakTime, TickSec, LedPwrTime, CntrlTime;
 static float Uerr, Ierr, InfTau;
 static uint16_t  dm_loss_cnt = 0;
 static uint8_t ERR_Ext = 0, OutErrCnt = 0;
+#ifdef STABLE_ON
+static uint8_t StCnt = 0;
+#endif
 static bool InitF, SatU, InitCsu = false;
 static pid_t Pid_U;
 static pid_t Pid_Ic;
@@ -460,9 +463,18 @@ static inline void csu_control (void) {
             Pid_Id = IdPidDef;
             Pid_Id.Xi = (float)TaskId / XI_K;
             Pid_Ic.Xi = (float)TaskI / XI_K;
+#ifdef STABLE_ON
+            StCnt = STABLE_DEL;
+#endif
          } else {
             Uerr = flt_exp(Uerr, (float)err_u, InfTau);
             Ierr = flt_exp(Ierr, (float)err_i, InfTau);
+#ifdef STABLE_ON
+            if (StCnt) {
+                StCnt--;
+                return;
+            }
+#endif
         }
         if (pwm_st == CHARGE) {
             float err;

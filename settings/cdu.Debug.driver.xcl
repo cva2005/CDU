@@ -10,11 +10,9 @@
 
 "1024" 
 
-"--avrone_jtag_clock=4000000" 
+"--avrone_jtag_clock=100000" 
 
 "--jtagice_leave_timers_running" 
-
-"--jtagice_preserve_eeprom" 
 
 "--drv_communication=USB" 
 
