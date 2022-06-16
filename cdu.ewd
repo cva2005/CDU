@@ -169,12 +169,12 @@
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagFreqManually</name>
-                    <state>100</state>
+                    <state>400</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagFreq</name>
                     <version>0</version>
-                    <state>8</state>
+                    <state>16</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagDeviceBefore</name>
@@ -202,7 +202,7 @@
                 </option>
                 <option>
                     <name>OATMELICEJtagDebugEeprom</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagDebugFuses</name>
@@ -1059,7 +1059,7 @@
                 </option>
                 <option>
                     <name>DDFile</name>
-                    <state></state>
+                    <state>$TOOLKIT_DIR$\Config\iom32.ddf</state>
                 </option>
                 <option>
                     <name>CInput</name>

@@ -42,8 +42,8 @@ MAKE_SPI_CNTR(
 
 void adc_init (void) {
     spi_init();
-    //CS_ON(); // 32-Bit Data Transmission Cycle (CS -> ON)
-    //SET_AS_OUT(CS_PORT, CS_PIN);
+    CS_ON(); // 32-Bit Data Transmission Cycle (CS -> ON)
+    SET_AS_OUT(CS_PORT, CS_PIN);
     spi_start_io((char *)&CfgReg, sizeof(uint16_t), sizeof(uint32_t), &adc_cntr);
     AdcTime = get_fin_time(ADC_TIME);
 }
