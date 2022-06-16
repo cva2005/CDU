@@ -30,8 +30,10 @@ extern "C" {
 /* управления режимом прием/передача RS485 */
 #define	RS485_IN()      CLR_PIN(RS_DIR_PORT, RS_DIR) /* на прием */
 #define	RS485_OUT()     SET_PIN(RS_DIR_PORT, RS_DIR) /* передачу */
-#define IS_RS485_IN()   IS_LAT_CLR(RS_DIR_PORT, RS_DIR) /* акт. прием */
-#define IS_RS485_OUT()  IS_LAT_SET(RS_DIR_PORT, RS_DIR) /* акт. передача */
+//#define IS_RS485_IN()   IS_LAT_CLR(RS_DIR_PORT, RS_DIR) /* акт. прием */
+//#define IS_RS485_OUT()  IS_LAT_SET(RS_DIR_PORT, RS_DIR) /* акт. передача */
+#define IS_RS485_IN()   IS_PIN_CLR(RS_DIR_PORT, RS_DIR) /* акт. прием */
+#define IS_RS485_OUT()  IS_PIN_SET(RS_DIR_PORT, RS_DIR) /* акт. передача */
 #define	RX_ACTIVE()     IS_RS485_IN()
 #define	TX_ACTIVE()     IS_RS485_OUT()
 
@@ -60,6 +62,7 @@ extern "C" {
 {\
     RX_TMR_OFF(); /* остановить таймер приема кадра */\
     RS485_IN(); /* линию управления RS485 на прием */\
+    while (TX_ACTIVE());\
     RxIpOld = RxIpNew; /* указатель хвоста буфера приема */\
     UART(UDR,) = UART(UDR,); /* сбросить флаг возможного прерывания URxC */\
     UART(UCSR,B) |= SHL(UART(RXEN,)) |\

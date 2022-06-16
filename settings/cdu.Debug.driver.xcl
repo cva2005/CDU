@@ -10,7 +10,7 @@
 
 "1024" 
 
-"--avrone_jtag_clock=4000000" 
+"--avrone_jtag_clock=5000000" 
 
 "--jtagice_leave_timers_running" 
 

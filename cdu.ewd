@@ -165,16 +165,16 @@
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagFreqRadio</name>
-                    <state>0</state>
+                    <state>1</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagFreqManually</name>
-                    <state>400</state>
+                    <state>5000</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagFreq</name>
                     <version>0</version>
-                    <state>16</state>
+                    <state>17</state>
                 </option>
                 <option>
                     <name>OATMELICEJtagIceJtagDeviceBefore</name>

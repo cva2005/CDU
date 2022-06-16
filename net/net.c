@@ -59,7 +59,7 @@ void start_tx(char first, uint8_t *buff)
     STOP_RX(); /* запретить прием */
     BuffPtr = buff; /* сохранить указатель на буфер передачи */
     RS485_OUT(); /* линию управления RS485 - на передачу */
-    delay_us(10);
+    while (RX_ACTIVE());
     /* разрешить передачу и прерывание TX UART */
     UART(UCSR,B) |= SHL(UART(UDRIE,));
     UART(UDR,) = first; /* загрузить первый байт */
