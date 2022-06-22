@@ -129,7 +129,6 @@ typedef enum {
 #define ID_M(x,y)   (uint32_t)x * (uint32_t)(y * 10) / Cfg.K_Id
 
 unsigned char U_align_st (void);
-uint16_t i_pwr_lim (uint16_t p, uint16_t i);
 void Init_ExtInt (void);
 void csu_start (csu_st mode);
 void csu_stop (csu_st mode);

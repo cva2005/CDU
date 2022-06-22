@@ -1,13 +1,14 @@
 #pragma message	("@(#)mbus.c")
 
 #include <sys/system.h>
+#include "csu/csu.h"
 #include "mbus.h"
 #include "mbus_imp.h"
 
 static void frame_parse(BUS_MODE mode);
 static uint16_t rtu_crc(uint8_t *buf, uint8_t len);
 static uint8_t ascii_lcr(uint8_t *buf, uint8_t len);
-static bool read_reg(uint8_t *buf, uint16_t first, uint16_t len);
+static bool read_reg(uint8_t *buf, uint8_t first, uint8_t len);
 
 static uint8_t RtuBuff[RTU_BUFF_LEN]; /* буфер приема/передачи RTU */
 static uint8_t AsciiBuff[ASCII_BUFF_LEN]; /* буфер приема/передачи ASCII */
@@ -174,42 +175,34 @@ static void frame_parse(BUS_MODE mode)
 }
 
 /* заполнение буфера содержимым регистров */
-static bool read_reg(uint8_t *buf, uint16_t first, uint16_t len)
+static bool read_reg(uint8_t *buf, uint8_t first, uint8_t len)
 {
     if ((len == 0)  || ((first + len) > REG_NUM)) return false;
     len += first;
-    for (; (char)first < (char)len; first++) {
+    for (; first < len; first++) {
         int16_t int_val;
-        float flo_val;
-        uint8_t i;
-        //unsigned char idx = first / REG_IDX_NUM; /* индекс группы */
-        switch ((char)(first % REG_IDX_NUM)) { /* номер параметра в группе */
-        case DPOINT_POS:
-            *buf++ = 0;
-            *buf++ = /*Cfg.Dp[idx]*/0;
-            continue;
-        case MEAS_INT:
-            flo_val = /*ch_data[idx].value*/0;
-            i = /*Cfg.Dp[idx]*/0;
-            while (i--) flo_val *= 10;
-            int_val = (int16_t)flo_val;
+        switch (first) {
+        case CSU_T1:
+        case CSU_T2:
+            int_val = get_csu_t((tch_t)first);
             break;
-        case MEAS_STAT:
-            i = *((uint8_t *)/*&ch_data[idx].value +*/ 3);
-            if (i <= /*emErrValue*/1) { /* значение не содержит ошибку */
-                int_val = 0x0000;
-            } else { /* ошибка измерения*/
-                int_val = 0xf000 + (i & 0x0f);
-            }
+        case TASK_IC:
+            int_val = get_task_ic();
             break;
-        case MEAS_TIME:
-            int_val = /*ch_data[idx].time*/0;
+        case TASK_U:
+            int_val = get_task_u();
             break;
-        case MEAS_FLOATL:
-            int_val = *((short *)/*&ch_data[idx].value*/0);
+        case TASK_ID:
+            int_val = get_task_id();
             break;
-        default: /* MEAS_FLOATH */
-            int_val = *((short *)/*&ch_data[idx].value +*/ 1);
+        case RD_ADC_MU: // канал измерения напряжения
+        case RD_ADC_MI: // канал измерения тока
+        case RD_ADC_DI: // канал измерения разрядного тока
+        case RD_ADC_MUp: // канал измерения входного тока
+            int_val = ADC_O[first - RD_ADC_MU];
+            break;
+        default: /* CSU_ERR: */
+            int_val = (int16_t)get_csu_err();
         }
         *buf++ = int_val >> 8;
         *buf++ = (uint8_t)int_val;

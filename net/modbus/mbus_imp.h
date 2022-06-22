@@ -10,17 +10,19 @@
 extern "C" {
 #endif
 
-#define REG_MAX     47 /* максимальный номер регистра */
-#define REG_NUM     (REG_MAX + 1) /* общее количество регистров */
-#define REG_IDX_NUM 6 /* регистров в индексной группе */
+#define CSU_T1          0 /* температура транзисторов/диодов */
+#define CSU_T2          1
+#define TASK_IC         2 /* задание ток заряда */
+#define TASK_U          3 /* задание напряжение */
+#define TASK_ID         4 /* задание ток разряда */
+#define RD_ADC_MU       5 // канал измерения напряжения
+#define RD_ADC_MI       6 // канал измерения тока
+#define RD_ADC_DI       7 // канал измерения разрядного тока
+#define RD_ADC_MUp      8 // канал измерения входного тока
+#define CSU_ERR         9
 
-/* расположение параметров в группе */
-#define DPOINT_POS  0 /* положение десятичной точки в целом значении */
-#define MEAS_INT    1 /* целое значение измерения */
-#define MEAS_STAT   2 /* статус измерени (код исключительной ситуации) */
-#define MEAS_TIME   3 /* циклическое время измерения входа */
-#define MEAS_FLOATL 4 /* float значение измерения, мл. слово */
-#define MEAS_FLOATH 5 /* float значение измерения, ст. слово */
+#define REG_MAX         CSU_ERR /* максимальный номер регистра */
+#define REG_NUM         (REG_MAX + 1) /* общее количество регистров */
 
 #define MB_FUNC_DATA    6 /* количество сл. байт функции */
 #define CRC_LEN         2 /* количество байт CRC */

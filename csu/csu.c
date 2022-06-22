@@ -9,6 +9,7 @@
 #include "csu/csu.h"
 #include "csu/csu_imp.h"
 
+static uint16_t i_pwr_lim (uint16_t p, uint16_t i);
 static inline void check_auto_start (void);
 static inline void csu_control (void);
 static inline void start_cntrl (void);
@@ -295,14 +296,17 @@ void csu_stop (csu_st mode) {
     else RELAY_ON();
 }
 
-uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
-    uint32_t u, id;
+static uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
+    uint32_t u;
     pLim = false;
     u = get_adc_res(ADC_MU);
     u *= Cfg.K_U;
     u /= D1M;
     if (u > 0) {
-        id = (uint64_t)(p * D100M) / u / Cfg.K_Id;
+        uint64_t id = D100M;
+        id *= p;
+        id /= u;
+        id /= Cfg.K_Id;
         if (id < 32768 && id > 0) {
             if (i > (uint16_t)id) {
                 /* если превышена мощность, то снизить ток

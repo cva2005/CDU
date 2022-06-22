@@ -133,12 +133,12 @@ typedef enum {
     WDTCR = prd | SHL(WDE);\
 }
 
-#define D1K     1000UL
-#define D10K    10000UL
-#define D100K   100000UL
-#define D1M     1000000UL
-#define D10M    10000000UL
-#define D100M   100000000UL
+#define D1K     1000
+#define D10K    10000
+#define D100K   100000
+#define D1M     1000000
+#define D10M    10000000
+#define D100M   100000000
 
 #define SYS_INIT_CODE   0x00
 #define MCP_ERROR_CODE  12
