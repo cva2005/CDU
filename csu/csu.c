@@ -303,7 +303,7 @@ static uint16_t i_pwr_lim (uint16_t p, uint16_t i) {
     u *= Cfg.K_U;
     u /= D1M;
     if (u > 0) {
-        uint64_t id = D100M;
+        uint64_t id = D10M;
         id *= p;
         id /= u;
         id /= Cfg.K_Id;
