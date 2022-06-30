@@ -36,7 +36,7 @@ void kron_drv (uint8_t ip, uint8_t len)
         while (len--) {
             if (ip >= RX_BUFF_LEN) ip = 0;
             uint8_t tmp = RxBuff[ip++];
-            if (tmp == CHAR_RS) { /* обнаружен стартовый байт KRON */
+            if (tmp == CHAR_RS && KronBusState != BUS_START) { /* обнаружен стартовый байт KRON */
                 IpBuff = 0; /* указатель на начало буфера */
                 KronBusState = BUS_START; /* первый байт кадра принят */
             }
