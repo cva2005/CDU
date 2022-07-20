@@ -227,9 +227,8 @@ static void frame_parse (void) {
 #define buf Buff.byte
 static void tx_reply (void) {
     LongTx = false;
-    uint8_t len = 0;
+    uint8_t len =  tx.dest_adr = 0;
     tx.start = CHAR_TS;
-    tx.dest_adr = 0;
     tx.src_adr = Cfg.addr;
     csu_st pwm_st = pwm_state();
     switch (tx.type) {
@@ -261,10 +260,7 @@ static void tx_reply (void) {
         td.usr.B_U = Cfg.B[ADC_MU];
         td.usr.B_Ip = Cfg.B[ADC_MUp];
         td.usr.B_Id = Cfg.B[ADC_DI];
-        td.usr.D_I=7;
-        td.usr.D_U=7;
-        td.usr.D_Id=7;
-        td.usr.D_Ip=7;
+        td.usr.D_I = td.usr.D_U = td.usr.D_Id = td.usr.D_Ip = 7;
         /* адрес в ответе, если происходит изменени адреса */
         if (rd.usr.cmd.addr_set) tx.src_adr = rx.dest_adr;
         len = sizeof(usr_t); 
@@ -277,8 +273,7 @@ static void tx_reply (void) {
         td.sys.maxId = Cfg.maxId;
         td.sys.maxPd = Cfg.P_maxW;
         td.sys.dm_cnt = Cfg.dmSlave;
-        td.sys.slave_cnt_u=0;
-        td.sys.slave_cnt_i=0;
+        td.sys.slave_cnt_u = td.sys.slave_cnt_i = 0;
         td.sys.cfg = Cfg.bf2.bit.astart;
         td.sys.autostart_try = Cfg.cnt_set;//AST_CNT;
         td.sys.restart_timout = Cfg.time_set;

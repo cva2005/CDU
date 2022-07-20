@@ -2,7 +2,7 @@
 #include <sys/config.h>
 
 /* EEPROM параметры конфигураци */
-static __eeprom edata_t eData;
+static __no_init __eeprom edata_t eData;
 
 /* RAM копия параметров конфигураци */
 __no_init cfg_t Cfg;

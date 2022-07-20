@@ -44,10 +44,10 @@ static pid_t Pid_Id;
 #define T_I         5.0f        /* Ti integration time */
 #define T_F         5.0f        /* Tf derivative filter tau */
 #define T_D         0.2f        /* Td derivative time */
-#define DK_P        0.00007f    /* Kp; gain factor */
-#define DT_I        5.0f        /* Ti integration time */
-#define DT_F        5.0f        /* Tf derivative filter tau */
-#define DT_D        0.2f        /* Td derivative time */
+#define DK_P        0.00004f    /* Kp; gain factor */
+#define DT_I        4.0f        /* Ti integration time */
+#define DT_F        2.0f        /* Tf derivative filter tau */
+#define DT_D        0.001f      /* Td derivative time */
 #define XI_K        1.5f        /* Xi integral zone factor */
 #define XD          0.1f        /* Xd dead zone */
 static const pid_t IcPidDef = {

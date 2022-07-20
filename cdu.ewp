@@ -257,7 +257,6 @@
                     <state>SYS_TRM0</state>
                     <state>UART_DS_MODE</state>
                     <state>SPI_POOL</state>
-                    <state>JTAG_DBGU</state>
                     <state>STABLE_ON</state>
                 </option>
                 <option>
@@ -501,7 +500,7 @@
                 <option>
                     <name>CCOptStrategy</name>
                     <version>0</version>
-                    <state>2</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCOptLevel</name>
@@ -1312,7 +1311,7 @@
                     <name>CCDefines</name>
                     <state>NDEBUG</state>
                     <state>SYS_UART</state>
-                    <state>SYS_TRM2</state>
+                    <state>SYS_TRM0</state>
                     <state>UART_DS_MODE</state>
                     <state>SPI_POOL</state>
                     <state>STABLE_ON</state>
@@ -1558,7 +1557,7 @@
                 <option>
                     <name>CCOptStrategy</name>
                     <version>0</version>
-                    <state>1</state>
+                    <state>0</state>
                 </option>
                 <option>
                     <name>CCOptLevel</name>

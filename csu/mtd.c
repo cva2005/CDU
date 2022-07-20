@@ -230,26 +230,14 @@ void create_mtd (uint8_t num) {
         memset(Mtd.fld.name, ' ', sizeof(Mtd.fld.name));
         Mtd.fld.data_type = MTD_ID;
         Mtd.fld.end.h = 10;
-        Mtd.fld.Cnt =
-        Mtd.fld.NStg = 1;
+        Mtd.fld.Cnt = Mtd.fld.NStg = 1;
         Stg.fld.data_type = STG_ID;
-        Mtd.fld.end.m =
-        Mtd.fld.end.s =
-        Stg.fld.stop_flag.T =
-        Stg.fld.stop_flag.I =
-        Stg.fld.stop_flag.U =
-        Stg.fld.stop_flag.dU =
-        Stg.fld.T_ch =
-        Stg.fld.T_dch =
-        Stg.fld.end_I =
-        Stg.fld.end_U =
-        Stg.fld.end_dU =
-        Stg.fld.end_Temp =
-        Stg.fld.end_C =
-        Stg.fld.end.m =
-        Stg.fld.end.s = 0;
-        Mtd.fld.Im =
-        Stg.fld.end.h = INF_TIME;
+        Mtd.fld.end.m = Mtd.fld.end.s = Stg.fld.stop_flag.T =
+        Stg.fld.stop_flag.I = Stg.fld.stop_flag.U = Stg.fld.stop_flag.dU =
+        Stg.fld.T_ch = Stg.fld.T_dch = Stg.fld.end_I =
+        Stg.fld.end_U = Stg.fld.end_dU = Stg.fld.end_Temp =
+        Stg.fld.end_C = Stg.fld.end.m = Stg.fld.end.s = 0;
+        Mtd.fld.Im = Stg.fld.end.h = INF_TIME;
     } else return;
     if (num == 0) {
         Mtd.fld.name[0] = Z_rus;
@@ -259,10 +247,8 @@ void create_mtd (uint8_t num) {
         Mtd.fld.name[4] = d_rus;
         Mtd.fld.Um = 1440;
         Stg.fld.type = CHARGE;
-        Stg.fld.I_ch =
-        Stg.fld.U_ch = 10000;
-        Stg.fld.I_dch =
-        Stg.fld.U_dch = 0;
+        Stg.fld.I_ch = Stg.fld.U_ch = 10000;
+        Stg.fld.I_dch = Stg.fld.U_dch = 0;
 	} else if (num == 1) {
         Mtd.fld.name[0] = 'P';
         Mtd.fld.name[1] = 'a';
@@ -272,10 +258,8 @@ void create_mtd (uint8_t num) {
         Mtd.fld.name[5] = d_rus;
         Mtd.fld.Um = 1080;
         Stg.fld.type = DISCHARGE;
-        Stg.fld.I_ch =
-        Stg.fld.U_ch = 0;
-        Stg.fld.I_dch =
-        Stg.fld.U_dch = 10000;
+        Stg.fld.I_ch = Stg.fld.U_ch = 0;
+        Stg.fld.I_dch = Stg.fld.U_dch = 10000;
 	}
     save_alg(num, &Mtd);
     save_alg(num + 1, &Stg);
@@ -301,7 +285,7 @@ uint8_t find_free (void) {
 
 void delete_all_mtd (void) {
     eeclr_alg();
-    for (uint8_t i = 0; i < MS_N; i++) {
+    for (uint8_t i = 0; i < MTD_N; i++) {
         StgNum[i] = 0;
     }
     mCnt = sCnt = cCnt = 0;
