@@ -123,7 +123,7 @@ extern uint32_t stime; /* системное время, 100 HZ */
 
 bool run_time(uint32_t start, uint32_t delta);
 
-#define delay_ns {asm("nop"); asm("nop"); asm("nop"); asm("nop");}
+#define delay_ns() {asm("nop"); asm("nop"); asm("nop"); asm("nop");}
 /*
  * Задержка с микросекундным интервалом.
  * Зависит от количества операций в ассемблерном цикле!

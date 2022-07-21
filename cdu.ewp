@@ -2157,6 +2157,12 @@
         <file>
             <name>$PROJ_DIR$\lcd\wh2004.h</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\lcd\WH2004_EX.c</name>
+            <excluded>
+                <configuration>Debug</configuration>
+            </excluded>
+        </file>
     </group>
     <group>
         <name>net</name>

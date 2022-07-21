@@ -76,6 +76,8 @@ typedef enum {
 #define IS_LAT_SET(port,pin) __is_lat_set(port,pin)
 #define __port_as_out(port) DDR##port = 0xFF
 #define PORT_AS_OUT(port) __port_as_out(port)
+#define __port_as_inp(port) DDR##port = 0x00
+#define PORT_AS_INP(port) __port_as_inp(port)
 #define __set_as_outs(port, pins) DDR##port |= pins
 #define SET_AS_OUTS(port, pins) __set_as_outs(port, pins)
 #define __set_pins(port, pins) PORT##port |= pins

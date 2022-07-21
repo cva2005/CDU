@@ -2196,6 +2196,9 @@
         <file>
             <name>$PROJ_DIR$\lcd\wh2004.h</name>
         </file>
+        <file>
+            <name>$PROJ_DIR$\lcd\WH2004_EX.c</name>
+        </file>
     </group>
     <group>
         <name>net</name>
@@ -2306,6 +2309,12 @@
         <name>tsens</name>
         <file>
             <name>$PROJ_DIR$\tsens\ds1820.c</name>
+            <configuration>
+                <name>Debug</name>
+            </configuration>
+            <configuration>
+                <name>Release</name>
+            </configuration>
         </file>
         <file>
             <name>$PROJ_DIR$\tsens\ds1820.h</name>

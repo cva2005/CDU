@@ -3,103 +3,72 @@
 #include "wh2004.h"
 #include "csu/csu.h"
 
-#if !JTAG_DBGU
-void Init_WH2004(bool enable)
-{
-//DATA_OUT = 0;
-//-----------------------------Инициализация-------------------------------
-WH2004L_wr_inst;
+#ifndef JTAG_DBGU
 
-DATA_OUT=0x30; //Function set (без чтения флага "busy")
-WH2004L_enable;
-delay_ns;
-WH2004L_disable;
-delay_us(40);
-
-DATA_OUT=0x30; //Function set (без чтения флага "busy")
-WH2004L_enable;
-delay_ns;
-WH2004L_disable;
-delay_us(40);
-//----------------------------------запись начальных настроек------------
-if (enable)	WH2004_inst_wr(0x38);//Function set (N = 0 1-line displayl; F = 0 5x8 dot character font)
-
-WH2004_inst_wr(0x08);//Display OFF
-
-WH2004_inst_wr(0x01);//Display Clear
-
-if (enable)
-	{
-	WH2004_inst_wr(0x06);//Entry Mode Set (I/D = 1 Increment by 1; S = 0; No shift)
-	//-----------------------------------вкючение ЖКИ--------------------------
-	WH2004_inst_wr(0x0F);//Display ON (D=1 diplay on, C=0 cursor off, B=0 blinking off)
-	}
+static bool is_ready (void) {
+    uint8_t di; 
+    RD_BUSY();
+    PORT_AS_INP(DATA_PORT);
+    for (uint8_t i = 0; i < ERR_BUSY; i++) {
+        EN_ON();
+        delay_ns();
+        di = DATA_IN;
+        EN_OFF();
+        if (di & BUSY_F) return true;
+    }
+    return false;
 }
 
-uint8_t WH2004_wait_ready(void)
-{
-    uint8_t BF=0; 
-    uint16_t cnt=0;
-
-DATA_OUT=0;    //на выходы все 0
-WH2004L_rd_busy;
-DDRC=0x00; //все пины D0-D7 настройить на вход;
-do
-	{
-	cnt++;          //увеличить счётчик времени ожидания
-	WH2004L_enable; //сигнал включения
-	delay_ns; //подождать пока установится данные на шине
-	BF=DATA_IN;		//прочитать флаг "busy"
-	WH2004L_disable;//убрать сигнал включения
-	}
-while ( (BF&0x80)&&(cnt<1001) ); //ожидаем готовности WH2004L
-
-//WH2004L_rd_data;
-if (cnt>1000) return(0); //Если таймаут вышел, значит WH2004L неисправна*/
-return(1);
+static bool data_wr (uint8_t data) {
+    if (is_ready()) {
+        DATA_OUT=data;
+        PORT_AS_OUT(DATA_PORT);
+        WR_DATA();
+        EN_ON();
+        delay_ns();
+        DATA_OUT=data;
+        EN_OFF();
+        return true;
+    }
+    return false;
 }
 
-uint8_t WH2004_data_wr(uint8_t data)
-{
-if (WH2004_wait_ready())
-	{
-	DATA_OUT=data;
-	DDRC=0xFF; //порт настроить как выходы
-	WH2004L_wr_data;
-	WH2004L_enable;
-	delay_ns;
-	DATA_OUT=data;
-	WH2004L_disable;
-	return(1);
-	}
-return(0);
+void Init_WH2004 (bool enable) {
+    WR_INSTR();
+    DATA_OUT = FUNC_SET | BIT_8 | LINE_4 | DT_5x8;
+    for (uint8_t i = 0; i < 2; i++) {
+        EN_ON(); // BF can not be checked before this instruction
+        delay_ns();
+        EN_OFF();
+        delay_us(40);
+    }
+    WH2004_inst_wr(DISP_CTRL | SET_OFF);
+    WH2004_inst_wr(DISP_CLR);
+    delay_us(1600);
+    if (enable) {
+        WH2004_inst_wr(MODE_SET | INC_MOV | NO_SHIFT);
+        WH2004_inst_wr(DISP_CTRL | SET_ON | CUR_ON | BLC_ON);
+    }
 }
 
-uint8_t WH2004_inst_wr(uint8_t inst)
-{
-if (WH2004_wait_ready())
-	{
-	DATA_OUT=inst;
-	DDRC=0xFF; //порт настроить как выходы
-	WH2004L_wr_inst;
-//delay_ns;
-	WH2004L_enable;
-	delay_ns;
-	DATA_OUT=inst;
-	WH2004L_disable;
-delay_ns;
-	return(1);
-	}
-return(0);
+bool WH2004_inst_wr (uint8_t inst) {
+    if (is_ready()) {
+        DATA_OUT = inst;
+        PORT_AS_OUT(DATA_PORT);
+        WR_INSTR();
+        EN_ON();
+        delay_ns();
+        EN_OFF();
+        delay_ns();
+        return true;
+    }
+    return false;
 }
 
-void WH2004_string_wr(char *string, uint8_t adr, uint8_t nsym)
-{
-    uint8_t cnt=0;
-
-if (WH2004_inst_wr(adr)) //установить курсор в нужную позицию
-	{
-	for (cnt=0; cnt<nsym; cnt++) WH2004_data_wr(string[cnt]); //записать последовательно все символы
+void WH2004_string_wr (char *s, uint8_t adr, uint8_t n) {
+    if (WH2004_inst_wr(adr)) { // set cursor
+        for (uint8_t i = 0; i < n; i++)
+            data_wr(s[i]); // send char
 	}	
 }
 #endif
