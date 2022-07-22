@@ -36,7 +36,7 @@ void main (void) {
 }
 
 static inline void init_gpio (void) { // ToDo: delete magic numbers!
-    DDRA = 0x03;
+    SET_AS_OUT(LCD_CNTR_PORT, LCD_CNTR_PINS);
     DDRB = 0x18;
 #ifndef JTAG_DBGU
     DDRC = 0xFF;

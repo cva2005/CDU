@@ -6,18 +6,31 @@
 extern "C" {
 #endif
 
-#define WR_INSTR()      PORTA &= 0xFC
-#define WR_DATA()       PORTA = (PORTA & 0xFD) | 0x01
-#define RD_BUSY()       PORTA = (PORTA & 0xFE) | 0x02
-#define RD_DATA()       PORTA |= 0x03
+#define OUT             PORTA
+#define CNTR_PORT       A
+#define RS_PIN          0
+#define RW_PIN          1
+#define EN_PIN          2
+#define MODE_PINS       ((1 << RS_PIN) | (1 << RW_PIN))
+#define CNTR_PINS       (1 << RS_PIN) | (1 << RW_PIN) | (1 << EN_PIN)
+#define LCD_CNTR_PORT   CNTR_PORT
+#define LCD_CNTR_PINS   CNTR_PINS
 
-#define EN_ON()         PORTA |= 0x04
-#define EN_OFF()        PORTA &= 0xFB
+#define WI_MASK         (0 << RS_PIN) | (0 << RW_PIN)
+#define RB_MASK         (0 << RS_PIN) | (1 << RW_PIN)
+#define WD_MASK         (1 << RS_PIN) | (0 << RW_PIN)
+#define RD_MASK         (1 << RS_PIN) | (1 << RW_PIN)
+#define WR_INSTR()      OUT = (OUT & ~MODE_PINS) | WI_MASK
+#define WR_DATA()       OUT = (OUT & ~MODE_PINS) | WD_MASK
+#define RD_BUSY()       OUT = (OUT & ~MODE_PINS) | RB_MASK
+#define RD_DATA()       OUT = (OUT & ~MODE_PINS) | RI_MASK
+
+#define EN_ON()         SET_PIN(CNTR_PORT, EN_PIN)
+#define EN_OFF()        CLR_PIN(CNTR_PORT, EN_PIN)
 
 #define DATA_PORT       C
 #define DATA_OUT        PORTC
 #define DATA_IN         PINC
-#define ERR_BUSY        100
 #define BUSY_F          0x80
 
 #define FUNC_SET        0x20
@@ -50,7 +63,7 @@ extern "C" {
 #define WH2004_string_wr(...)
 #else
 void Init_WH2004 (bool enable);
-bool WH2004_inst_wr (uint8_t inst);
+void WH2004_inst_wr (uint8_t inst);
 void WH2004_string_wr (char *s, uint8_t adr, uint8_t n);
 #endif
 

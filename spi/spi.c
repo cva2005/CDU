@@ -16,8 +16,10 @@ void spi_init(void) {
 }
 
 void spi_reset (void) {
+    cs_func(CS_ON);
     SPCR = SPI_OFF;
     CLR_PIN(SPI_PORT, SCK);
+    cs_func(CS_OFF);
 }
 
 void spi_start_io (char *msg, uint8_t wlen,

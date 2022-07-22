@@ -5,32 +5,25 @@
 
 #ifndef JTAG_DBGU
 
-static bool is_ready (void) {
+static void wait_busy (void) {
     uint8_t di; 
     RD_BUSY();
     PORT_AS_INP(DATA_PORT);
-    for (uint8_t i = 0; i < ERR_BUSY; i++) {
+    do {
         EN_ON();
-        delay_ns();
         di = DATA_IN;
         EN_OFF();
-        if (di & BUSY_F) return true;
-    }
-    return false;
+    } while (di & BUSY_F);
 }
 
-static bool data_wr (uint8_t data) {
-    if (is_ready()) {
-        DATA_OUT=data;
-        PORT_AS_OUT(DATA_PORT);
-        WR_DATA();
-        EN_ON();
-        delay_ns();
-        DATA_OUT=data;
-        EN_OFF();
-        return true;
-    }
-    return false;
+static void data_wr (uint8_t data) {
+    DATA_OUT = data;
+    PORT_AS_OUT(DATA_PORT);
+    WR_DATA();
+    EN_ON();
+    delay_ns();
+    EN_OFF();
+    wait_busy();
 }
 
 void Init_WH2004 (bool enable) {
@@ -51,24 +44,19 @@ void Init_WH2004 (bool enable) {
     }
 }
 
-bool WH2004_inst_wr (uint8_t inst) {
-    if (is_ready()) {
-        DATA_OUT = inst;
-        PORT_AS_OUT(DATA_PORT);
-        WR_INSTR();
-        EN_ON();
-        delay_ns();
-        EN_OFF();
-        delay_ns();
-        return true;
-    }
-    return false;
+void WH2004_inst_wr (uint8_t inst) {
+    DATA_OUT = inst;
+    PORT_AS_OUT(DATA_PORT);
+    WR_INSTR();
+    EN_ON();
+    delay_ns();
+    EN_OFF();
+    wait_busy();
 }
 
 void WH2004_string_wr (char *s, uint8_t adr, uint8_t n) {
-    if (WH2004_inst_wr(adr)) { // set cursor
-        for (uint8_t i = 0; i < n; i++)
-            data_wr(s[i]); // send char
-	}	
+    WH2004_inst_wr(adr); // set cursor
+    for (uint8_t i = 0; i < n; i++)
+        data_wr(s[i]); // send char
 }
 #endif

@@ -114,10 +114,10 @@ typedef struct {
 #define SCK_FREQ        4000001UL
 #define CS_PORT         A
 #define CS_PIN          2
-//#define CS_ON()         CLR_PIN(CS_PORT, CS_PIN)
+#define CS_ON()         CLR_PIN(CS_PORT, CS_PIN)
 //#define CS_OFF()        SET_PIN(CS_PORT, CS_PIN)
-#define CS_ON()         SET_AS_OUT(CS_PORT, CS_PIN)
-#define CS_OFF()        SET_AS_INP(CS_PORT, CS_PIN)
+//#define CS_ON()         SET_AS_OUT(CS_PORT, CS_PIN)
+//#define CS_OFF()        SET_AS_INP(CS_PORT, CS_PIN)
 #define ADC_SEL(x)      !x ? (CS_OFF()) : (CS_ON())
 /* линия RYD (она же MISO) */
 #define RDY_PORT        B
