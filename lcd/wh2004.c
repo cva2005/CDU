@@ -1,4 +1,4 @@
-#pragma message	("@(#)wh2004.c")
+#pragma message	("@(#)wh.c")
 #include <system.h>
 #include "wh2004.h"
 #include "csu/csu.h"
@@ -26,25 +26,26 @@ static void data_wr (uint8_t data) {
     wait_busy();
 }
 
-void Init_WH2004 (bool enable) {
+void Init_wh (bool enable) {
     WR_INSTR();
     DATA_OUT = FUNC_SET | BIT_8 | LINE_4 | DT_5x8;
     for (uint8_t i = 0; i < 2; i++) {
         EN_ON(); // BF can not be checked before this instruction
         delay_ns();
         EN_OFF();
-        delay_us(40);
+        delay_us(SHORT_DL);
     }
-    WH2004_inst_wr(DISP_CTRL | SET_OFF);
-    WH2004_inst_wr(DISP_CLR);
-    delay_us(1600);
-    if (enable) {
-        WH2004_inst_wr(MODE_SET | INC_MOV | NO_SHIFT);
-        WH2004_inst_wr(DISP_CTRL | SET_ON | CUR_ON | BLC_ON);
-    }
+    uint8_t ctrl;
+    if (enable) ctrl = CURS_BLINK;
+    else ctrl = DISP_OFF;
+    wh_inst_wr(ctrl);
+    delay_us(SHORT_DL);
+    wh_inst_wr(DISP_CLR);
+    delay_us(LONG_DL);
+    wh_inst_wr(MODE_SET | INC_MOV | NO_SHIFT);
 }
 
-void WH2004_inst_wr (uint8_t inst) {
+void wh_inst_wr (uint8_t inst) {
     DATA_OUT = inst;
     PORT_AS_OUT(DATA_PORT);
     WR_INSTR();
@@ -54,8 +55,8 @@ void WH2004_inst_wr (uint8_t inst) {
     wait_busy();
 }
 
-void WH2004_string_wr (char *s, uint8_t adr, uint8_t n) {
-    WH2004_inst_wr(adr); // set cursor
+void wh_string_wr (char *s, uint8_t adr, uint8_t n) {
+    wh_inst_wr(adr); // set cursor
     for (uint8_t i = 0; i < n; i++)
         data_wr(s[i]); // send char
 }

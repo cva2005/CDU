@@ -33,6 +33,10 @@ extern "C" {
 #define DATA_IN         PINC
 #define BUSY_F          0x80
 
+#define INI_N           2
+#define LONG_DL         1600
+#define SHORT_DL        40
+
 #define FUNC_SET        0x20
 #define BIT_8           0x10
 #define BIT_4           0x00
@@ -54,17 +58,21 @@ extern "C" {
 #define CUR_OFF         0x00
 #define BLC_ON          0x01
 #define BLC_OFF         0x00
+#define CURS_BLINK      DISP_CTRL | SET_ON | CUR_ON | BLC_ON
+#define CURS_ON         DISP_CTRL | SET_ON | CUR_ON | BLC_OFF
+#define CURS_OFF        DISP_CTRL | SET_ON | CUR_OFF | BLC_OFF
+#define DISP_OFF        DISP_CTRL | SET_OFF
 
 #define DISP_CLR        0x01
 
 #ifdef JTAG_DBGU
-#define Init_WH2004(...)
-#define WH2004_inst_wr(...)
-#define WH2004_string_wr(...)
+#define Init_wh(...)
+#define wh_inst_wr(...)
+#define wh_string_wr(...)
 #else
-void Init_WH2004 (bool enable);
-void WH2004_inst_wr (uint8_t inst);
-void WH2004_string_wr (char *s, uint8_t adr, uint8_t n);
+void Init_wh (bool enable);
+void wh_inst_wr (uint8_t inst);
+void wh_string_wr (char *s, uint8_t adr, uint8_t n);
 #endif
 
 #define LA_0    0x80
@@ -74,39 +82,6 @@ void WH2004_string_wr (char *s, uint8_t adr, uint8_t n);
 #define LN      4 // line num
 #define SL      20 // string len
 
-#define J_rus   163
-#define Z_rus   164
-#define I_rus   165
-#define j_rus   182
-#define i_rus   184
-#define m_rus   188
-#define z_rus   183
-#define ya_rus  199
-#define d_rus   227
-#define D_rus   224
-#define u_rus   198
-#define l_rus   187
-#define _rus    196
-#define f_rus   228
-#define t_rus   191
-#define k_rus   186
-#define b_rus   178
-#define ch_rus  192
-#define n_rus   189
-#define p_rus   190
-#define ii_rus  195
-#define io_rus  181
-#define v_rus   179
-#define P_rus   168
-#define E_rus   175
-#define io_rus  181
-#define g_rus   180
-#define G_rus   161
-#define B_rus   160
-#define sh_rus  193
-#define c_rus   229
-#define C_rus   225
- 
 #ifdef __cplusplus
 }
 #endif

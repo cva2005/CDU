@@ -245,8 +245,8 @@ void calc_cfg (void) {
         Clb.id.byte = 0;
 	}
     lcd_clear();
-    if (Cfg.mode.lcd) Init_WH2004(true);
-    else Init_WH2004(false);	
+    if (Cfg.mode.lcd) Init_wh(true);
+    else Init_wh(false);	
     if (Cfg.mode.led) {
         PORT_AS_OUT(C);
         SET_ALL(C);	

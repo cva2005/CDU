@@ -2,7 +2,6 @@
 #define LDC_H
 #pragma message	("@(#)ldc.h")
 #include "wh2004.h"
-#include "tsens/ds1820.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -31,14 +30,17 @@ typedef enum {
 #define T_P             2
 #define S_P             17
 #define C_P             14
-#define PR_NUM          5 //число параметров для редактирования
-#define pr_mode         0x80
-#define pr_time         0xD4
-#define pr_I            0xC0 
-#define pr_U            0x94
-#define pr_cycle        0x8F
+#define PC_CHAR         168
+
+#define PR_MODE         LA_0
+#define PR_I            LA_1 
+#define PR_U            LA_2
+#define PR_TIME         LA_3
+#define PR_CYCLE        0x8F
 
 #ifdef JTAG_DBGU
+#define decd_cpy(...)
+#define lcd_set_curs(...)
 #define lcd_wr_set(...)
 #define lcd_clear(...)
 #define lcd_update_set(...)
@@ -50,6 +52,8 @@ typedef enum {
 #define lcd_update_work(...)
 #define lcd_tick_sec(...)
 #else
+void decd_cpy (char *dst, const char *src, uint8_t n);
+void lcd_set_curs (uint8_t idx);
 void lcd_wr_set(void);
 void lcd_clear (void);
 void lcd_update_set (void);

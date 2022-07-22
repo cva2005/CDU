@@ -12,7 +12,7 @@
         <ByteLimit>50</ByteLimit>
     </Stack>
     <DebugChecksum>
-        <Checksum>4197063059</Checksum>
+        <Checksum>4010072805</Checksum>
     </DebugChecksum>
     <CallStack>
         <ShowArgs>0</ShowArgs>
@@ -53,14 +53,11 @@
         <Count>0</Count>
     </Breakpoints2>
     <watch_formats>
-        <Fmt0>{W}3:PINC	1	0</Fmt0>
-        <Fmt1>{W}3:PORTA	1	0</Fmt1>
-        <Fmt2>{W}3:PORTC	1	0</Fmt2>
+        <Fmt0>{W}3:DDRA	1	0</Fmt0>
+        <Fmt1>{W}3:PINC	1	0</Fmt1>
+        <Fmt2>{W}3:PORTA	1	0</Fmt2>
+        <Fmt3>{W}3:PORTC	1	0</Fmt3>
     </watch_formats>
-    <Breakpoints>
-        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\sys\main.c}.27.9" 1 0 0 0 "" 0 ""</Bp0>
-        <Count>1</Count>
-    </Breakpoints>
     <TermIOLog>
         <LoggingEnabled>_ 0</LoggingEnabled>
         <LogFile>_ ""</LogFile>
@@ -70,6 +67,11 @@
         <LogFile>_ ""</LogFile>
         <Category>_ 0</Category>
     </LogFile>
+    <Breakpoints>
+        <Bp0>_ "STD_CODE" "{$PROJ_DIR$\sys\main.c}.16.5" 1 0 0 0 "" 0 ""</Bp0>
+        <Bp1>_ "STD_CODE" "{$PROJ_DIR$\lcd\lcd.c}.110.5" 1 0 0 0 "" 0 ""</Bp1>
+        <Count>2</Count>
+    </Breakpoints>
     <Aliases>
         <Count>0</Count>
         <SuppressDialog>0</SuppressDialog>

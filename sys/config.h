@@ -116,7 +116,7 @@ extern __no_init cfg_t Cfg;
 extern __no_init num_t Num;
 extern __no_init clb_t Clb;
 void read_cfg (void);
-void read_num (char *num);
+void read_num (char *dest);
 void save_num (uint8_t *src);
 bool read_clb (void);
 bool eeread_mtd (uint8_t num, mtd_t *pm);

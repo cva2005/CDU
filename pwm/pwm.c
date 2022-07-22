@@ -1,8 +1,5 @@
 #pragma message	("@(#)pwm.c")
 #include <system.h>
-#include "csu/csu.h"
-#include "lcd/wh2004.h"
-#include "spi/adc/ads1118.h"
 #include "pwm.h"
 
 csu_st PwmStatus = STOP;

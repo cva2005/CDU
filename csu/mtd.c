@@ -240,22 +240,13 @@ void create_mtd (uint8_t num) {
         Mtd.fld.Im = Stg.fld.end.h = INF_TIME;
     } else return;
     if (num == 0) {
-        Mtd.fld.name[0] = Z_rus;
-        Mtd.fld.name[1] = 'a';
-        Mtd.fld.name[2] = 'p';
-        Mtd.fld.name[3] = ya_rus;
-        Mtd.fld.name[4] = d_rus;
+        decd_cpy((char*)Mtd.fld.name, "Заряд", 5);
         Mtd.fld.Um = 1440;
         Stg.fld.type = CHARGE;
         Stg.fld.I_ch = Stg.fld.U_ch = 10000;
         Stg.fld.I_dch = Stg.fld.U_dch = 0;
 	} else if (num == 1) {
-        Mtd.fld.name[0] = 'P';
-        Mtd.fld.name[1] = 'a';
-        Mtd.fld.name[2] = z_rus;
-        Mtd.fld.name[3] = 'p';
-        Mtd.fld.name[4] = ya_rus;
-        Mtd.fld.name[5] = d_rus;
+        decd_cpy((char*)Mtd.fld.name, "Разряд", 6);
         Mtd.fld.Um = 1080;
         Stg.fld.type = DISCHARGE;
         Stg.fld.I_ch = Stg.fld.U_ch = 0;

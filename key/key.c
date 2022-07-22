@@ -1,7 +1,5 @@
 #pragma message	("@(#)key.c")
-#include <sys/config.h>
-#include "csu/csu.h"
-#include "csu/mtd.h"
+#include "sys/config.h"
 #include "lcd/lcd.h"
 #include "pwm/pwm.h"
 #include "key.h"
@@ -18,11 +16,10 @@ static void change_id (int8_t add);
 static void change_u (int8_t add);
 
 static stime_t KeyDel, KeyPress;
-static uint8_t Step = 1, Cursor_point = 0;
-static uint8_t Cursor_pos[PR_NUM] = {pr_mode, pr_I, pr_U, pr_time, pr_cycle};
+static uint8_t Step = 1, iCurs = 0;
 
-uint8_t cursor_pos (void) {
-    return Cursor_pos[Cursor_point];
+uint8_t curs_idx (void) {
+    return iCurs;
 }
 
 void check_key (void) {
@@ -80,13 +77,13 @@ void key_power (void) {
 
 static inline void key_set (void) {
     if (CsuState == STOP) {
-        Cursor_point++;
-        if (Cursor_point == PR_NUM) Cursor_point = 0;
+        iCurs++;
+        if (iCurs == PR_NUM) iCurs = 0;
     } else {
-        Cursor_point = 0;
+        iCurs = 0;
         lcd_mode_ch();
     }
-    WH2004_inst_wr(Cursor_pos[Cursor_point]);
+    lcd_set_curs(iCurs);
     KeyDel = get_fin_time(MS(320));
 }
 
@@ -94,23 +91,20 @@ static void key_up_dw (up_dw_t up_dw) {
     if (CsuState == STOP) {
         SaveMtd = true;
         int8_t stp = Step * (int8_t)up_dw;
-        switch (Cursor_pos[Cursor_point]) {
-        case pr_mode:
+        switch (iCurs) {
+        case IDX_MODE:
             mCnt += (int8_t)up_dw;
             read_mtd();
             SaveMtd = false;
             goto set_del_320;
-        case pr_I:
-            if (SetMode == DISCHARGE) {
-                change_id(stp);
-            } else {
-                change_ic(stp);
-            }
+        case IDX_I:
+            if (SetMode == DISCHARGE) change_id(stp);
+            else change_ic(stp);
             break;
-        case pr_U:
+        case IDX_U:
             change_u(stp);
             break;
-        case pr_time:
+        case IDX_TIME:
             if (up_dw == UP_PRESS) {
                 if (Mtd.fld.end.h < 100) {
                     Mtd.fld.end.m += Step;
@@ -128,7 +122,7 @@ static void key_up_dw (up_dw_t up_dw) {
             }
             KeyDel = get_fin_time(MS(160));
             break;
-        case pr_cycle:
+        case IDX_CYCLE:
             Mtd.fld.Cnt += (int8_t)up_dw;
             if (Mtd.fld.Cnt > 10) Mtd.fld.Cnt = 1;
             else if (Mtd.fld.Cnt < 1) Mtd.fld.Cnt = 10;
@@ -140,11 +134,8 @@ static void key_up_dw (up_dw_t up_dw) {
         if (SetMode == DISCHARGE) {
             change_id((int8_t)up_dw);
         } else {
-            if (I_ST) {
-                change_ic((int8_t)up_dw);
-            } else {
-                change_u((int8_t)up_dw);
-            }
+            if (I_ST) change_ic((int8_t)up_dw);
+            else change_u((int8_t)up_dw);
         }
         delay_ms(3); // ToDo: remove satic delay!
     }

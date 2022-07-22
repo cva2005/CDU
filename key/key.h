@@ -11,6 +11,15 @@ typedef enum {
     DOWN_PRESS  = -1
 } up_dw_t;
 
+typedef enum {
+    IDX_MODE    = 0,
+    IDX_I       = 1,
+    IDX_U       = 2,
+    IDX_TIME    = 3,
+    IDX_CYCLE   = 4,
+    PR_NUM      = 5
+} curs_idx_t;
+
 #define K5          0x78
 #define K4          0xB8
 #define K3          0xD8
@@ -21,7 +30,7 @@ typedef enum {
 
 void check_key (void);
 void key_power (void);
-uint8_t cursor_pos (void);
+uint8_t curs_idx (void);
 
 #ifdef __cplusplus
 }
